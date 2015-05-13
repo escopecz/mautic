@@ -82,6 +82,13 @@ class LeadRepository extends CommonRepository
     public function getLeadsByFieldValue($field, $value, $ignoreId = null)
     {
         $col = 'l.'.$field;
+
+        if ($field == 'email') {
+            // Prevent emails from being case sensitive
+            $col   = "LOWER($col)";
+            $value = strtolower($value);
+        }
+
         $q = $this->_em->getConnection()->createQueryBuilder()
         ->select('l.id')
         ->from(MAUTIC_TABLE_PREFIX . 'leads', 'l')
@@ -111,6 +118,80 @@ class LeadRepository extends CommonRepository
             ->orderBy('l.dateAdded', 'DESC');
             $results = $q->getQuery()->getResult();
         }
+
+        return $results;
+    }
+
+    /**
+     * Get a list of lead entities
+     *
+     * @param $fields
+     * @param $values
+     *
+     * @return array
+     */
+    public function getLeadsByUniqueFields($uniqueFieldsWithData, $leadId = null)
+    {
+        // get the list of IDs
+        $idList = $this->getLeadIdsByUniqueFields($uniqueFieldsWithData, $leadId);
+
+        // init to empty array
+        $results = array();
+
+        // if we didn't get anything return empty
+        if (!count(($idList))) {
+            return $results;
+        }
+
+        $ids = array();
+
+        // we know we have at least one
+        foreach ($idList as $r) {
+            $ids[] = $r['id'];
+        }
+
+        $q = $this->_em->createQueryBuilder()
+            ->select('l')
+            ->from('MauticLeadBundle:Lead', 'l');
+
+        $q->where(
+            $q->expr()->in('l.id', ':ids')
+        )
+            ->setParameter('ids', $ids)
+            ->orderBy('l.dateAdded', 'DESC');
+
+        $results = $q->getQuery()->getResult();
+
+        return $results;
+    }
+
+    /*
+     * Get list of lead Ids by unique field data.
+     *
+     * @param $uniqueFieldsWithData is an array of columns & values to filter by
+     * @param $leadId is the current lead id. Added to query to skip and find other leads.
+     *
+     * @return array
+     */
+    public function getLeadIdsByUniqueFields($uniqueFieldsWithData, $leadId = null)
+    {
+        $q = $this->_em->getConnection()->createQueryBuilder()
+            ->select('l.id')
+            ->from(MAUTIC_TABLE_PREFIX . 'leads', 'l');
+
+        // loop through the fields and
+        foreach($uniqueFieldsWithData as $col => $val) {
+            $q->orWhere("l.$col = :" . $col)
+                ->setParameter($col, $val);
+        }
+
+        // if we have a lead ID lets use it
+        if (!empty($leadId)) {
+            // make sure that its not the id we already have
+            $q->andWhere("l.id != " . $leadId);
+        }
+
+        $results = $q->execute()->fetchAll();
 
         return $results;
     }
@@ -338,6 +419,8 @@ class LeadRepository extends CommonRepository
             $fields[$r['alias']] = $r;
         }
 
+        unset($results);
+
         //Fix arguments if necessary
         $args = $this->convertOrmProperties('Mautic\\LeadBundle\\Entity\\Lead', $args);
 
@@ -369,6 +452,7 @@ class LeadRepository extends CommonRepository
 
         //loop over results to put fields in something that can be assigned to the entities
         $fieldValues = array();
+        $groups      = array('core', 'social', 'personal', 'professional');
         foreach ($results as $result) {
             $leadId = $result['id'];
             //unset all the columns that are not fields
@@ -380,7 +464,15 @@ class LeadRepository extends CommonRepository
                     $fieldValues[$leadId][$fields[$k]['group']][$fields[$k]['alias']]['value'] = $r;
                 }
             }
+
+            //make sure each group key is present
+            foreach ($groups as $g) {
+                if (!isset($fieldValues[$leadId][$g])) {
+                    $fieldValues[$leadId][$g] = array();
+                }
+            }
         }
+        unset($results, $fields);
 
         //get an array of IDs for ORM query
         $ids = array_keys($fieldValues);
@@ -401,9 +493,9 @@ class LeadRepository extends CommonRepository
             $order .= ' ELSE ' . $count . ' END) AS HIDDEN ORD';
 
             //ORM - generates lead entities
-            $q = $this
-                ->createQueryBuilder('l');
+            $q = $this->_em->createQueryBuilder();
             $q->select('l, u, i,' . $order)
+                ->from('MauticLeadBundle:Lead', 'l', 'l.id')
                 ->leftJoin('l.ipAddresses', 'i')
                 ->leftJoin('l.owner', 'u');
 
@@ -413,7 +505,11 @@ class LeadRepository extends CommonRepository
             )->setParameter('leadIds', $ids);
 
             $q->orderBy('ORD', 'ASC');
-            $results   = $q->getQuery()->getResult();
+
+            $results = $q->getQuery()
+                ->useQueryCache(false)
+                ->useResultCache(false)
+                ->getResult();
 
             //assign fields
             foreach ($results as $r) {
@@ -424,6 +520,8 @@ class LeadRepository extends CommonRepository
                 $leadId = $r->getId();
                 $r->setFields($fieldValues[$leadId]);
             }
+        } else {
+            $results = array();
         }
 
         return (!empty($args['withTotalCount'])) ?
@@ -457,20 +555,25 @@ class LeadRepository extends CommonRepository
         $unique  = $this->generateRandomParameterName(); //ensure that the string has a unique parameter identifier
         $string  = ($filter->strict) ? $filter->string : "%{$filter->string}%";
 
-        $expr = $q->expr()->orX(
-            $q->expr()->like('l.firstname', ":$unique"),
-            $q->expr()->like('l.lastname', ":$unique"),
-            $q->expr()->like('l.email', ":$unique"),
-            $q->expr()->like('l.company', ":$unique"),
-            $q->expr()->like('l.city', ":$unique"),
-            $q->expr()->like('l.state', ":$unique"),
-            $q->expr()->like('l.zipcode', ":$unique"),
-            $q->expr()->like('l.country', ":$unique")
-        );
-
         if ($filter->not) {
-            $q->expr()->not($expr);
+            $xFunc    = 'andX';
+            $exprFunc = 'notLike';
+        } else {
+            $xFunc    = 'orX';
+            $exprFunc = 'like';
+
         }
+
+        $expr = $q->expr()->$xFunc(
+            $q->expr()->$exprFunc('l.firstname', ":$unique"),
+            $q->expr()->$exprFunc('l.lastname', ":$unique"),
+            $q->expr()->$exprFunc('l.email', ":$unique"),
+            $q->expr()->$exprFunc('l.company', ":$unique"),
+            $q->expr()->$exprFunc('l.city', ":$unique"),
+            $q->expr()->$exprFunc('l.state', ":$unique"),
+            $q->expr()->$exprFunc('l.zipcode', ":$unique"),
+            $q->expr()->$exprFunc('l.country', ":$unique")
+        );
 
         return array(
             $expr,

@@ -53,6 +53,13 @@ class CheckStep implements StepInterface
     public $site_url;
 
     /**
+     * Set the name of the source that installed Mautic
+     *
+     * @var string
+     */
+    public $install_source = 'Mautic';
+
+    /**
      * Constructor
      *
      * @param boolean $configIsWritable Flag if the configuration file is writable
@@ -102,10 +109,6 @@ class CheckStep implements StepInterface
 
         if (!is_writable($this->kernelRoot . '/logs')) {
             $messages[] = 'mautic.install.logs.unwritable';
-        }
-
-        if (!ini_get('date.timezone')) {
-            $messages[] = 'mautic.install.date.timezone';
         }
 
         if (version_compare(PHP_VERSION, '5.3.7', '>=')) {
@@ -220,6 +223,11 @@ class CheckStep implements StepInterface
             if (!call_user_func(create_function('$cfgValue', 'return $cfgValue > 100;'), $cfgValue)) {
                 $messages[] = 'mautic.install.xdebug.nesting';
             }
+        }
+
+        // We set a default timezone in the app bootstrap, but advise the user if their PHP config is missing it
+        if (!ini_get('date.timezone')) {
+            $messages[] = 'mautic.install.date.timezone.not.set';
         }
 
         if (!class_exists('\\DomDocument')) {

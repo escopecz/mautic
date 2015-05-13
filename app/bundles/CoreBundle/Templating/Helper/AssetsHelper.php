@@ -65,12 +65,24 @@ class AssetsHelper extends CoreAssetsHelper
      *
      * @return string
      */
-    public function getUrl($path, $packageName = null, $version = null)
+    public function getUrl($path, $packageName = null, $version = null, $absolute = false)
     {
+        // if we have http in the url it is absolute and we can just return it
+        if (strpos($path, 'http') === 0) {
+            return $path;
+        }
+
+        // otherwise build the complete path
         $assetPrefix = $this->getAssetPrefix(strpos($path, '/') !== 0);
         $path        = $assetPrefix . $path;
 
-        return parent::getUrl($path, $packageName, $version);
+        $url = parent::getUrl($path, $packageName, $version);
+
+        if ($absolute) {
+            $url = $this->factory->getRequest()->getSchemeAndHttpHost() . $url;
+        }
+
+        return $url;
     }
 
     /**
@@ -177,6 +189,28 @@ class AssetsHelper extends CoreAssetsHelper
                 'app/bundles/CoreBundle/Assets/js/libraries/ckeditor/adapters/jquery.js'
             ));
         }
+    }
+
+    /*
+     * Loads an addon script
+     *
+     * @param $assetFilepath the path to the file location. Can use full path or relative to mautic web root
+     */
+
+    public function includeScript($assetFilePath)
+    {
+        return  '<script type="text/javascript">Mautic.loadScript(\'' . $this->getUrl($assetFilePath) . '\');</script>';
+    }
+
+    /*
+     * Include stylesheet
+     *
+     * @param $assetFilepath the path to the file location. Can use full path or relative to mautic web root
+     */
+
+    public function includeStylesheet($assetFilePath)
+    {
+        return  '<script type="text/javascript">Mautic.loadStylesheet(\'' . $this->getUrl($assetFilePath) . '\');</script>';
     }
 
     /**

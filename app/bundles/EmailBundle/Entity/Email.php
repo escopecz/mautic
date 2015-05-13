@@ -102,14 +102,6 @@ class Email extends FormEntity
     private $readCount = 0;
 
     /**
-     * @ORM\Column(name="read_in_browser", type="boolean")
-     * @Serializer\Expose
-     * @Serializer\Since("1.0")
-     * @Serializer\Groups({"emailDetails"})
-     */
-    private $readInBrowser = false;
-
-    /**
      * @ORM\Column(name="sent_count", type="integer")
      * @Serializer\Expose
      * @Serializer\Since("1.0")
@@ -142,7 +134,7 @@ class Email extends FormEntity
     private $lists;
 
     /**
-     * @ORM\OneToMany(targetEntity="Stat", mappedBy="email", cascade={"all"}, indexBy="id", fetch="EXTRA_LAZY")
+     * @ORM\OneToMany(targetEntity="Stat", mappedBy="email", cascade={"persist"}, indexBy="id", fetch="EXTRA_LAZY")
      * @Serializer\Expose
      * @Serializer\Since("1.0")
      * @Serializer\Groups({"emailDetails"})
@@ -629,22 +621,6 @@ class Email extends FormEntity
                 $this->variantSentCount--;
             }
         }
-    }
-
-    /**
-     * @return mixed
-     */
-    public function getReadInBrowser ()
-    {
-        return $this->readInBrowser;
-    }
-
-    /**
-     * @param mixed $readInBrowser
-     */
-    public function setReadInBrowser ($readInBrowser)
-    {
-        $this->readInBrowser = $readInBrowser;
     }
 
     /**

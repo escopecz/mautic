@@ -117,15 +117,18 @@ class CommonRepository extends EntityRepository
         if (isset($args['hydration_mode'])) {
             $hydrationMode = constant("\\Doctrine\\ORM\\Query::" . strtoupper($args['hydration_mode']));
             $query->setHydrationMode($hydrationMode);
+        } else {
+            $hydrationMode = Query::HYDRATE_OBJECT;
         }
 
-        if (empty($args['ignore_paginator'])) {
+        if (!empty($args['iterator_mode'])) {
+            // Hydrate one by one
+            return $query->iterate(null, $hydrationMode);
+        } elseif (empty($args['ignore_paginator'])) {
+            // Paginator
             return new Paginator($query);
         } else {
-            if (empty($hydrationMode)) {
-                $hydrationMode = Query::HYDRATE_OBJECT;
-            }
-
+            // All results
             return $query->getResult($hydrationMode);
         }
     }
@@ -204,6 +207,28 @@ class CommonRepository extends EntityRepository
 
         if ($flush)
             $this->_em->flush();
+    }
+
+
+    /**
+     * Delete an array of entities
+     *
+     * @param array $entities
+     *
+     * @return void
+     */
+    public function deleteEntities($entities)
+    {
+        //iterate over the results so the events are dispatched on each delete
+        $batchSize = 20;
+        foreach ($entities as $k => $entity) {
+            $this->deleteEntity($entity, false);
+
+            if ((($k + 1) % $batchSize) === 0) {
+                $this->_em->flush();
+            }
+        }
+        $this->_em->flush();
     }
 
     /**
@@ -285,7 +310,7 @@ class CommonRepository extends EntityRepository
                 $filterCount = ($expressions instanceof \Countable) ? count($expressions) : count($expressions->getParts());
 
                 if (!empty($filterCount)) {
-                    $q->where($expressions);
+                    $q->andWhere($expressions);
                     foreach ($parameters as $k => $v) {
                         if ($v === true || $v === false) {
                             $q->setParameter($k, $v, 'boolean');
@@ -502,7 +527,7 @@ class CommonRepository extends EntityRepository
     protected function buildLimiterClauses(&$q, array $args)
     {
         $start      = array_key_exists('start', $args) ? $args['start'] : 0;
-        $limit      = array_key_exists('limit', $args) ? $args['limit'] : 30;
+        $limit      = array_key_exists('limit', $args) ? $args['limit'] : 0;
 
         if (!empty($limit)) {
             $q->setFirstResult($start)
@@ -646,11 +671,11 @@ class CommonRepository extends EntityRepository
             $q->expr()->eq("$alias.isPublished", ':true'),
             $q->expr()->orX(
                 $q->expr()->isNull("$alias.publishUp"),
-                $q->expr()->gte("$alias.publishUp", ':now')
+                $q->expr()->lte("$alias.publishUp", ':now')
             ),
             $q->expr()->orX(
                 $q->expr()->isNull("$alias.publishDown"),
-                $q->expr()->lte("$alias.publishDown", ':now')
+                $q->expr()->gte("$alias.publishDown", ':now')
             )
         );
 

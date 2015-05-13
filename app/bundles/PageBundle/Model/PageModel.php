@@ -384,10 +384,13 @@ class PageModel extends FormModel
                 // if additional data were sent with the tracking pixel
                 if ($request->server->get('QUERY_STRING')) {
                     parse_str($request->server->get('QUERY_STRING'), $query);
-                    // URL attr 'd' is decoded. Encode it first.
+
+                    // URL attr 'd' is encoded so let's decode it first.
+
                     $decoded = false;
                     if (isset($query['d'])) {
-                        $query   = unserialize(base64_decode(urldecode($query['d'])));
+                        // parse_str auto urldecodes
+                        $query   = unserialize(base64_decode($query['d']));
                         $decoded = true;
                     }
 
@@ -422,38 +425,46 @@ class PageModel extends FormModel
                     // Update lead fields if some data were sent in the URL query
                     /** @var \Mautic\LeadBundle\Model\FieldModel $leadFieldModel */
                     $leadFieldModel      = $this->factory->getModel('lead.field');
-                    $availableLeadFields = $leadFieldModel->getFieldList(false, false, array(
-                        'isPublished'         => true,
-                        'isPubliclyUpdatable' => true
-                    ));
+                    $availableLeadFields = $leadFieldModel->getFieldList(
+                        false,
+                        false,
+                        array(
+                            'isPublished'         => true,
+                            'isPubliclyUpdatable' => true
+                        )
+                    );
 
-                    $inQuery = array_intersect_key($query, $availableLeadFields);
+                    $uniqueLeadFields    = $this->factory->getModel('lead.field')->getUniqueIdentiferFields();
+                    $uniqueLeadFieldData = array();
+                    $inQuery             = array_intersect_key($query, $availableLeadFields);
                     foreach ($inQuery as $k => $v) {
                         if (empty($query[$k])) {
                             unset($inQuery[$k]);
                         }
+
+                        if (array_key_exists($k, $uniqueLeadFields)) {
+                            $uniqueLeadFieldData[$k] = $v;
+                        }
                     }
 
                     if (count($inQuery)) {
-                        if (isset($inQuery['email'])) {
-                            // Make sure a lead does not currently exist if the current lead doesn't match
-                            $fields = $lead->getFields();
-                            if (strtolower($inQuery['email']) != $fields['core']['email']['value']) {
-                                $exists = $leadModel->getRepository()->getLeadsByFieldValue('email', $inQuery['email'], $lead->getId());
-                                if (!empty($exists)) {
-                                    //merge with current lead
-                                    $lead = $leadModel->mergeLeads($lead, $exists[0]);
-                                    $leadIpAddresses = $lead->getIpAddresses();
+                        if (count($uniqueLeadFieldData)) {
+                            $existingLeads = $this->em->getRepository('MauticLeadBundle:Lead')->getLeadsByUniqueFields(
+                                $uniqueLeadFieldData,
+                                $lead->getId()
+                            );
+                            if (!empty($existingLeads)) {
+                                $lead = $leadModel->mergeLeads($lead, $existingLeads[0]);
+                            }
+                            $leadIpAddresses = $lead->getIpAddresses();
 
-                                    if (!$leadIpAddresses->contains($ipAddress)) {
-                                        $lead->addIpAddress($ipAddress);
-                                    }
-
-                                    $leadModel->setCurrentLead($lead);
-                                }
+                            if (!$leadIpAddresses->contains($ipAddress)) {
+                                $lead->addIpAddress($ipAddress);
                             }
 
+                            $leadModel->setCurrentLead($lead);
                         }
+
                         $leadModel->setFieldValues($lead, $inQuery);
                         $leadModel->saveEntity($lead);
                     }

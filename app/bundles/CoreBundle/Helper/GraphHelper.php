@@ -115,7 +115,7 @@ class GraphHelper
         } elseif ($unit == 'W') {
             $format = 'W';
         } elseif ($unit == 'M') {
-            $format = 'F';
+            $format = 'F y';
         } elseif ($unit == 'Y') {
             $format = 'Y';
         }
@@ -267,10 +267,12 @@ class GraphHelper
             $graphData['datasets'][$datasetKey]['count'] = array();
         }
 
+        $utc = new \DateTimeZone('UTC');
         foreach ($items as $item) {
             if (isset($item[$dateName]) && $item[$dateName]) {
                 if (is_string($item[$dateName])) {
-                    $item[$dateName] = new \DateTime($item[$dateName]);
+                    // Assume that it is UTC
+                    $item[$dateName] = new \DateTime($item[$dateName], $utc);
                 }
 
                 $oneItem = $item[$dateName]->format(self::getDateLabelFormat($unit));

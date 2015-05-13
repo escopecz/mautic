@@ -102,6 +102,10 @@ var Mautic = {
             mQuery('#mautic_dashboard_index').click();
         });
 
+        Mousetrap.bind('shift+l', function(e) {
+            mQuery('#menu_lead_parent_child > li:first > a').click();
+        });
+
         Mousetrap.bind('shift+right', function (e) {
             mQuery('.navbar-right > button.navbar-toggle').click();
         });
@@ -113,6 +117,28 @@ var Mautic = {
         Mousetrap.bind('shift+s', function (e) {
             mQuery('#globalSearchContainer .search-button').click();
         });
+    },
+
+    /**
+     * Setups browser notifications
+     */
+    setupBrowserNotifier: function () {
+        //request notification support
+        notify.requestPermission();
+        notify.config({
+            autoClose: 10000
+        });
+
+        Mautic.browserNotifier = {
+            isSupported:     notify.isSupported,
+            permissionLevel: notify.permissionLevel()
+        };
+
+        Mautic.browserNotifier.isSupported        = notify.isSupported;
+        Mautic.browserNotifier.permissionLevel    = notify.permissionLevel();
+        Mautic.browserNotifier.createNotification = function (title, options) {
+            return notify.createNotification(title, options);
+        }
     },
 
     /**
@@ -480,6 +506,8 @@ var Mautic = {
         if (container == '#app-content' || container == 'body') {
             //register global keyboard shortcuts
             Mautic.bindGlobalKeyboardShortcuts();
+
+            Mautic.setupBrowserNotifier();
         }
 
         if (contentSpecific && typeof Mautic[contentSpecific + "OnLoad"] == 'function') {
@@ -774,6 +802,10 @@ var Mautic = {
             dataType: "json",
             success: function (response) {
                 if (response) {
+                    if (response.callback) {
+                        window["Mautic"][response.callback].apply('window', [response]);
+                        return;
+                    }
                     if (response.redirect) {
                         mQuery('<div />', {
                             'class': "modal-backdrop fade in"
@@ -833,6 +865,54 @@ var Mautic = {
         //prevent firing of href link
         //mQuery(link).attr("href", "javascript: void(0)");
         return false;
+    },
+
+    /**
+     * Inserts a new javascript file request into the document head
+     *
+     * @param url
+     */
+    loadScript: function (url) {
+        // check if the asset has been loaded
+        if (typeof Mautic.headLoadedAssets == 'undefined') {
+            Mautic.headLoadedAssets = {};
+        } else if (typeof Mautic.headLoadedAssets[url] != 'undefined') {
+            // URL has already been appended to head
+            return;
+        }
+
+        // Note that asset has been appended
+        Mautic.headLoadedAssets[url] = 1;
+
+        var s = document.createElement('script');
+        s.type = 'text/javascript';
+        s.async = true;
+        s.src = url;
+        mQuery('head').append(s);
+    },
+
+    /**
+     * Inserts a new stylesheet into the document head
+     *
+     * @param url
+     */
+    loadStylesheet: function (url) {
+        // check if the asset has been loaded
+        if (typeof Mautic.headLoadedAssets == 'undefined') {
+            Mautic.headLoadedAssets = {};
+        } else if (typeof Mautic.headLoadedAssets[url] != 'undefined') {
+            // URL has already been appended to head
+            return;
+        }
+
+        // Note that asset has been appended
+        Mautic.headLoadedAssets[url] = 1;
+
+        var link = document.createElement("link");
+        link.type = "text/css";
+        link.rel = "stylesheet";
+        link.href = url;
+        mQuery('head').append(link);
     },
 
     /**
@@ -980,6 +1060,10 @@ var Mautic = {
 
             if (response.notifications) {
                 Mautic.setNotifications(response.notifications);
+            }
+
+            if (response.browserNotifications) {
+                Mautic.setBrowserNotifications(response.browserNotifications);
             }
 
             if (response.route) {
@@ -1295,6 +1379,19 @@ var Mautic = {
         } else {
             if (response.flashes) {
                 Mautic.setFlashes(response.flashes);
+            }
+
+            if (response.notifications) {
+                Mautic.setNotifications(response.notifications);
+            }
+
+            if (response.browserNotifications) {
+                Mautic.setBrowserNotifications(response.browserNotifications);
+            }
+
+            if (response.callback) {
+                window["Mautic"][response.callback].apply('window', [response]);
+                return;
             }
 
             if (response.closeModal) {
@@ -2302,10 +2399,27 @@ var Mautic = {
                 mQuery(me).fadeTo(500, 0).slideUp(500, function () {
                     mQuery(this).remove();
                 });
-            }, 7000);
+            }, 4000);
 
             mQuery(this).removeClass('alert-new');
         });
+    },
+
+    /**
+     * Set browser notifications
+     *
+     * @param notifications
+     */
+    setBrowserNotifications: function (notifications) {
+       mQuery.each(notifications, function (key, notification) {
+          Mautic.browserNotifier.createNotification(
+              notification.title,
+              {
+                  body: notification.message,
+                  icon: notification.icon
+              }
+          );
+       });
     },
 
     /**
