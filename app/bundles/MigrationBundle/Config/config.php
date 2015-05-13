@@ -16,25 +16,37 @@ return array(
     'routes'     => array(
         'main' => array(
             // Clients
-            'mautic_migrationclient_index'                   => array(
-                'path'       => '/migrationclients/{page}',
-                'controller' => 'MigrationBundle:Client:index'
+            'mautic_migration_index'                   => array(
+                'path'       => '/migrations/{page}',
+                'controller' => 'MigrationBundle:Migration:index'
             ),
-            'mautic_migrationclient_action'                  => array(
-                'path'       => '/migrationclients/{objectAction}/{objectId}',
-                'controller' => 'MigrationBundle:Client:execute'
+            'mautic_migration_action'                  => array(
+                'path'       => '/migrations/{objectAction}/{objectId}',
+                'controller' => 'MigrationBundle:Migration:execute'
             )
         )
     ),
 
     'menu'       => array(
         'admin' => array(
+            'priority' => 51,
             'items'    => array(
-                'mautic.migration.clients.menu.index' => array(
-                    'route'     => 'mautic_migrationclient_index',
+                'mautic.migration.menu.index' => array(
+                    'route'     => 'mautic_migration_index',
+                    'id'        => 'mautic_config_index',
                     'iconClass' => 'fa-envelope-square',
-                    // 'access'    => 'migration:clients:view',
+                    'access'    => 'admin',
                 )
+            )
+        )
+    ),
+
+    'services' => array(
+        'forms' => array(
+            'mautic.form.type.migration' => array(
+                'class' => 'Mautic\MigrationBundle\Form\Type\MigrationType',
+                'arguments' => 'mautic.factory',
+                'alias' => 'migration'
             )
         )
     )

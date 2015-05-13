@@ -21,12 +21,12 @@ use Symfony\Component\Validator\Context\ExecutionContextInterface;
 use Symfony\Component\Validator\Mapping\ClassMetadata;
 
 /**
- * Class Client
- * @ORM\Table(name="migration_clients")
- * @ORM\Entity(repositoryClass="Mautic\MigrationBundle\Entity\ClientRepository")
+ * Class Migration
+ * @ORM\Table(name="migration")
+ * @ORM\Entity(repositoryClass="Mautic\MigrationBundle\Entity\MigrationRepository")
  * @Serializer\ExclusionPolicy("all")
  */
-class Client extends FormEntity
+class Migration extends FormEntity
 {
 
     /**
@@ -35,7 +35,7 @@ class Client extends FormEntity
      * @ORM\GeneratedValue(strategy="AUTO")
      * @Serializer\Expose
      * @Serializer\Since("1.0")
-     * @Serializer\Groups({"clientDetails", "clientList"})
+     * @Serializer\Groups({"migrationDetails"})
      */
     private $id;
 
@@ -43,7 +43,7 @@ class Client extends FormEntity
      * @ORM\Column(name="title", type="string")
      * @Serializer\Expose
      * @Serializer\Since("1.0")
-     * @Serializer\Groups({"clientDetails", "clientList"})
+     * @Serializer\Groups({"migrationDetails"})
      */
     private $title;
 
@@ -51,7 +51,7 @@ class Client extends FormEntity
      * @ORM\Column(type="text", nullable=true)
      * @Serializer\Expose
      * @Serializer\Since("1.0")
-     * @Serializer\Groups({"clientDetails"})
+     * @Serializer\Groups({"migrationDetails"})
      */
     private $description;
 

@@ -13,11 +13,11 @@ use Doctrine\ORM\Tools\Pagination\Paginator;
 use Mautic\CoreBundle\Entity\CommonRepository;
 
 /**
- * Class ClientRepository
+ * Class MigrationRepository
  *
  * @package Mautic\MigrationBundle\Entity
  */
-class ClientRepository extends CommonRepository
+class MigrationRepository extends CommonRepository
 {
 
     /**
@@ -26,7 +26,7 @@ class ClientRepository extends CommonRepository
     protected function getDefaultOrder()
     {
         return array(
-            array('c.title', 'ASC')
+            array($this->getTableAlias() . '.title', 'ASC')
         );
     }
 
@@ -37,6 +37,6 @@ class ClientRepository extends CommonRepository
      */
     public function getTableAlias()
     {
-        return 'c';
+        return 'm';
     }
 }

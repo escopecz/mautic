@@ -12,14 +12,14 @@ namespace Mautic\MigrationBundle\Model;
 use Mautic\CoreBundle\Entity\IpAddress;
 use Mautic\CoreBundle\Helper\InputHelper;
 use Mautic\CoreBundle\Model\FormModel;
-use Mautic\MigrationBundle\Entity\Client;
+use Mautic\MigrationBundle\Entity\Migration;
 use Mautic\MigrationBundle\MauticMigrationEvents;
 use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
 
 /**
- * Class ClientModel
+ * Class MigrationModel
  */
-class ClientModel extends FormModel
+class MigrationModel extends FormModel
 {
     /**
      * {@inheritdoc}
@@ -67,7 +67,7 @@ class ClientModel extends FormModel
      */
     public function getRepository()
     {
-        return $this->em->getRepository('MigrationBundle:Client');
+        return $this->em->getRepository('MauticMigrationBundle:Migration');
     }
 
     /**
@@ -75,7 +75,7 @@ class ClientModel extends FormModel
      */
     public function getPermissionBase()
     {
-        return 'mauticMigration:clients';
+        return 'mauticMigration:migrations';
     }
 
     /**
@@ -93,11 +93,11 @@ class ClientModel extends FormModel
      */
     public function createForm($entity, $formFactory, $action = null, $options = array())
     {
-        // if (!$entity instanceof Asset) {
-        //     throw new MethodNotAllowedHttpException(array('Asset'));
-        // }
-        // $params = (!empty($action)) ? array('action' => $action) : array();
-        // return $formFactory->create('asset', $entity, $params);
+        if (!$entity instanceof Migration) {
+            throw new MethodNotAllowedHttpException(array('Migration'));
+        }
+        $params = (!empty($action)) ? array('action' => $action) : array();
+        return $formFactory->create('migration', $entity, $params);
     }
 
     /**
@@ -109,7 +109,7 @@ class ClientModel extends FormModel
     public function getEntity($id = null)
     {
         if ($id === null) {
-            $entity = new Client();
+            $entity = new Migration();
         } else {
             $entity = parent::getEntity($id);
         }
@@ -128,22 +128,22 @@ class ClientModel extends FormModel
      */
     protected function dispatchEvent($action, &$entity, $isNew = false, $event = false)
     {
-        if (!$entity instanceof Client) {
-            throw new MethodNotAllowedHttpException(array('Client'));
+        if (!$entity instanceof Migration) {
+            throw new MethodNotAllowedHttpException(array('Migration'));
         }
 
         switch ($action) {
             case "pre_save":
-                $name = MauticMigrationEvents::MIGRATION_CLIENT_PRE_SAVE;
+                $name = MauticMigrationEvents::MIGRATION_MIGRATION_PRE_SAVE;
                 break;
             case "post_save":
-                $name = MauticMigrationEvents::MIGRATION_CLIENT_POST_SAVE;
+                $name = MauticMigrationEvents::MIGRATION_MIGRATION_POST_SAVE;
                 break;
             case "pre_delete":
-                $name = MauticMigrationEvents::MIGRATION_CLIENT_PRE_DELETE;
+                $name = MauticMigrationEvents::MIGRATION_MIGRATION_PRE_DELETE;
                 break;
             case "post_delete":
-                $name = MauticMigrationEvents::MIGRATION_CLIENT_POST_DELETE;
+                $name = MauticMigrationEvents::MIGRATION_MIGRATION_POST_DELETE;
                 break;
             default:
                 return false;
@@ -151,7 +151,7 @@ class ClientModel extends FormModel
 
         if ($this->dispatcher->hasListeners($name)) {
             if (empty($event)) {
-                $event = new ClientEvent($entity, $isNew);
+                $event = new MigrationEvent($entity, $isNew);
                 $event->setEntityManager($this->em);
             }
 

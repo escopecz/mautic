@@ -16,7 +16,7 @@ use Symfony\Component\HttpKernel\Bundle\Bundle;
  *
  * @package Mautic\MigrationBundle
  */
-class MigrationBundle extends Bundle
+class MauticMigrationBundle extends Bundle
 {
 
 }
