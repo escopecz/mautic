@@ -132,85 +132,73 @@ class MigrationController extends FormController
      *
      * @return JsonResponse|\Symfony\Component\HttpFoundation\Response
      */
-    // public function viewAction ($objectId)
-    // {
-    //     $model       = $this->factory->getModel('migration.migration');
-    //     $security    = $this->factory->getSecurity();
-    //     $activeMigration = $model->getEntity($objectId);
-    //     $request     = $this->request;
+    public function viewAction ($objectId)
+    {
+        $model       = $this->factory->getModel('migration.migration');
+        $security    = $this->factory->getSecurity();
+        $activeMigration = $model->getEntity($objectId);
+        $request     = $this->request;
 
-    //     //set the migration we came from
-    //     $page = $this->factory->getSession()->get('mautic.migration.page', 1);
+        //set the migration we came from
+        $page = $this->factory->getSession()->get('mautic.migration.page', 1);
 
-    //     $tmpl = $this->request->isXmlHttpRequest() ? $this->request->get('tmpl', 'details') : 'details';
+        $tmpl = $this->request->isXmlHttpRequest() ? $this->request->get('tmpl', 'details') : 'details';
 
-    //     if ($activeMigration === null) {
-    //         //set the return URL
-    //         $returnUrl = $this->generateUrl('mautic_migration_index', array('page' => $page));
+        if ($activeMigration === null) {
+            //set the return URL
+            $returnUrl = $this->generateUrl('mautic_migration_index', array('page' => $page));
 
-    //         return $this->postActionRedirect(array(
-    //             'returnUrl'       => $returnUrl,
-    //             'viewParameters'  => array('page' => $page),
-    //             'contentTemplate' => 'MauticMigrationBundle:Migration:index',
-    //             'passthroughVars' => array(
-    //                 'activeLink'    => '#mautic_migration_index',
-    //                 'mauticContent' => 'migration'
-    //             ),
-    //             'flashes'         => array(
-    //                 array(
-    //                     'type'    => 'error',
-    //                     'msg'     => 'mautic.migration.migration.error.notfound',
-    //                     'msgVars' => array('%id%' => $objectId)
-    //                 )
-    //             )
-    //         ));
-    //     } elseif (!$this->factory->getSecurity()->hasEntityAccess('migration:migrations:viewown', 'migration:migrations:viewother', $activeMigration->getCreatedBy())) {
-    //         return $this->accessDenied();
-    //     }
+            return $this->postActionRedirect(array(
+                'returnUrl'       => $returnUrl,
+                'viewParameters'  => array('page' => $page),
+                'contentTemplate' => 'MauticMigrationBundle:Migration:index',
+                'passthroughVars' => array(
+                    'activeLink'    => '#mautic_migration_index',
+                    'mauticContent' => 'migration'
+                ),
+                'flashes'         => array(
+                    array(
+                        'type'    => 'error',
+                        'msg'     => 'mautic.migration.migration.error.notfound',
+                        'msgVars' => array('%id%' => $objectId)
+                    )
+                )
+            ));
+        } elseif (!$this->factory->getSecurity()->hasEntityAccess('migration:migrations:viewown', 'migration:migrations:viewother', $activeMigration->getCreatedBy())) {
+            return $this->accessDenied();
+        }
 
-    //     // Download stats per time period
-    //     $timeStats = $this->factory->getEntityManager()->getRepository('MauticMigrationBundle:Download')->getDownloads($activeMigration->getId());
+        // Audit Log
+        $logs = $this->factory->getModel('core.auditLog')->getLogForObject('migration', $activeMigration->getId());
 
-    //     // Audit Log
-    //     $logs = $this->factory->getModel('core.auditLog')->getLogForObject('migration', $activeMigration->getId());
-
-    //     return $this->delegateView(array(
-    //         'returnUrl'       => $this->generateUrl('mautic_migration_action', array(
-    //                 'objectAction' => 'view',
-    //                 'objectId'     => $activeMigration->getId())
-    //         ),
-    //         'viewParameters'  => array(
-    //             'activeMigration'      => $activeMigration,
-    //             'tmpl'             => $tmpl,
-    //             'permissions'      => $security->isGranted(array(
-    //                 'migration:migrations:viewown',
-    //                 'migration:migrations:viewother',
-    //                 'migration:migrations:create',
-    //                 'migration:migrations:editown',
-    //                 'migration:migrations:editother',
-    //                 'migration:migrations:deleteown',
-    //                 'migration:migrations:deleteother',
-    //                 'migration:migrations:publishown',
-    //                 'migration:migrations:publishother'
-    //             ), "RETURN_ARRAY"),
-    //             'stats'            => array(
-    //                 'downloads' => array(
-    //                     'total'     => $activeMigration->getDownloadCount(),
-    //                     'unique'    => $activeMigration->getUniqueDownloadCount(),
-    //                     'timeStats' => $timeStats
-    //                 )
-    //             ),
-    //             'security'         => $security,
-    //             'migrationDownloadUrl' => $model->generateUrl($activeMigration, true),
-    //             'logs'             => $logs,
-    //         ),
-    //         'contentTemplate' => 'MauticMigrationBundle:Migration:' . $tmpl . '.html.php',
-    //         'passthroughVars' => array(
-    //             'activeLink'    => '#mautic_migration_index',
-    //             'mauticContent' => 'migration'
-    //         )
-    //     ));
-    // }
+        return $this->delegateView(array(
+            'returnUrl'       => $this->generateUrl('mautic_migration_action', array(
+                    'objectAction' => 'view',
+                    'objectId'     => $activeMigration->getId())
+            ),
+            'viewParameters'  => array(
+                'activeMigration'  => $activeMigration,
+                'permissions'      => $security->isGranted(array(
+                    'migration:migrations:viewown',
+                    'migration:migrations:viewother',
+                    'migration:migrations:create',
+                    'migration:migrations:editown',
+                    'migration:migrations:editother',
+                    'migration:migrations:deleteown',
+                    'migration:migrations:deleteother',
+                    'migration:migrations:publishown',
+                    'migration:migrations:publishother'
+                ), "RETURN_ARRAY"),
+                'security'         => $security,
+                'logs'             => $logs,
+            ),
+            'contentTemplate' => 'MauticMigrationBundle:Migration:' . $tmpl . '.html.php',
+            'passthroughVars' => array(
+                'activeLink'    => '#mautic_migration_index',
+                'mauticContent' => 'migration'
+            )
+        ));
+    }
 
     /**
      * Generates new form and processes post data
@@ -256,15 +244,8 @@ class MigrationController extends FormController
             if (!$cancelled = $this->isFormCancelled($form)) {
                 if ($valid = $this->isFormValid($form)) {
 
-                    $entity->setUploadDir($this->factory->getParameter('upload_dir'));
-                    $entity->preUpload();
-                    $entity->upload();
-
                     //form is valid so process the data
                     $model->saveEntity($entity);
-
-                    //remove the migration from request
-                    $this->request->files->remove('migration');
 
                     $this->addFlash('mautic.core.notice.created', array(
                         '%name%'      => $entity->getTitle(),
@@ -336,163 +317,124 @@ class MigrationController extends FormController
      *
      * @return JsonResponse|\Symfony\Component\HttpFoundation\RedirectResponse|\Symfony\Component\HttpFoundation\Response
      */
-    // public function editAction ($objectId, $ignorePost = false)
-    // {
-    //     /** @var \Mautic\MigrationBundle\Model\MigrationModel $model */
-    //     $model = $this->factory->getModel('migration.migration');
+    public function editAction ($objectId, $ignorePost = false)
+    {
+        /** @var \Mautic\MigrationBundle\Model\MigrationModel $model */
+        $model = $this->factory->getModel('migration.migration');
 
-    //     /** @var \Mautic\MigrationBundle\Entity\Migration $entity */
-    //     $entity     = $model->getEntity($objectId);
-    //     $entity->setMaxSize($model->convertSizeToBytes($this->factory->getParameter('max_size') . 'M')); // convert from MB to B 
-    //     $session    = $this->factory->getSession();
-    //     $page       = $this->factory->getSession()->get('mautic.migration.page', 1);
-    //     $method     = $this->request->getMethod();
-    //     $maxSize    = $this->factory->getParameter('max_size');
-    //     $extensions = '.' . implode(', .', $this->factory->getParameter('allowed_extensions'));
+        /** @var \Mautic\MigrationBundle\Entity\Migration $entity */
+        $entity     = $model->getEntity($objectId);
+        $session    = $this->factory->getSession();
+        $page       = $this->factory->getSession()->get('mautic.migration.page', 1);
+        $method     = $this->request->getMethod();
 
-    //     $maxSizeError = $this->get('translator')->trans('mautic.migration.migration.error.file.size', array(
-    //         '%fileSize%' => '{{filesize}}',
-    //         '%maxSize%'  => '{{maxFilesize}}'
-    //     ), 'validators');
+        //set the return URL
+        $returnUrl = $this->generateUrl('mautic_migration_index', array('page' => $page));
 
-    //     $extensionError = $this->get('translator')->trans('mautic.migration.migration.error.file.extension.js', array(
-    //         '%extensions%' => $extensions
-    //     ), 'validators');
+        $postActionVars = array(
+            'returnUrl'       => $returnUrl,
+            'viewParameters'  => array('page' => $page),
+            'contentTemplate' => 'MauticMigrationBundle:Migration:index',
+            'passthroughVars' => array(
+                'activeLink'    => 'mautic_migration_index',
+                'mauticContent' => 'migration'
+            )
+        );
 
-    //     //set the return URL
-    //     $returnUrl = $this->generateUrl('mautic_migration_index', array('page' => $page));
+        //not found
+        if ($entity === null) {
+            return $this->postActionRedirect(
+                array_merge($postActionVars, array(
+                    'flashes' => array(
+                        array(
+                            'type'    => 'error',
+                            'msg'     => 'mautic.migration.migration.error.notfound',
+                            'msgVars' => array('%id%' => $objectId)
+                        )
+                    )
+                ))
+            );
+        } elseif (!$this->factory->getSecurity()->hasEntityAccess(
+            'migration:migrations:viewown', 'migration:migrations:viewother', $entity->getCreatedBy()
+        )
+        ) {
+            return $this->accessDenied();
+        } elseif ($model->isLocked($entity)) {
+            //deny access if the entity is locked
+            return $this->isLocked($postActionVars, $entity, 'migration.migration');
+        }
 
-    //     // Get upload folder
-    //     $uploaderHelper = $this->container->get('oneup_uploader.templating.uploader_helper');
-    //     $uploadEndpoint = $uploaderHelper->endpoint('migration');
+        //Create the form
+        $action = $this->generateUrl('mautic_migration_action', array('objectAction' => 'edit', 'objectId' => $objectId));
+        $form   = $model->createForm($entity, $this->get('form.factory'), $action);
 
-    //     $postActionVars = array(
-    //         'returnUrl'       => $returnUrl,
-    //         'viewParameters'  => array('page' => $page),
-    //         'contentTemplate' => 'MauticMigrationBundle:Migration:index',
-    //         'passthroughVars' => array(
-    //             'activeLink'    => 'mautic_migration_index',
-    //             'mauticContent' => 'migration'
-    //         )
-    //     );
+        ///Check for a submitted form and process it
+        if (!$ignorePost && $method == 'POST') {
+            $valid = false;
+            if (!$cancelled = $this->isFormCancelled($form)) {
+                if ($valid = $this->isFormValid($form)) {
 
-    //     //not found
-    //     if ($entity === null) {
-    //         return $this->postActionRedirect(
-    //             array_merge($postActionVars, array(
-    //                 'flashes' => array(
-    //                     array(
-    //                         'type'    => 'error',
-    //                         'msg'     => 'mautic.migration.migration.error.notfound',
-    //                         'msgVars' => array('%id%' => $objectId)
-    //                     )
-    //                 )
-    //             ))
-    //         );
-    //     } elseif (!$this->factory->getSecurity()->hasEntityAccess(
-    //         'migration:migrations:viewown', 'migration:migrations:viewother', $entity->getCreatedBy()
-    //     )
-    //     ) {
-    //         return $this->accessDenied();
-    //     } elseif ($model->isLocked($entity)) {
-    //         //deny access if the entity is locked
-    //         return $this->isLocked($postActionVars, $entity, 'migration.migration');
-    //     }
+                    //form is valid so process the data
+                    $model->saveEntity($entity, $form->get('buttons')->get('save')->isClicked());
 
-    //     // Create temporary migration ID
-    //     $tempId = ($method == 'POST') ? $this->request->request->get('migration[tempId]', '', true) : uniqid('tmp_');
-    //     $entity->setTempId($tempId);
+                    //remove the migration from request
+                    $this->request->files->remove('migration');
 
-    //     //Create the form
-    //     $action = $this->generateUrl('mautic_migration_action', array('objectAction' => 'edit', 'objectId' => $objectId));
-    //     $form   = $model->createForm($entity, $this->get('form.factory'), $action);
+                    $this->addFlash('mautic.core.notice.updated', array(
+                        '%name%'      => $entity->getTitle(),
+                        '%menu_link%' => 'mautic_migration_index',
+                        '%url%'       => $this->generateUrl('mautic_migration_action', array(
+                            'objectAction' => 'edit',
+                            'objectId'     => $entity->getId()
+                        ))
+                    ));
 
-    //     ///Check for a submitted form and process it
-    //     if (!$ignorePost && $method == 'POST') {
-    //         $valid = false;
-    //         if (!$cancelled = $this->isFormCancelled($form)) {
-    //             if ($valid = $this->isFormValid($form)) {
-    //                 $entity->setUploadDir($this->factory->getParameter('upload_dir'));
-    //                 $entity->preUpload();
-    //                 $entity->upload();
+                    $returnUrl  = $this->generateUrl('mautic_migration_action', array(
+                        'objectAction' => 'view',
+                        'objectId'     => $entity->getId()
+                    ));
+                    $viewParams = array('objectId' => $entity->getId());
+                    $template   = 'MauticMigrationBundle:Migration:view';
+                }
+            } else {
+                //unlock the entity
+                $model->unlockEntity($entity);
 
-    //                 //form is valid so process the data
-    //                 $model->saveEntity($entity, $form->get('buttons')->get('save')->isClicked());
+                $returnUrl  = $this->generateUrl('mautic_migration_index', array('page' => $page));
+                $viewParams = array('page' => $page);
+                $template   = 'MauticMigrationBundle:Migration:index';
+            }
 
-    //                 //remove the migration from request
-    //                 $this->request->files->remove('migration');
+            if ($cancelled || ($valid && $form->get('buttons')->get('save')->isClicked())) {
+                return $this->postActionRedirect(
+                    array_merge($postActionVars, array(
+                        'returnUrl'       => $returnUrl,
+                        'viewParameters'  => $viewParams,
+                        'contentTemplate' => $template
+                    ))
+                );
+            }
+        } else {
+            //lock the entity
+            $model->lockEntity($entity);
+        }
 
-    //                 $this->addFlash('mautic.core.notice.updated', array(
-    //                     '%name%'      => $entity->getTitle(),
-    //                     '%menu_link%' => 'mautic_migration_index',
-    //                     '%url%'       => $this->generateUrl('mautic_migration_action', array(
-    //                         'objectAction' => 'edit',
-    //                         'objectId'     => $entity->getId()
-    //                     ))
-    //                 ));
-
-    //                 $returnUrl  = $this->generateUrl('mautic_migration_action', array(
-    //                     'objectAction' => 'view',
-    //                     'objectId'     => $entity->getId()
-    //                 ));
-    //                 $viewParams = array('objectId' => $entity->getId());
-    //                 $template   = 'MauticMigrationBundle:Migration:view';
-    //             }
-    //         } else {
-    //             //clear any modified content
-    //             $session->remove('mautic.asestbuilder.' . $objectId . '.content');
-    //             //unlock the entity
-    //             $model->unlockEntity($entity);
-
-    //             $returnUrl  = $this->generateUrl('mautic_migration_index', array('page' => $page));
-    //             $viewParams = array('page' => $page);
-    //             $template   = 'MauticMigrationBundle:Migration:index';
-    //         }
-
-    //         if ($cancelled || ($valid && $form->get('buttons')->get('save')->isClicked())) {
-    //             return $this->postActionRedirect(
-    //                 array_merge($postActionVars, array(
-    //                     'returnUrl'       => $returnUrl,
-    //                     'viewParameters'  => $viewParams,
-    //                     'contentTemplate' => $template
-    //                 ))
-    //             );
-    //         }
-    //     } else {
-    //         //lock the entity
-    //         $model->lockEntity($entity);
-    //     }
-
-    //     // Check for integrations to cloud providers
-    //     /** @var \Mautic\AddonBundle\Helper\IntegrationHelper $integrationHelper */
-    //     $integrationHelper = $this->factory->getHelper('integration');
-
-    //     $integrations = $integrationHelper->getIntegrationObjects(null, array('cloud_storage'));
-
-    //     return $this->delegateView(array(
-    //         'viewParameters'  => array(
-    //             'form'             => $form->createView(),
-    //             'activeMigration'      => $entity,
-    //             'migrationDownloadUrl' => $model->generateUrl($entity),
-    //             'integrations'     => $integrations,
-    //             'startOnLocal'     => $entity->getStorageLocation() == 'local',
-    //             'uploadEndpoint'   => $uploadEndpoint,
-    //             'maxSize'          => $maxSize,
-    //             'maxSizeError'     => $maxSizeError,
-    //             'extensions'       => $extensions,
-    //             'extensionError'   => $extensionError
-    //         ),
-    //         'contentTemplate' => 'MauticMigrationBundle:Migration:form.html.php',
-    //         'passthroughVars' => array(
-    //             'activeLink'    => '#mautic_migration_index',
-    //             'mauticContent' => 'migration',
-    //             'route'         => $this->generateUrl('mautic_migration_action', array(
-    //                 'objectAction' => 'edit',
-    //                 'objectId'     => $entity->getId()
-    //             ))
-    //         )
-    //     ));
-    // }
+        return $this->delegateView(array(
+            'viewParameters'  => array(
+                'form'             => $form->createView(),
+                'activeMigration'      => $entity,
+            ),
+            'contentTemplate' => 'MauticMigrationBundle:Migration:form.html.php',
+            'passthroughVars' => array(
+                'activeLink'    => '#mautic_migration_index',
+                'mauticContent' => 'migration',
+                'route'         => $this->generateUrl('mautic_migration_action', array(
+                    'objectAction' => 'edit',
+                    'objectId'     => $entity->getId()
+                ))
+            )
+        ));
+    }
 
     /**
      * Clone an entity

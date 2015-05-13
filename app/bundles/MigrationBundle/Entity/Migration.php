@@ -22,7 +22,7 @@ use Symfony\Component\Validator\Mapping\ClassMetadata;
 
 /**
  * Class Migration
- * @ORM\Table(name="migration")
+ * @ORM\Table(name="migration_templates")
  * @ORM\Entity(repositoryClass="Mautic\MigrationBundle\Entity\MigrationRepository")
  * @Serializer\ExclusionPolicy("all")
  */

@@ -13,7 +13,7 @@ use Mautic\CoreBundle\Entity\IpAddress;
 use Mautic\CoreBundle\Helper\InputHelper;
 use Mautic\CoreBundle\Model\FormModel;
 use Mautic\MigrationBundle\Entity\Migration;
-use Mautic\MigrationBundle\MauticMigrationEvents;
+use Mautic\MigrationBundle\MigrationEvents;
 use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
 
 /**
@@ -26,40 +26,7 @@ class MigrationModel extends FormModel
      */
     public function saveEntity($entity, $unlock = true)
     {
-        // if (empty($this->inConversion)) {
-        //     $alias = $entity->getAlias();
-        //     if (empty($alias)) {
-        //         $alias = strtolower(InputHelper::alphanum($entity->getTitle(), false, '-'));
-        //     } else {
-        //         $alias = strtolower(InputHelper::alphanum($alias, false, '-'));
-        //     }
-
-        //     //make sure alias is not already taken
-        //     $repo      = $this->getRepository();
-        //     $testAlias = $alias;
-        //     $count     = $repo->checkUniqueAlias($testAlias, $entity);
-        //     $aliasTag  = $count;
-
-        //     while ($count) {
-        //         $testAlias = $alias . $aliasTag;
-        //         $count     = $repo->checkUniqueAlias($testAlias, $entity);
-        //         $aliasTag++;
-        //     }
-        //     if ($testAlias != $alias) {
-        //         $alias = $testAlias;
-        //     }
-        //     $entity->setAlias($alias);
-        // }
-
-        // //set the author for new asset
-        // if (!$entity->isNew()) {
-        //     //increase the revision
-        //     $revision = $entity->getRevision();
-        //     $revision++;
-        //     $entity->setRevision($revision);
-        // }
-
-        // parent::saveEntity($entity, $unlock);
+        parent::saveEntity($entity, $unlock);
     }
 
     /**
@@ -134,16 +101,16 @@ class MigrationModel extends FormModel
 
         switch ($action) {
             case "pre_save":
-                $name = MauticMigrationEvents::MIGRATION_MIGRATION_PRE_SAVE;
+                $name = MigrationEvents::MIGRATION_TEMPLATE_PRE_SAVE;
                 break;
             case "post_save":
-                $name = MauticMigrationEvents::MIGRATION_MIGRATION_POST_SAVE;
+                $name = MigrationEvents::MIGRATION_TEMPLATE_POST_SAVE;
                 break;
             case "pre_delete":
-                $name = MauticMigrationEvents::MIGRATION_MIGRATION_PRE_DELETE;
+                $name = MigrationEvents::MIGRATION_TEMPLATE_PRE_DELETE;
                 break;
             case "post_delete":
-                $name = MauticMigrationEvents::MIGRATION_MIGRATION_POST_DELETE;
+                $name = MigrationEvents::MIGRATION_TEMPLATE_POST_DELETE;
                 break;
             default:
                 return false;

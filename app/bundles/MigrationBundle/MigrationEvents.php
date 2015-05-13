@@ -7,7 +7,7 @@
  * @license     GNU/GPLv3 http://www.gnu.org/licenses/gpl-3.0.html
  */
 
-namespace Mautics\MigrationBundle;
+namespace Mautic\MigrationBundle;
 
 /**
  * Class MauticMigrationEvents
@@ -15,7 +15,7 @@ namespace Mautics\MigrationBundle;
  *
  * @package Mautic\MigrationBundle
  */
-final class MauticMigrationEvents
+final class MigrationEvents
 {
     /**
      * The mautic.migration_client_on_display event is thrown before displaying the migration client content
@@ -25,7 +25,7 @@ final class MauticMigrationEvents
      *
      * @var string
      */
-    const MIGRATION_CLIENT_ON_DISPLAY   = 'mautic.migration_client_on_display';
+    const MIGRATION_TEMPLATE_ON_DISPLAY   = 'mautic.migration_client_on_display';
 
     /**
      * The mautic.migration_client_pre_save event is thrown right before a migration client is persisted.
@@ -35,7 +35,7 @@ final class MauticMigrationEvents
      *
      * @var string
      */
-    const MIGRATION_CLIENT_PRE_SAVE   = 'mautic.migration_client_pre_save';
+    const MIGRATION_TEMPLATE_PRE_SAVE   = 'mautic.migration_client_pre_save';
 
     /**
      * The mautic.migration_client_post_save event is thrown right after a migration client is persisted.
@@ -45,7 +45,7 @@ final class MauticMigrationEvents
      *
      * @var string
      */
-    const MIGRATION_CLIENT_POST_SAVE   = 'mautic.migration_client_post_save';
+    const MIGRATION_TEMPLATE_POST_SAVE   = 'mautic.migration_client_post_save';
 
     /**
      * The mautic.migration_client_pre_delete event is thrown prior to when a migration client is deleted.
@@ -55,7 +55,7 @@ final class MauticMigrationEvents
      *
      * @var string
      */
-    const MIGRATION_CLIENT_PRE_DELETE   = 'mautic.migration_client_pre_delete';
+    const MIGRATION_TEMPLATE_PRE_DELETE   = 'mautic.migration_client_pre_delete';
 
     /**
      * The mautic.migration_client_post_delete event is thrown after a migration client is deleted.
@@ -65,5 +65,5 @@ final class MauticMigrationEvents
      *
      * @var string
      */
-    const MIGRATION_CLIENT_POST_DELETE   = 'mautic.migration_client_post_delete';
+    const MIGRATION_TEMPLATE_POST_DELETE   = 'mautic.migration_client_post_delete';
 }

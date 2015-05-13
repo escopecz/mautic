@@ -18,11 +18,11 @@ return array(
             // Clients
             'mautic_migration_index'                   => array(
                 'path'       => '/migrations/{page}',
-                'controller' => 'MigrationBundle:Migration:index'
+                'controller' => 'MauticMigrationBundle:Migration:index'
             ),
             'mautic_migration_action'                  => array(
                 'path'       => '/migrations/{objectAction}/{objectId}',
-                'controller' => 'MigrationBundle:Migration:execute'
+                'controller' => 'MauticMigrationBundle:Migration:execute'
             )
         )
     ),
@@ -34,7 +34,7 @@ return array(
                 'mautic.migration.menu.index' => array(
                     'route'     => 'mautic_migration_index',
                     'id'        => 'mautic_config_index',
-                    'iconClass' => 'fa-envelope-square',
+                    'iconClass' => 'fa-exchange',
                     'access'    => 'admin',
                 )
             )
