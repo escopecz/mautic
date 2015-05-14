@@ -47,6 +47,11 @@ return array(
                 'class' => 'Mautic\MigrationBundle\Form\Type\MigrationType',
                 'arguments' => 'mautic.factory',
                 'alias' => 'migration'
+            ),
+            'mautic.form.type.migration.event.properties' => array(
+                'class' => 'Mautic\MigrationBundle\Form\Type\EventPropertiesType',
+                'arguments' => 'mautic.factory',
+                'alias' => 'event_properties'
             )
         )
     )

@@ -55,6 +55,24 @@ class Migration extends FormEntity
      */
     private $description;
 
+    /**
+     * List of entities to migrate
+     * 
+     * @ORM\Column(type="array", nullable=true)
+     * @Serializer\Expose
+     * @Serializer\Since("1.0")
+     * @Serializer\Groups({"migrationDetails"})
+     */
+    private $migrate = array();
+
+    /**
+     * @ORM\Column(type="array", nullable=true)
+     * @Serializer\Expose
+     * @Serializer\Since("1.0")
+     * @Serializer\Groups({"migrationDetails"})
+     */
+    private $properties = array();
+
     public function __clone()
     {
         $this->id = null;
@@ -69,20 +87,6 @@ class Migration extends FormEntity
     {
         return $this->id;
     }
-    /**
-     * Set title
-     *
-     * @param string $title
-     *
-     * @return Asset
-     */
-    public function setTitle($title)
-    {
-        $this->isChanged('title', $title);
-        $this->title = $title;
-
-        return $this;
-    }
 
     /**
      * Get title
@@ -95,7 +99,22 @@ class Migration extends FormEntity
     }
 
     /**
-     * @return mixed
+     * Set title
+     *
+     * @param string $title
+     *
+     * @return Migration
+     */
+    public function setTitle($title)
+    {
+        $this->isChanged('title', $title);
+        $this->title = $title;
+
+        return $this;
+    }
+
+    /**
+     * @return string
      */
     public function getDescription ()
     {
@@ -103,10 +122,68 @@ class Migration extends FormEntity
     }
 
     /**
-     * @param mixed $description
+     * @param string $description
+     * 
+     * @return Migration
      */
     public function setDescription ($description)
     {
+        $this->isChanged('description', $description);
+
         $this->description = $description;
+
+        return $this;
+    }
+
+    /**
+     * Get migrate
+     *
+     * @return array
+     */
+    public function getMigrate()
+    {
+        return $this->migrate;
+    }
+
+    /**
+     * Set migrate
+     *
+     * @param array $migrate
+     * 
+     * @return Migration
+     */
+    public function setMigrate($migrate)
+    {
+        $this->isChanged('migrate', $migrate);
+
+        $this->migrate = $migrate;
+
+        return $this;
+    }
+
+    /**
+     * Get properties
+     *
+     * @return array
+     */
+    public function getProperties()
+    {
+        return $this->properties;
+    }
+
+    /**
+     * Set properties
+     *
+     * @param array $properties
+     * 
+     * @return Migration
+     */
+    public function setProperties($properties)
+    {
+        $this->isChanged('properties', $properties);
+
+        $this->properties = $properties;
+
+        return $this;
     }
 }

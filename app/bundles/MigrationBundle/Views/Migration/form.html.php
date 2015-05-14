@@ -29,6 +29,12 @@ $view['slots']->set('mauticContent', 'migration');
                     <?php echo $view['form']->row($form['description']); ?>
                 </div>
             </div>
+
+            <div class="row">
+                <div class="col-xs-12">
+                    <?php echo $view['form']->row($form['properties']); ?>
+                </div>
+            </div>
         </div>
     </div>
      <div class="col-md-3 bg-white height-auto">

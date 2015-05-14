@@ -63,8 +63,10 @@ class MigrationModel extends FormModel
         if (!$entity instanceof Migration) {
             throw new MethodNotAllowedHttpException(array('Migration'));
         }
-        $params = (!empty($action)) ? array('action' => $action) : array();
-        return $formFactory->create('migration', $entity, $params);
+        if ($action) {
+            $options['action'] = $action;
+        }
+        return $formFactory->create('migration', $entity, $options);
     }
 
     /**

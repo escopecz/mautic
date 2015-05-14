@@ -18,52 +18,62 @@ namespace Mautic\MigrationBundle;
 final class MigrationEvents
 {
     /**
-     * The mautic.migration_client_on_display event is thrown before displaying the migration client content
+     * The mautic.migration_template_on_edit_display event is thrown before displaying the migration template edit form
      *
      * The event listener receives a
      * Mautic\MigrationBundle\Event\MauticMigrationEvents instance.
      *
      * @var string
      */
-    const MIGRATION_TEMPLATE_ON_DISPLAY   = 'mautic.migration_client_on_display';
+    const MIGRATION_TEMPLATE_ON_EDIT_DISPLAY   = 'mautic.migration_template_on_edit_display';
 
     /**
-     * The mautic.migration_client_pre_save event is thrown right before a migration client is persisted.
+     * The mautic.migration_template_on_display event is thrown before displaying the migration template content
      *
      * The event listener receives a
      * Mautic\MigrationBundle\Event\MauticMigrationEvents instance.
      *
      * @var string
      */
-    const MIGRATION_TEMPLATE_PRE_SAVE   = 'mautic.migration_client_pre_save';
+    const MIGRATION_TEMPLATE_ON_DISPLAY   = 'mautic.migration_template_on_display';
 
     /**
-     * The mautic.migration_client_post_save event is thrown right after a migration client is persisted.
+     * The mautic.migration_template_pre_save event is thrown right before a migration template is persisted.
      *
      * The event listener receives a
      * Mautic\MigrationBundle\Event\MauticMigrationEvents instance.
      *
      * @var string
      */
-    const MIGRATION_TEMPLATE_POST_SAVE   = 'mautic.migration_client_post_save';
+    const MIGRATION_TEMPLATE_PRE_SAVE   = 'mautic.migration_template_pre_save';
 
     /**
-     * The mautic.migration_client_pre_delete event is thrown prior to when a migration client is deleted.
+     * The mautic.migration_template_post_save event is thrown right after a migration template is persisted.
      *
      * The event listener receives a
      * Mautic\MigrationBundle\Event\MauticMigrationEvents instance.
      *
      * @var string
      */
-    const MIGRATION_TEMPLATE_PRE_DELETE   = 'mautic.migration_client_pre_delete';
+    const MIGRATION_TEMPLATE_POST_SAVE   = 'mautic.migration_template_post_save';
 
     /**
-     * The mautic.migration_client_post_delete event is thrown after a migration client is deleted.
+     * The mautic.migration_template_pre_delete event is thrown prior to when a migration template is deleted.
      *
      * The event listener receives a
      * Mautic\MigrationBundle\Event\MauticMigrationEvents instance.
      *
      * @var string
      */
-    const MIGRATION_TEMPLATE_POST_DELETE   = 'mautic.migration_client_post_delete';
+    const MIGRATION_TEMPLATE_PRE_DELETE   = 'mautic.migration_template_pre_delete';
+
+    /**
+     * The mautic.migration_template_post_delete event is thrown after a migration template is deleted.
+     *
+     * The event listener receives a
+     * Mautic\MigrationBundle\Event\MauticMigrationEvents instance.
+     *
+     * @var string
+     */
+    const MIGRATION_TEMPLATE_POST_DELETE   = 'mautic.migration_template_post_delete';
 }

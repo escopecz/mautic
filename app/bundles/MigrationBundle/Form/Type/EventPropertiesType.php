@@ -20,11 +20,11 @@ use Mautic\MigrationBundle\MigrationEvents;
 use Mautic\MigrationBundle\Event\MigrationEditEvent;
 
 /**
- * Class MigrationType
+ * Class EventPropertiesType
  *
  * @package Mautic\MigrationBundle\Form\Type
  */
-class MigrationType extends AbstractType
+class EventPropertiesType extends AbstractType
 {
 
     protected $factory;
@@ -42,35 +42,13 @@ class MigrationType extends AbstractType
      */
     public function buildForm (FormBuilderInterface $builder, array $options)
     {
-        $builder->add('title', 'text', array(
-            'label'      => 'mautic.core.title',
-            'label_attr' => array('class' => 'control-label'),
-            'attr'       => array('class' => 'form-control')
-        ));
-
-        $builder->add('description', 'textarea', array(
-            'label'      => 'mautic.core.description',
-            'label_attr' => array('class' => 'control-label'),
-            'attr'       => array('class' => 'form-control editor'),
-            'required'   => false
-        ));
-
-        $event          = new MigrationEditEvent($this->factory);
-        $dispatcher     = $this->factory->getDispatcher();
-        $dispatcher->dispatch(MigrationEvents::MIGRATION_TEMPLATE_ON_EDIT_DISPLAY, $event);
-        $eventForms     = $event->getForms();
-
-        $builder->add('properties', 'event_properties', array(
-            'label' => false,
-            'eventForms' => $eventForms,
-            'required' => false,
-            'data'      => $options['data']->getProperties()
-        ));
-
-        $builder->add('buttons', 'form_buttons', array());
-
-        if (!empty($options["action"])) {
-            $builder->setAction($options["action"]);
+        foreach ($options['eventForms'] as $form) {
+            if (isset($form['formAlias'])) {
+                $builder->add($form['formAlias'], $form['formAlias'], array(
+                    'data' => isset($options['data'][$form['formAlias']]) ? $options['data'][$form['formAlias']] : null,
+                    'label' => false
+                ));
+            }
         }
     }
 
@@ -79,15 +57,13 @@ class MigrationType extends AbstractType
      */
     public function setDefaultOptions(OptionsResolverInterface $resolver)
     {
-        $resolver->setDefaults(array(
-            'data_class' => 'Mautic\MigrationBundle\Entity\Migration'
-        ));
+        $resolver->setRequired(array('eventForms'));
     }
 
     /**
      * @return string
      */
     public function getName() {
-        return "migration";
+        return "event_properties";
     }
 }

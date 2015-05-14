@@ -106,6 +106,9 @@ return array(
             ),
             'oneup_uploader.pre_upload' => array(
                 'class' => 'Mautic\AssetBundle\EventListener\UploadSubscriber'
+            ),
+            'mautic.asset.migrationbundle.subscriber' => array(
+                'class' => 'Mautic\AssetBundle\EventListener\MigrationSubscriber'
             )
         ),
         'forms' => array(
@@ -135,6 +138,11 @@ return array(
                 'class' => 'Mautic\AssetBundle\Form\Type\ConfigType',
                 'arguments' => 'mautic.factory',
                 'alias' => 'assetconfig'
+            ),
+            'mautic.form.type.assetmigration' => array(
+                'class' => 'Mautic\AssetBundle\Form\Type\MigrationType',
+                'arguments' => 'mautic.factory',
+                'alias' => 'assetmigration'
             )
         ),
         'others' => array(
