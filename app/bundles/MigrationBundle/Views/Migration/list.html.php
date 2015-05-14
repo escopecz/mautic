@@ -30,20 +30,6 @@ $view->extend('MauticMigrationBundle:Migration:index.html.php');
 
                 echo $view->render('MauticCoreBundle:Helper:tableheader.html.php', array(
                     'sessionVar' => 'migration',
-                    'orderBy'    => 'c.title',
-                    'text'       => 'mautic.core.category',
-                    'class'      => 'visible-md visible-lg col-migration-category'
-                ));
-
-                echo $view->render('MauticCoreBundle:Helper:tableheader.html.php', array(
-                    'sessionVar' => 'migration',
-                    'orderBy'    => 'a.downloadCount',
-                    'text'       => 'mautic.migration.migration.thead.download.count',
-                    'class'      => 'visible-md visible-lg col-migration-download-count'
-                ));
-
-                echo $view->render('MauticCoreBundle:Helper:tableheader.html.php', array(
-                    'sessionVar' => 'migration',
                     'orderBy'    => 'a.id',
                     'text'       => 'mautic.core.id',
                     'class'      => 'visible-md visible-lg col-migration-id'
@@ -88,21 +74,13 @@ $view->extend('MauticMigrationBundle:Migration:index.html.php');
                             <a href="<?php echo $view['router']->generate('mautic_migration_action',
                                 array("objectAction" => "view", "objectId" => $item->getId())); ?>"
                                data-toggle="ajax">
-                                <?php echo $item->getTitle(); ?> (<?php echo $item->getAlias(); ?>)
+                                <?php echo $item->getTitle(); ?>
                             </a>
-                            <i class="<?php echo $item->getIconClass(); ?>"></i>
                         </div>
                         <?php if ($description = $item->getDescription()): ?>
                             <div class="text-muted mt-4"><small><?php echo $description; ?></small></div>
                         <?php endif; ?>
                     </td>
-                    <td class="visible-md visible-lg">
-                        <?php $category = $item->getCategory(); ?>
-                        <?php $catName  = ($category) ? $category->getTitle() : $view['translator']->trans('mautic.core.form.uncategorized'); ?>
-                        <?php $color    = ($category) ? '#' . $category->getColor() : 'inherit'; ?>
-                        <span style="white-space: nowrap;"><span class="label label-default pa-4" style="border: 1px solid #d5d5d5; background: <?php echo $color; ?>;"> </span> <span><?php echo $catName; ?></span></span>
-                    </td>
-                    <td class="visible-md visible-lg"><?php echo $item->getDownloadCount(); ?></td>
                     <td class="visible-md visible-lg"><?php echo $item->getId(); ?></td>
                 </tr>
             <?php endforeach; ?>
