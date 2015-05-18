@@ -26,6 +26,21 @@ class MigrationEditEvent extends Event
     private $forms = array();
 
     /**
+     * @var array
+     */
+    private $bundles = array();
+
+    /**
+     * @var array
+     */
+    private $entities = array();
+
+    /**
+     * @var array
+     */
+    private $folders = array();
+
+    /**
      * @var MauticFactory
      */
     private $factory;
@@ -53,6 +68,52 @@ class MigrationEditEvent extends Event
     }
 
     /**
+     * Set new bundle to the bundles array
+     *
+     * @param array $bundle
+     *
+     * @return void
+     */
+    public function addBundle ($bundle)
+    {
+        $this->bundles[] = $bundle;
+    }
+
+    /**
+     * Set new entity to the entities[$bundle] array
+     *
+     * @param string $bundle
+     * @param string $entity
+     *
+     * @return void
+     */
+    public function addEntity ($bundle, $entity)
+    {
+        if (!isset($this->entities[$bundle])) {
+            $this->entities[$bundle] = array();
+        }
+
+        $this->entities[$bundle][$bundle . '.' . $entity] = $entity;
+    }
+
+    /**
+     * Set new folder to the folders[$folder] array
+     *
+     * @param string $bundle
+     * @param string $folder
+     *
+     * @return void
+     */
+    public function addFolder ($bundle, $folder)
+    {
+        if (!isset($this->folders[$bundle])) {
+            $this->folders[$bundle] = array();
+        }
+
+        $this->folders[$bundle][$bundle . '.' . $folder] = $folder;
+    }
+
+    /**
      * Returns the forms array
      *
      * @return array
@@ -60,6 +121,26 @@ class MigrationEditEvent extends Event
     public function getForms ()
     {
         return $this->forms;
+    }
+
+    /**
+     * Returns the entities array
+     *
+     * @return array
+     */
+    public function getEntities ()
+    {
+        return $this->entities;
+    }
+
+    /**
+     * Returns the folders array
+     *
+     * @return array
+     */
+    public function getFolders ()
+    {
+        return $this->folders;
     }
 
     /**

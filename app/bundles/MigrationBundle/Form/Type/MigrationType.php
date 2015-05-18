@@ -59,12 +59,33 @@ class MigrationType extends AbstractType
         $dispatcher     = $this->factory->getDispatcher();
         $dispatcher->dispatch(MigrationEvents::MIGRATION_TEMPLATE_ON_EDIT_DISPLAY, $event);
         $eventForms     = $event->getForms();
+        $eventEntities  = $event->getEntities();
+        $eventFolders   = $event->getFolders();
+
+
+        $builder->add('entities', 'choice', array(
+            'choices'    => $eventEntities,
+            'label'      => 'mautic.migration.form.entities',
+            'label_attr' => array('class' => 'control-label'),
+            'attr'       => array('class' => 'form-control'),
+            'required'   => false,
+            'multiple'   => true
+        ));
+
+        $builder->add('folders', 'choice', array(
+            'choices'    => $eventFolders,
+            'label'      => 'mautic.migration.form.folders',
+            'label_attr' => array('class' => 'control-label'),
+            'attr'       => array('class' => 'form-control'),
+            'required'   => false,
+            'multiple'   => true
+        ));
 
         $builder->add('properties', 'event_properties', array(
-            'label' => false,
-            'eventForms' => $eventForms,
-            'required' => false,
-            'data'      => $options['data']->getProperties()
+            'label'         => false,
+            'eventForms'    => $eventForms,
+            'required'      => false,
+            'data'          => $options['data']->getProperties()
         ));
 
         $builder->add('buttons', 'form_buttons', array());

@@ -42,12 +42,14 @@ class EventPropertiesType extends AbstractType
      */
     public function buildForm (FormBuilderInterface $builder, array $options)
     {
-        foreach ($options['eventForms'] as $form) {
-            if (isset($form['formAlias'])) {
-                $builder->add($form['formAlias'], $form['formAlias'], array(
-                    'data' => isset($options['data'][$form['formAlias']]) ? $options['data'][$form['formAlias']] : null,
-                    'label' => false
-                ));
+        if (isset($options['eventForms']) && is_array($options['eventForms'])) {
+            foreach ($options['eventForms'] as $form) {
+                if (isset($form['formAlias'])) {
+                    $builder->add($form['formAlias'], $form['formAlias'], array(
+                        'data' => isset($options['data'][$form['formAlias']]) ? $options['data'][$form['formAlias']] : null,
+                        'label' => false
+                    ));
+                }
             }
         }
     }

@@ -71,6 +71,22 @@ class Migration extends FormEntity
      * @Serializer\Since("1.0")
      * @Serializer\Groups({"migrationDetails"})
      */
+    private $entities = array();
+
+    /**
+     * @ORM\Column(type="array", nullable=true)
+     * @Serializer\Expose
+     * @Serializer\Since("1.0")
+     * @Serializer\Groups({"migrationDetails"})
+     */
+    private $folders = array();
+
+    /**
+     * @ORM\Column(type="array", nullable=true)
+     * @Serializer\Expose
+     * @Serializer\Since("1.0")
+     * @Serializer\Groups({"migrationDetails"})
+     */
     private $properties = array();
 
     public function __clone()
@@ -157,6 +173,58 @@ class Migration extends FormEntity
         $this->isChanged('migrate', $migrate);
 
         $this->migrate = $migrate;
+
+        return $this;
+    }
+
+    /**
+     * Get entities
+     *
+     * @return array
+     */
+    public function getEntities()
+    {
+        return $this->entities;
+    }
+
+    /**
+     * Set entities
+     *
+     * @param array $entities
+     * 
+     * @return Migration
+     */
+    public function setEntities($entities)
+    {
+        $this->isChanged('entities', $entities);
+
+        $this->entities = $entities;
+
+        return $this;
+    }
+
+    /**
+     * Get folders
+     *
+     * @return array
+     */
+    public function getFolders()
+    {
+        return $this->folders;
+    }
+
+    /**
+     * Set folders
+     *
+     * @param array $folders
+     * 
+     * @return Migration
+     */
+    public function setFolders($folders)
+    {
+        $this->isChanged('folders', $folders);
+
+        $this->folders = $folders;
 
         return $this;
     }

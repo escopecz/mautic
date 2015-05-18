@@ -29,7 +29,14 @@ $view['slots']->set('mauticContent', 'migration');
                     <?php echo $view['form']->row($form['description']); ?>
                 </div>
             </div>
-
+            <div class="row">
+                <div class="col-xs-6">
+                    <?php echo $view['form']->row($form['entities']); ?>
+                </div>
+                <div class="col-xs-6">
+                    <?php echo $view['form']->row($form['folders']); ?>
+                </div>
+            </div>
             <div class="row">
                 <div class="col-xs-12">
                     <?php echo $view['form']->row($form['properties']); ?>

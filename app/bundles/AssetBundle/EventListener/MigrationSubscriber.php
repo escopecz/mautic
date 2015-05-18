@@ -20,6 +20,10 @@ use Mautic\MigrationBundle\Event\MigrationEditEvent;
  */
 class MigrationSubscriber extends CommonSubscriber
 {
+    /**
+     * @var string
+     */
+    protected $bundleName = 'AssetBundle';
 
     /**
      * @return array
@@ -33,11 +37,15 @@ class MigrationSubscriber extends CommonSubscriber
 
     public function onMigrationEditGenerate (MigrationEditEvent $event)
     {
+        $event->addEntity($this->bundleName, 'Asset');
+        $event->addEntity($this->bundleName, 'Download');
+        $event->addFolder($this->bundleName, realpath($event->getFactory()->getParameter('upload_dir')));
 
-        $event->addForm(array(
-            'name'       => 'Assets',
-            'formAlias'  => 'assetmigration',
-            'formTheme'  => 'MauticAssetBundle:FormTheme\Migration'
-        ));
+        // No need for special form for now
+        // $event->addForm(array(
+        //     'name'       => 'Assets',
+        //     'formAlias'  => 'assetmigration',
+        //     'formTheme'  => 'MauticAssetBundle:FormTheme\Migration'
+        // ));
     }
 }
