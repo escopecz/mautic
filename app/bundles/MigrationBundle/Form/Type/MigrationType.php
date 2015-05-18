@@ -88,6 +88,8 @@ class MigrationType extends AbstractType
             'data'          => $options['data']->getProperties()
         ));
 
+        $builder->add('isPublished', 'yesno_button_group');
+
         $builder->add('buttons', 'form_buttons', array());
 
         if (!empty($options["action"])) {
