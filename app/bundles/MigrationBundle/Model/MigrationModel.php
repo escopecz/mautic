@@ -87,6 +87,26 @@ class MigrationModel extends FormModel
     }
 
     /**
+     * Trigger export of a specific migration template
+     *
+     * @param  Migration        $migration
+     * @param  array            $progress
+     * @param  integer          $batch limit
+     * @param  OutputInterface  $output
+     * @return array of updated progress
+     */
+    public function triggerExport($migration, $progress, $batch, $output)
+    {
+        if ($id === null) {
+            $entity = new Migration();
+        } else {
+            $entity = parent::getEntity($id);
+        }
+
+        return $entity;
+    }
+
+    /**
      * {@inheritdoc}
      *
      * @param $action
