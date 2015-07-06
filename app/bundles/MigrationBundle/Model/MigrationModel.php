@@ -15,6 +15,7 @@ use Mautic\CoreBundle\Model\FormModel;
 use Mautic\MigrationBundle\Entity\Migration;
 use Mautic\MigrationBundle\MigrationEvents;
 use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
+use Symfony\Component\EventDispatcher\Event;
 
 /**
  * Class MigrationModel
@@ -112,10 +113,12 @@ class MigrationModel extends FormModel
      * @param $action
      * @param $event
      * @param $entity
-     * @param $isNew
+     * @param boolean $isNew
+     * @param Symfony\Component\EventDispatcher\Event $event
+     *
      * @throws \Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException
      */
-    protected function dispatchEvent($action, &$entity, $isNew = false, $event = false)
+    protected function dispatchEvent($action, &$entity, $isNew = false, Event $event = NULL)
     {
         if (!$entity instanceof Migration) {
             throw new MethodNotAllowedHttpException(array('Migration'));
