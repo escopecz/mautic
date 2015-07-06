@@ -31,10 +31,15 @@ class MigrationSubscriber extends CommonSubscriber
     static public function getSubscribedEvents ()
     {
         return array(
-            MigrationEvents::MIGRATION_TEMPLATE_ON_EDIT_DISPLAY => array('onMigrationEditGenerate', 0)
+            MigrationEvents::MIGRATION_TEMPLATE_ON_EDIT_DISPLAY => array('onMigrationEditGenerate', 0),
+            // MigrationEvents::MIGRATION_TEMPLATE_PRE_SAVE => array('onMigrationExport', 0)
         );
     }
 
+    /**
+     * @param  MigrationTemplateEvent $event
+     * @return void
+     */
     public function onMigrationEditGenerate (MigrationEditEvent $event)
     {
         $event->addEntity($this->bundleName, 'Asset');

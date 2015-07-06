@@ -13,6 +13,8 @@ use Mautic\CoreBundle\Entity\IpAddress;
 use Mautic\CoreBundle\Helper\InputHelper;
 use Mautic\CoreBundle\Model\FormModel;
 use Mautic\MigrationBundle\Entity\Migration;
+use Mautic\MigrationBundle\Event\MigrationTemplateEvent;
+use Mautic\MigrationBundle\Event\MigrationEditEvent;
 use Mautic\MigrationBundle\MigrationEvents;
 use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
 use Symfony\Component\EventDispatcher\Event;
@@ -22,14 +24,6 @@ use Symfony\Component\EventDispatcher\Event;
  */
 class MigrationModel extends FormModel
 {
-    /**
-     * {@inheritdoc}
-     */
-    public function saveEntity($entity, $unlock = true)
-    {
-        parent::saveEntity($entity, $unlock);
-    }
-
     /**
      * @return \Mautic\AssetBundle\Entity\AssetRepository
      */
@@ -96,15 +90,17 @@ class MigrationModel extends FormModel
      * @param  OutputInterface  $output
      * @return array of updated progress
      */
-    public function triggerExport($migration, $progress, $batch, $output)
+    public function triggerExport(Migration $migration, $progress, $batch, $output)
     {
-        if ($id === null) {
-            $entity = new Migration();
+        $name = MigrationEvents::MIGRATION_ON_EXPORT;
+        if ($this->dispatcher->hasListeners($name)) {
+            $event = new MigrationEvent($entity, $isNew);
+            $event->setMigration($migration);
+            $this->dispatcher->dispatch($name, $event);
+            return $event;
         } else {
-            $entity = parent::getEntity($id);
+            return false;
         }
-
-        return $entity;
     }
 
     /**
@@ -143,14 +139,14 @@ class MigrationModel extends FormModel
 
         if ($this->dispatcher->hasListeners($name)) {
             if (empty($event)) {
-                $event = new MigrationEvent($entity, $isNew);
+                $event = new MigrationTemplateEvent($entity, $isNew);
                 $event->setEntityManager($this->em);
             }
 
             $this->dispatcher->dispatch($name, $event);
             return $event;
         } else {
-            return false;
+            return null;
         }
     }
 }
