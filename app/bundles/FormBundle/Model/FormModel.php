@@ -17,6 +17,7 @@ use Mautic\FormBundle\Entity\Form;
 use Mautic\FormBundle\Event\FormBuilderEvent;
 use Mautic\FormBundle\Event\FormEvent;
 use Mautic\FormBundle\FormEvents;
+use Symfony\Component\EventDispatcher\Event;
 use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
 
 /**
@@ -81,7 +82,7 @@ class FormModel extends CommonFormModel
      * @return bool|FormEvent|void
      * @throws \Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException
      */
-    protected function dispatchEvent($action, &$entity, $isNew = false, $event = false)
+    protected function dispatchEvent($action, &$entity, $isNew = false, Event $event = null)
     {
         if (!$entity instanceof Form) {
             throw new MethodNotAllowedHttpException(array('Form'));
@@ -101,7 +102,7 @@ class FormModel extends CommonFormModel
                 $name = FormEvents::FORM_POST_DELETE;
                 break;
             default:
-                return false;
+                return null;
         }
 
         if ($this->dispatcher->hasListeners($name)) {
@@ -113,7 +114,7 @@ class FormModel extends CommonFormModel
             $this->dispatcher->dispatch($name, $event);
             return $event;
         } else {
-            return false;
+            return null;
         }
     }
 
@@ -159,6 +160,7 @@ class FormModel extends CommonFormModel
     /**
      * @param Form $entity
      * @param      $sessionActions
+     * @param      $sessionFields
      */
     public function setActions(Form &$entity, $sessionActions, $sessionFields)
     {
@@ -227,36 +229,57 @@ class FormModel extends CommonFormModel
     }
 
     /**
+     * Obtains the cached HTML of a form and generates it if missing
+     *
+     * @param Form $form
+     *
+     * @return string
+     */
+    public function getContent(Form $form)
+    {
+        $cachedHtml = $form->getCachedHtml();
+
+        if (empty($cachedHtml)) {
+            $cachedHtml = $this->generateHtml($form);
+        }
+
+        return $cachedHtml;
+    }
+
+    /**
      * Generate the form's html
      *
      * @param Form $entity
      * @param bool $persist
+     *
+     * @return string
      */
     public function generateHtml(Form $entity, $persist = true)
     {
-
-        //generate cached HTML and JS
+        //generate cached HTML
         $templating = $this->factory->getTemplating();
+        $theme      = $entity->getTemplate();
 
-        $html = $templating->render('MauticFormBundle:Builder:form.html.php', array(
-            'form' => $entity
-        ));
+        if (!empty($theme)) {
+            $theme .= '|';
+        }
 
-        $style  = $templating->render('MauticFormBundle:Builder:style.html.php', array(
-            'form' => $entity
-        ));
+        $html = $templating->render(
+            $theme.'MauticFormBundle:Builder:form.html.php',
+            array(
+                'form'  => $entity,
+                'theme' => $theme,
+            )
+        );
 
-        $script = $templating->render('MauticFormBundle:Builder:script.html.php', array(
-            'form' => $entity
-        ));
-
-        $html = $style . $html . $script;
         $entity->setCachedHtml($html);
 
         if ($persist) {
             //bypass model function as events aren't needed for this
             $this->getRepository()->saveEntity($entity);
         }
+
+        return $html;
     }
 
     /**
@@ -347,7 +370,7 @@ class FormModel extends CommonFormModel
         );
         $ignoreTypes = array('button', 'freetext');
         foreach ($fields as $f) {
-            if (!in_array($f->getType(), $ignoreTypes)) {
+            if (!in_array($f->getType(), $ignoreTypes) && $f->getSaveResult() !== false) {
                 $columns[] = array(
                     'name'    => $f->getAlias(),
                     'type'    => 'text',
@@ -389,7 +412,7 @@ class FormModel extends CommonFormModel
      */
     public function getAutomaticJavascript(Form $form)
     {
-        $html = $form->getCachedHtml();
+        $html = $this->getContent($form);
 
         //replace line breaks with literal symbol and escape quotations
         $search  = array("\n", '"');

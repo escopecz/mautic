@@ -10,8 +10,11 @@
 namespace Mautic\CampaignBundle\Model;
 
 use Doctrine\ORM\EntityNotFoundException;
+use Mautic\CampaignBundle\CampaignEvents;
 use Mautic\CampaignBundle\Entity\Campaign;
 use Mautic\CampaignBundle\Entity\LeadEventLog;
+use Mautic\CampaignBundle\Event\CampaignDecisionTriggerEvent;
+use Mautic\CampaignBundle\Event\CampaignExecutionEvent;
 use Mautic\CoreBundle\Model\FormModel as CommonFormModel;
 use Mautic\CampaignBundle\Entity\Event;
 use Symfony\Component\Console\Helper\ProgressBar;
@@ -158,19 +161,6 @@ class EventModel extends CommonFormModel
             $logger->debug('CAMPAIGN: lead not anonymous; abort');
 
             return false;
-        }
-
-        if ($typeId !== null && $this->factory->getEnvironment() == 'prod') {
-            //let's prevent some unnecessary DB calls
-            $session         = $this->factory->getSession();
-            $triggeredEvents = $session->get('mautic.triggered.campaign.events', array());
-            if (in_array($typeId, $triggeredEvents)) {
-                $logger->debug('CAMPAIGN: '.$typeId.' has already been processed.');
-
-                return false;
-            }
-            $triggeredEvents[] = $typeId;
-            $session->set('mautic.triggered.campaign.events', $triggeredEvents);
         }
 
         //get the current lead
@@ -371,21 +361,32 @@ class EventModel extends CommonFormModel
             $this->getRepository()->saveEntities($persist);
         }
 
+        if ($this->dispatcher->hasListeners(CampaignEvents::ON_EVENT_DECISION_TRIGGER)) {
+            $event = new CampaignDecisionTriggerEvent($lead, $type, $eventDetails, $events, $persist);
+            $this->dispatcher->dispatch(CampaignEvents::ON_EVENT_DECISION_TRIGGER, $event);
+            unset($event);
+        }
+
         return $actionResponses;
     }
 
     /**
      * Trigger the root level action(s) in campaign(s)
      *
-     * @param $campaign
+     * @param                 $campaign
+     * @param                 $totalEventCount
+     * @param int             $limit
+     * @param bool            $max
+     * @param OutputInterface $output
      *
-     * @throws \Doctrine\ORM\ORMException
+     * @return int
      */
     public function triggerStartingEvents($campaign, &$totalEventCount, $limit = 100, $max = false, OutputInterface $output = null)
     {
         defined('MAUTIC_CAMPAIGN_SYSTEM_TRIGGERED') or define('MAUTIC_CAMPAIGN_SYSTEM_TRIGGERED', 1);
 
-        $campaignId = $campaign->getId();
+        $campaignId   = $campaign->getId();
+        $campaignName = $campaign->getName();
 
         $logger = $this->factory->getLogger();
         $logger->debug('CAMPAIGN: Triggering starting events');
@@ -510,7 +511,10 @@ class EventModel extends CommonFormModel
                     }
 
                     // Set campaign ID
-                    $event['campaign'] = array('id' => $campaignId);
+                    $event['campaign'] = array(
+                        'id'   => $campaignId,
+                        'name' => $campaignName,
+                    );
 
                     $logger->debug('CAMPAIGN: Event ID# '.$event['id']);
 
@@ -621,7 +625,8 @@ class EventModel extends CommonFormModel
     {
         defined('MAUTIC_CAMPAIGN_SYSTEM_TRIGGERED') or define('MAUTIC_CAMPAIGN_SYSTEM_TRIGGERED', 1);
 
-        $campaignId = $campaign->getId();
+        $campaignId   = $campaign->getId();
+        $campaignName = $campaign->getName();
 
         $logger = $this->factory->getLogger();
         $logger->debug('CAMPAIGN: Triggering scheduled events');
@@ -719,7 +724,10 @@ class EventModel extends CommonFormModel
                     $event = $campaignEvents[$log['event_id']];
 
                     // Set campaign ID
-                    $event['campaign'] = array('id' => $campaignId);
+                    $event['campaign'] = array(
+                        'id'   => $campaignId,
+                        'name' => $campaignName
+                    );
 
                     if (!isset($eventSettings['action'][$event['type']])) {
                         unset($event);
@@ -811,7 +819,13 @@ class EventModel extends CommonFormModel
     /**
      * Find and trigger the negative events, i.e. the events with a no decision path
      *
-     * @param null $campaignId
+     * @param                 $campaign
+     * @param int             $totalEventCount
+     * @param int             $limit
+     * @param bool            $max
+     * @param OutputInterface $output
+     *
+     * @return int
      */
     public function triggerNegativeEvents($campaign, $totalEventCount = 0, $limit = 100, $max = false, OutputInterface $output = null)
     {
@@ -820,7 +834,8 @@ class EventModel extends CommonFormModel
         $logger = $this->factory->getLogger();
         $logger->debug('CAMPAIGN: Triggering negative events');
 
-        $campaignId = $campaign->getId();
+        $campaignId   = $campaign->getId();
+        $campaignName = $campaign->getName();
 
         $repo         = $this->getRepository();
         $campaignRepo = $this->getCampaignRepository();
@@ -993,7 +1008,10 @@ class EventModel extends CommonFormModel
                             foreach ($eventTiming as $id => $timing) {
                                 // Set event
                                 $e             = $events[$id];
-                                $e['campaign'] = array('id' => $campaignId);
+                                $e['campaign'] = array(
+                                    'id'   => $campaignId,
+                                    'name' => $campaignName
+                                );
 
                                 // Set lead in case this is triggered by the system
                                 $leadModel->setSystemCurrentLead($l);
@@ -1132,10 +1150,11 @@ class EventModel extends CommonFormModel
     /**
      * Invoke the event's callback function
      *
-     * @param $event
-     * @param $settings
-     * @param $lead
-     * @param $eventDetails
+     * @param      $event
+     * @param      $settings
+     * @param null $lead
+     * @param null $eventDetails
+     * @param bool $systemTriggered
      *
      * @return bool|mixed
      */
@@ -1170,6 +1189,12 @@ class EventModel extends CommonFormModel
             }
 
             $result = $reflection->invokeArgs($this, $pass);
+
+            if ($this->dispatcher->hasListeners(CampaignEvents::ON_EVENT_EXECUTION)) {
+                $event = new CampaignExecutionEvent($args, $result);
+                $this->dispatcher->dispatch(CampaignEvents::ON_EVENT_EXECUTION, $event);
+                unset($event);
+            }
         } else {
             $result = true;
         }
@@ -1183,8 +1208,9 @@ class EventModel extends CommonFormModel
     /**
      * Check to see if the interval between events are appropriate to fire currentEvent
      *
-     * @param $triggeredEvent
-     * @param $action
+     * @param      $action
+     * @param null $parentTriggeredDate
+     * @param bool $allowNegate
      *
      * @return bool
      */

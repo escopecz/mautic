@@ -10,6 +10,7 @@
 namespace Mautic\CoreBundle\Model;
 
 use Mautic\UserBundle\Entity\User;
+use Symfony\Component\EventDispatcher\Event;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
@@ -17,28 +18,6 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
  */
 class FormModel extends CommonModel
 {
-
-    /**
-     * Get a specific entity
-     *
-     * @param $id
-     *
-     * @return null|object
-     */
-    public function getEntity($id = null)
-    {
-        if (null !== $id) {
-            $repo = $this->getRepository();
-            if (method_exists($repo, 'getEntity')) {
-                return $repo->getEntity($id);
-            }
-
-            return $repo->find($id);
-        }
-
-        return null;
-    }
-
     /**
      * Lock an entity to prevent multiple people from editing
      *
@@ -209,7 +188,6 @@ class FormModel extends CommonModel
         return false;
     }
 
-
     /**
      * Set timestamps and user ids
      *
@@ -221,14 +199,14 @@ class FormModel extends CommonModel
     {
         $user = $this->factory->getUser(true);
         if ($isNew) {
-            if (method_exists($entity, 'setDateAdded')) {
+            if (method_exists($entity, 'setDateAdded') && !$entity->getDateAdded()) {
                 $entity->setDateAdded(new \DateTime());
             }
 
             if ($user instanceof User) {
-                if (method_exists($entity, 'setCreatedBy')) {
+                if (method_exists($entity, 'setCreatedBy') && !$entity->getCreatedBy()) {
                     $entity->setCreatedBy($user);
-                } elseif (method_exists($entity, 'setCreatedByUser')) {
+                } elseif (method_exists($entity, 'setCreatedByUser') && !$entity->getCreatedByUser()) {
                     $entity->setCreatedByUser($user->getName());
                 }
             }
@@ -321,14 +299,18 @@ class FormModel extends CommonModel
     /**
      * Dispatches events for child classes
      *
-     * @param string $action
-     * @param object $entity
-     * @param bool   $isNew
-     * @param bool   $event
+     * @param       $action
+     * @param       $entity
+     * @param bool  $isNew
+     * @param Event $event
+     *
+     * @return Event|null
      */
-    protected function dispatchEvent($action, &$entity, $isNew = false, $event = false)
+    protected function dispatchEvent($action, &$entity, $isNew = false, Event $event = null)
     {
         //...
+
+        return $event;
     }
 
     /**

@@ -44,7 +44,7 @@ return array(
                 'controller'   => 'MauticCoreBundle:Common:removeTrailingSlash',
                 'method'       => 'GET',
                 'requirements' => array(
-                    'url' => '^(?!(/s/api-docs).*)/$'
+                    'url' => '.*/$'
                 )
             ),
             'mautic_public_bc_redirect' => array(
@@ -67,7 +67,7 @@ return array(
             'mautic_update_bc_redirect' => array(
                 'path'         => '/update',
                 'controller'   => 'MauticCoreBundle:Default:updateBcRedirect'
-            ),
+            )
         )
     ),
 
@@ -166,6 +166,11 @@ return array(
                 'arguments' => 'mautic.factory',
                 'alias'     => 'gravatar'
             ),
+            'mautic.helper.template.analytics'  => array(
+                'class'     => 'Mautic\CoreBundle\Templating\Helper\AnalyticsHelper',
+                'arguments' => 'mautic.factory',
+                'alias'     => 'analytics'
+            ),
             'mautic.helper.template.mautibot'  => array(
                 'class' => 'Mautic\CoreBundle\Templating\Helper\MautibotHelper',
                 'alias' => 'mautibot'
@@ -184,6 +189,11 @@ return array(
                 'class'     => 'Mautic\CoreBundle\Templating\Helper\FormatterHelper',
                 'arguments' => 'mautic.factory',
                 'alias'     => 'formatter'
+            ),
+            'mautic.helper.template.security' => array(
+                'class'     => 'Mautic\CoreBundle\Templating\Helper\SecurityHelper',
+                'arguments' => 'mautic.factory',
+                'alias'     => 'security'
             )
         ),
         'other'   => array(
@@ -291,8 +301,9 @@ return array(
                 'class'        => 'Mautic\CoreBundle\Swiftmailer\Transport\MandrillTransport',
                 'serviceAlias' => 'swiftmailer.mailer.transport.%s',
                 'methodCalls'  => array(
-                    'setUsername' => array('%mautic.mailer_user%'),
-                    'setPassword' => array('%mautic.mailer_password%')
+                    'setUsername'      => array('%mautic.mailer_user%'),
+                    'setPassword'      => array('%mautic.mailer_password%'),
+                    'setMauticFactory' => array('mautic.factory')
                 )
             ),
             'mautic.transport.sendgrid'          => array(
