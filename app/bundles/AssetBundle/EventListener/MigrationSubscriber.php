@@ -12,6 +12,7 @@ namespace Mautic\AssetBundle\EventListener;
 use Mautic\CoreBundle\EventListener\CommonSubscriber;
 use Mautic\MigrationBundle\MigrationEvents;
 use Mautic\MigrationBundle\Event\MigrationEditEvent;
+use Mautic\MigrationBundle\Event\MigrationCountEvent;
 
 /**
  * Class MigrationSubscriber
@@ -32,12 +33,13 @@ class MigrationSubscriber extends CommonSubscriber
     {
         return array(
             MigrationEvents::MIGRATION_TEMPLATE_ON_EDIT_DISPLAY => array('onMigrationEditGenerate', 0),
-            // MigrationEvents::MIGRATION_TEMPLATE_PRE_SAVE => array('onMigrationExport', 0)
+            MigrationEvents::MIGRATION_ON_ENTITY_COUNT => array('onEntityCount', 0)
         );
     }
 
     /**
      * @param  MigrationTemplateEvent $event
+     *
      * @return void
      */
     public function onMigrationEditGenerate (MigrationEditEvent $event)
@@ -52,5 +54,20 @@ class MigrationSubscriber extends CommonSubscriber
         //     'formAlias'  => 'assetmigration',
         //     'formTheme'  => 'MauticAssetBundle:FormTheme\Migration'
         // ));
+    }
+
+    /**
+     * @param  MigrationTemplateEvent $event
+     *
+     * @return void
+     */
+    public function onEntityCount (MigrationCountEvent $event)
+    {
+        if ($event->getBundle() == 'AssetBundle') {
+            $factory = $event->getFactory();
+            if ($event->getEntity() == 'Asset') {
+                $event->setCount($factory->getEntityManager()->getRepository('MauticAssetBundle:Asset')->count());
+            }
+        }
     }
 }

@@ -13,7 +13,7 @@ use Mautic\CoreBundle\Event\CommonEvent;
 use Mautic\MigrationBundle\Entity\Migration;
 
 /**
- * Class MigrationEvent
+ * Class MigrationTemplateEvent
  *
  * @package Mautic\MigrationBundle\Event
  */

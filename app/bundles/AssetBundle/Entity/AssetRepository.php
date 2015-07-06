@@ -206,6 +206,21 @@ class AssetRepository extends CommonRepository
     }
 
     /**
+     * Count all assets
+     *
+     * @return integer
+     */
+    public function count()
+    {
+        $count = $this->createQueryBuilder('a')
+            ->select('count(a.id)')
+            ->getQuery()
+            ->getSingleScalarResult();
+
+        return $count;
+    }
+
+    /**
      * @return string
      */
     protected function getDefaultOrder()

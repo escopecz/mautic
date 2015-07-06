@@ -78,12 +78,12 @@ final class MigrationEvents
     const MIGRATION_TEMPLATE_POST_DELETE   = 'mautic.migration_template_post_delete';
 
     /**
-     * The mautic.migration_on_export event is thrown before exporting the migration
+     * The mautic.migration_on_entity_count event is thrown on entity count
      *
      * The event listener receives a
      * Mautic\MigrationBundle\Event\MauticMigrationEvents instance.
      *
      * @var string
      */
-    const MIGRATION_ON_EXPORT   = 'mautic.migration_on_export';
+    const MIGRATION_ON_ENTITY_COUNT   = 'mautic.migration_on_entity_count';
 }

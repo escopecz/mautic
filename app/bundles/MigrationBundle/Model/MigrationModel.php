@@ -15,6 +15,7 @@ use Mautic\CoreBundle\Model\FormModel;
 use Mautic\MigrationBundle\Entity\Migration;
 use Mautic\MigrationBundle\Event\MigrationTemplateEvent;
 use Mautic\MigrationBundle\Event\MigrationEditEvent;
+use Mautic\MigrationBundle\Event\MigrationCountEvent;
 use Mautic\MigrationBundle\MigrationEvents;
 use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
 use Symfony\Component\EventDispatcher\Event;
@@ -92,15 +93,55 @@ class MigrationModel extends FormModel
      */
     public function triggerExport(Migration $migration, $progress, $batch, $output)
     {
-        $name = MigrationEvents::MIGRATION_ON_EXPORT;
-        if ($this->dispatcher->hasListeners($name)) {
-            $event = new MigrationEvent($entity, $isNew);
-            $event->setMigration($migration);
-            $this->dispatcher->dispatch($name, $event);
-            return $event;
-        } else {
-            return false;
+        if (!$progress) {
+            $progress = $this->buildProgress($migration);
         }
+
+        if ($this->dispatcher->hasListeners(MigrationEvents::MIGRATION_ON_EXPORT)) {
+            foreach ($progress['entities'] as $entity) {
+                // TODO implement entity export
+                // $event = new MigrationEvent($entity, $isNew);
+                // $event->setMigration($migration);
+                // $this->dispatcher->dispatch(MigrationEvents::MIGRATION_ON_EXPORT, $event);
+            }
+            // TODO implement file export
+        }
+
+        return $progress;
+    }
+
+    /**
+     * Trigger export of a specific migration template
+     *
+     * @param  Migration        $migration
+     * @param  array            $progress
+     * @param  integer          $batch limit
+     * @param  OutputInterface  $output
+     * @return array of updated progress
+     */
+    public function buildProgress(Migration $migration)
+    {
+        $progress = array('entities' => array(), 'folders' => array());
+
+        if ($this->dispatcher->hasListeners(MigrationEvents::MIGRATION_ON_ENTITY_COUNT)) {
+            foreach ($migration->getEntities() as $entity) {
+                $parts = explode('.', $entity);
+                $event = new MigrationCountEvent($this->factory);
+                $event->setBundle($parts[0]);
+                $event->setEntity($parts[1]);
+
+                $this->dispatcher->dispatch(MigrationEvents::MIGRATION_ON_ENTITY_COUNT, $event);
+                $progress['entities'][$entity] = array('count' => $event->getCount(), 'processed' => 0);
+            }
+
+            foreach ($migration->getFolders() as $folder) {
+                $parts = explode('.', $folder);
+                $files = new \FilesystemIterator($parts[1], \FilesystemIterator::SKIP_DOTS);
+                $progress['folders'][$folder] = array('count' => iterator_count($files), 'processed' => 0);
+            }
+        }
+
+        return $progress;
     }
 
     /**
