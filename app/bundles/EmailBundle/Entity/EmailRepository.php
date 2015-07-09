@@ -199,6 +199,7 @@ class EmailRepository extends CommonRepository
         }
 
         $q->orderBy('l.id');
+        $q->groupBy('l.id');
         $results = $q->execute()->fetchAll();
 
         if ($countOnly) {
