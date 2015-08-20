@@ -26,7 +26,7 @@ class MigrationRepository extends CommonRepository
     protected function getDefaultOrder()
     {
         return array(
-            array($this->getTableAlias() . '.title', 'ASC')
+            array($this->getTableAlias() . '.name', 'ASC')
         );
     }
 

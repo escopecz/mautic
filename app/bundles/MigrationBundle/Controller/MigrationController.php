@@ -66,7 +66,7 @@ class MigrationController extends FormController
                 array('column' => 'p.createdBy', 'expr' => 'eq', 'value' => $this->factory->getUser());
         }
 
-        $orderBy    = $this->factory->getSession()->get('mautic.migration.orderby', 'm.title');
+        $orderBy    = $this->factory->getSession()->get('mautic.migration.orderby', 'm.name');
         $orderByDir = $this->factory->getSession()->get('mautic.migration.orderbydir', 'DESC');
 
         $migrations = $model->getEntities(
@@ -248,7 +248,7 @@ class MigrationController extends FormController
                     $model->saveEntity($entity);
 
                     $this->addFlash('mautic.core.notice.created', array(
-                        '%name%'      => $entity->getTitle(),
+                        '%name%'      => $entity->getName(),
                         '%menu_link%' => 'mautic_migration_index',
                         '%url%'       => $this->generateUrl('mautic_migration_action', array(
                             'objectAction' => 'edit',
@@ -381,7 +381,7 @@ class MigrationController extends FormController
                     $this->request->files->remove('migration');
 
                     $this->addFlash('mautic.core.notice.updated', array(
-                        '%name%'      => $entity->getTitle(),
+                        '%name%'      => $entity->getName(),
                         '%menu_link%' => 'mautic_migration_index',
                         '%url%'       => $this->generateUrl('mautic_migration_action', array(
                             'objectAction' => 'edit',
@@ -522,7 +522,7 @@ class MigrationController extends FormController
     //             'type'    => 'notice',
     //             'msg'     => 'mautic.core.notice.deleted',
     //             'msgVars' => array(
-    //                 '%name%' => $entity->getTitle(),
+    //                 '%name%' => $entity->getName(),
     //                 '%id%'   => $objectId
     //             )
     //         );

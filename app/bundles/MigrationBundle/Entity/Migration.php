@@ -10,6 +10,8 @@
 namespace Mautic\MigrationBundle\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
+use Mautic\ApiBundle\Serializer\Driver\ApiMetadataDriver;
+use Mautic\CoreBundle\Doctrine\Mapping\ClassMetadataBuilder;
 use Mautic\CoreBundle\Entity\FormEntity;
 use JMS\Serializer\Annotation as Serializer;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
@@ -22,76 +24,83 @@ use Symfony\Component\Validator\Mapping\ClassMetadata;
 
 /**
  * Class Migration
- * @ORM\Table(name="migration_templates")
- * @ORM\Entity(repositoryClass="Mautic\MigrationBundle\Entity\MigrationRepository")
- * @Serializer\ExclusionPolicy("all")
+ *
+ * @package Mautic\MigrationBundle\Entity
  */
 class Migration extends FormEntity
 {
 
     /**
-     * @ORM\Column(type="integer")
-     * @ORM\Id()
-     * @ORM\GeneratedValue(strategy="AUTO")
-     * @Serializer\Expose
-     * @Serializer\Since("1.0")
-     * @Serializer\Groups({"migrationDetails"})
+     * @var int
      */
     private $id;
 
     /**
-     * @ORM\Column(name="title", type="string")
-     * @Serializer\Expose
-     * @Serializer\Since("1.0")
-     * @Serializer\Groups({"migrationDetails"})
+     * @var string
      */
-    private $title;
+    private $name;
 
     /**
-     * @ORM\Column(type="text", nullable=true)
-     * @Serializer\Expose
-     * @Serializer\Since("1.0")
-     * @Serializer\Groups({"migrationDetails"})
+     * @var string
      */
     private $description;
 
     /**
-     * List of entities to migrate
-     * 
-     * @ORM\Column(type="array", nullable=true)
-     * @Serializer\Expose
-     * @Serializer\Since("1.0")
-     * @Serializer\Groups({"migrationDetails"})
+     * @var array
      */
     private $migrate = array();
 
     /**
-     * @ORM\Column(type="array", nullable=true)
-     * @Serializer\Expose
-     * @Serializer\Since("1.0")
-     * @Serializer\Groups({"migrationDetails"})
+     * @var array
      */
     private $entities = array();
 
     /**
-     * @ORM\Column(type="array", nullable=true)
-     * @Serializer\Expose
-     * @Serializer\Since("1.0")
-     * @Serializer\Groups({"migrationDetails"})
+     * @var array
      */
     private $folders = array();
 
     /**
-     * @ORM\Column(type="array", nullable=true)
-     * @Serializer\Expose
-     * @Serializer\Since("1.0")
-     * @Serializer\Groups({"migrationDetails"})
+     * @var array
      */
     private $properties = array();
 
     public function __clone()
     {
         $this->id = null;
+    }
+
+    /**
+     * @param ORM\ClassMetadata $metadata
+     */
+    public static function loadMetadata (ORM\ClassMetadata $metadata)
+    {
+        $builder = new ClassMetadataBuilder($metadata);
+
+        $builder->setTable('migration_templates')
+            ->setCustomRepositoryClass('Mautic\MigrationBundle\Entity\MigrationRepository');
+
+        $builder->addIdColumns();
+
+        $builder->createField('migrate', 'array')
+            ->columnName('migrate')
+            ->nullable()
+            ->build();
+
+        $builder->createField('entities', 'array')
+            ->columnName('entities')
+            ->nullable()
+            ->build();
+
+        $builder->createField('folders', 'array')
+            ->columnName('folders')
+            ->nullable()
+            ->build();
+
+        $builder->createField('properties', 'array')
+            ->columnName('properties')
+            ->nullable()
+            ->build();
     }
 
     /**
@@ -105,26 +114,26 @@ class Migration extends FormEntity
     }
 
     /**
-     * Get title
+     * Get name
      *
      * @return string
      */
-    public function getTitle()
+    public function getName()
     {
-        return $this->title;
+        return $this->name;
     }
 
     /**
-     * Set title
+     * Set name
      *
-     * @param string $title
+     * @param string $name
      *
      * @return Migration
      */
-    public function setTitle($title)
+    public function setName($name)
     {
-        $this->isChanged('title', $title);
-        $this->title = $title;
+        $this->isChanged('name', $name);
+        $this->name = $name;
 
         return $this;
     }
@@ -139,7 +148,7 @@ class Migration extends FormEntity
 
     /**
      * @param string $description
-     * 
+     *
      * @return Migration
      */
     public function setDescription ($description)
@@ -165,7 +174,7 @@ class Migration extends FormEntity
      * Set migrate
      *
      * @param array $migrate
-     * 
+     *
      * @return Migration
      */
     public function setMigrate($migrate)
@@ -191,7 +200,7 @@ class Migration extends FormEntity
      * Set entities
      *
      * @param array $entities
-     * 
+     *
      * @return Migration
      */
     public function setEntities($entities)
@@ -217,7 +226,7 @@ class Migration extends FormEntity
      * Set folders
      *
      * @param array $folders
-     * 
+     *
      * @return Migration
      */
     public function setFolders($folders)
@@ -243,7 +252,7 @@ class Migration extends FormEntity
      * Set properties
      *
      * @param array $properties
-     * 
+     *
      * @return Migration
      */
     public function setProperties($properties)

@@ -9,7 +9,7 @@
 
 $view->extend('MauticCoreBundle:Default:content.html.php');
 $view['slots']->set('mauticContent', 'migration');
-$view['slots']->set("headerTitle", $activeMigration->getTitle());
+$view['slots']->set("headerTitle", $activeMigration->getName());
 
 $view['slots']->set('actions', $view->render('MauticCoreBundle:Helper:page_actions.html.php', array(
     'item'       => $activeMigration,
@@ -19,7 +19,7 @@ $view['slots']->set('actions', $view->render('MauticCoreBundle:Helper:page_actio
     ),
     'routeBase'  => 'migration',
     'langVar'    => 'migration.migration',
-    'nameGetter' => 'getTitle'
+    'nameGetter' => 'getName'
 )));
 ?>
 

@@ -8,7 +8,7 @@
  */
 $view->extend('MauticCoreBundle:Default:content.html.php');
 $header = ($activeMigration->getId()) ?
-    $view['translator']->trans('mautic.migration.migration.edit', array('%name%' => $activeMigration->getTitle())) :
+    $view['translator']->trans('mautic.migration.migration.edit', array('%name%' => $activeMigration->getName())) :
     $view['translator']->trans('mautic.migration.migration.new');
 $view['slots']->set("headerTitle", $header);
 $view['slots']->set('mauticContent', 'migration');
@@ -21,7 +21,7 @@ $view['slots']->set('mauticContent', 'migration');
         <div class="pa-md">
             <div class="row">
                 <div class="col-md-6">
-                    <?php echo $view['form']->row($form['title']); ?>
+                    <?php echo $view['form']->row($form['name']); ?>
                 </div>
             </div>
             <div class="row">

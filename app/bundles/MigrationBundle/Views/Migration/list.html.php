@@ -22,9 +22,9 @@ $view->extend('MauticMigrationBundle:Migration:index.html.php');
 
                 echo $view->render('MauticCoreBundle:Helper:tableheader.html.php', array(
                     'sessionVar' => 'migration',
-                    'orderBy'    => 'a.title',
-                    'text'       => 'mautic.core.title',
-                    'class'      => 'col-migration-title',
+                    'orderBy'    => 'a.name',
+                    'text'       => 'mautic.core.name',
+                    'class'      => 'col-migration-name',
                     'default'    => true
                 ));
 
@@ -50,7 +50,7 @@ $view->extend('MauticMigrationBundle:Migration:index.html.php');
                             ),
                             'routeBase'  => 'migration',
                             'langVar'    => 'migration.migration',
-                            'nameGetter' => 'getTitle',
+                            'nameGetter' => 'getName',
                             'customButtons' => array(
                                 array(
                                     'attr' => array(
@@ -74,7 +74,7 @@ $view->extend('MauticMigrationBundle:Migration:index.html.php');
                             <a href="<?php echo $view['router']->generate('mautic_migration_action',
                                 array("objectAction" => "view", "objectId" => $item->getId())); ?>"
                                data-toggle="ajax">
-                                <?php echo $item->getTitle(); ?>
+                                <?php echo $item->getName(); ?>
                             </a>
                         </div>
                         <?php if ($description = $item->getDescription()): ?>

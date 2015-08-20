@@ -46,7 +46,7 @@ class MigrationModel extends FormModel
      */
     public function getNameGetter()
     {
-        return "getTitle";
+        return "getName";
     }
 
     /**

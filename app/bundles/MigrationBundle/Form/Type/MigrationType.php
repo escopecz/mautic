@@ -42,8 +42,8 @@ class MigrationType extends AbstractType
      */
     public function buildForm (FormBuilderInterface $builder, array $options)
     {
-        $builder->add('title', 'text', array(
-            'label'      => 'mautic.core.title',
+        $builder->add('name', 'text', array(
+            'label'      => 'mautic.core.name',
             'label_attr' => array('class' => 'control-label'),
             'attr'       => array('class' => 'form-control')
         ));
