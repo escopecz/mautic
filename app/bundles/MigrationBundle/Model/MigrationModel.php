@@ -16,6 +16,7 @@ use Mautic\MigrationBundle\Entity\Migration;
 use Mautic\MigrationBundle\Event\MigrationTemplateEvent;
 use Mautic\MigrationBundle\Event\MigrationEditEvent;
 use Mautic\MigrationBundle\Event\MigrationCountEvent;
+use Mautic\MigrationBundle\Event\MigrationEvent;
 use Mautic\MigrationBundle\MigrationEvents;
 use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
 use Symfony\Component\EventDispatcher\Event;
@@ -98,12 +99,28 @@ class MigrationModel extends FormModel
         }
 
         if ($this->dispatcher->hasListeners(MigrationEvents::MIGRATION_ON_EXPORT)) {
-            foreach ($progress['entities'] as $entity) {
-                // TODO implement entity export
-                // $event = new MigrationEvent($entity, $isNew);
-                // $event->setMigration($migration);
-                // $this->dispatcher->dispatch(MigrationEvents::MIGRATION_ON_EXPORT, $event);
+            foreach ($progress['entities'] as $entity => $props) {
+                if ($props['count'] == $props['processed']) {
+                    continue;
+                }
+
+                $event = new MigrationEvent($this->factory);
+                $event->setBundle($props['bundle']);
+                $event->setEntity($props['entity']);
+                $event->setStart($props['processed']);
+                $event->setLimit(10);
+                $this->dispatcher->dispatch(MigrationEvents::MIGRATION_ON_EXPORT, $event);
+                $entities = $event->getEntities();
+                $serializer = $this->factory->getSerializer();
+
+                foreach ($entities as $entity) {
+                    $entityAr = $this->entityToArray($entity);
+                    // TODO convert to CSV
+                }
+
+                break; // Process only one batch.
             }
+
             // TODO implement file export
         }
 
@@ -131,7 +148,12 @@ class MigrationModel extends FormModel
                 $event->setEntity($parts[1]);
 
                 $this->dispatcher->dispatch(MigrationEvents::MIGRATION_ON_ENTITY_COUNT, $event);
-                $progress['entities'][$entity] = array('count' => $event->getCount(), 'processed' => 0);
+                $progress['entities'][$entity] = array(
+                    'bundle' => $event->getBundle(),
+                    'entity' => $event->getEntity(),
+                    'count' => $event->getCount(),
+                    'processed' => 0
+                );
             }
 
             foreach ($migration->getFolders() as $folder) {
@@ -142,6 +164,18 @@ class MigrationModel extends FormModel
         }
 
         return $progress;
+    }
+
+    /**
+     * Convert an entity to array
+     *
+     * @param  \Mautic\CoreBundle\Entity $action
+     * @return array
+     */
+    protected function entityToArray(\Mautic\CoreBundle\Entity $entity)
+    {
+        $entityJson = $serializer->serialize($entity, 'json');
+        return json_decode($entityJson, true);
     }
 
     /**

@@ -107,7 +107,8 @@ class ExportMigrationCommand extends ContainerAwareCommand
             $migration = $migrationModel->getEntity($id);
 
             if ($migration !== null && $migration->isPublished()) {
-                $progressFile = $container->getParameter('kernel.cache_dir').'/migration/export/'.$id.'.json';
+                $progressFolder = $container->getParameter('kernel.cache_dir') . '/migration/export';
+                $progressFile = $progressFolder . '/' . $id . '.json';
                 $progress = array();
                 if (file_exists($progressFile)) {
                     // Get the progress in the file
@@ -119,6 +120,10 @@ class ExportMigrationCommand extends ContainerAwareCommand
                 // $output->writeln(
                 //     '<comment>'.$translator->trans('mautic.migration.trigger.events_executed', array('%events%' => $processed)).'</comment>'."\n"
                 // );
+
+                if (!is_dir($progressFolder)) {
+                    mkdir($progressFolder, 0775, true);
+                }
 
                 file_put_contents($progressFile, json_encode($progress));
 
@@ -140,41 +145,17 @@ class ExportMigrationCommand extends ContainerAwareCommand
 
                 if ($c->isPublished()) {
                     $output->writeln('<info>'.$translator->trans('mautic.migration.trigger.triggering', array('%id%' => $c->getId())).'</info>');
-                    if (!$negativeOnly && !$scheduleOnly) {
-                        //trigger starting action events for newly added leads
-                        $output->writeln('<comment>'.$translator->trans('mautic.migration.trigger.starting').'</comment>');
-                        $processed = $model->triggerStartingEvents($c, $totalProcessed, $batch, $max, $output);
-                        $output->writeln(
-                            '<comment>'.$translator->trans('mautic.migration.trigger.events_executed', array('%events%' => $processed)).'</comment>'."\n"
-                        );
-                    }
+
+                    //trigger starting action events for newly added leads
+                    $output->writeln('<comment>'.$translator->trans('mautic.migration.trigger.starting').'</comment>');
+                    $processed = $model->triggerStartingEvents($c, $totalProcessed, $batch, $max, $output);
+                    $output->writeln(
+                        '<comment>'.$translator->trans('mautic.migration.trigger.events_executed', array('%events%' => $processed)).'</comment>'."\n"
+                    );
 
                     if ($max && $totalProcessed >= $max) {
 
                         continue;
-                    }
-
-                    if (!$negativeOnly) {
-                        //trigger scheduled events
-                        $output->writeln('<comment>'.$translator->trans('mautic.migration.trigger.scheduled').'</comment>');
-                        $processed = $model->triggerScheduledEvents($c, $totalProcessed, $batch, $max, $output);
-                        $output->writeln(
-                            '<comment>'.$translator->trans('mautic.migration.trigger.events_executed', array('%events%' => $processed)).'</comment>'."\n"
-                        );
-                    }
-
-                    if ($max && $totalProcessed >= $max) {
-
-                        continue;
-                    }
-
-                    if (!$scheduleOnly) {
-                        //find and trigger "no" path events
-                        $output->writeln('<comment>'.$translator->trans('mautic.migration.trigger.negative').'</comment>');
-                        $processed = $model->triggerNegativeEvents($c, $totalProcessed, $batch, $max, $output);
-                        $output->writeln(
-                            '<comment>'.$translator->trans('mautic.migration.trigger.events_executed', array('%events%' => $processed)).'</comment>'."\n"
-                        );
                     }
                 }
 

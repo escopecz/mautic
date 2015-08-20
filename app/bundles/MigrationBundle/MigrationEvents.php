@@ -86,4 +86,14 @@ final class MigrationEvents
      * @var string
      */
     const MIGRATION_ON_ENTITY_COUNT   = 'mautic.migration_on_entity_count';
+
+    /**
+     * The mautic.migration_on_export event is thrown on entity export
+     *
+     * The event listener receives a
+     * Mautic\MigrationBundle\Event\MauticMigrationEvents instance.
+     *
+     * @var string
+     */
+    const MIGRATION_ON_EXPORT   = 'mautic.migration_on_export';
 }

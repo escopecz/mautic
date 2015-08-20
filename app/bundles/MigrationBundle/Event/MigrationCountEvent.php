@@ -55,7 +55,7 @@ class MigrationCountEvent extends Event
      *
      * @param string $entity
      *
-     * @return MigrationEvent
+     * @return MigrationCountEvent
      */
     public function setEntity ($entity)
     {
@@ -69,7 +69,7 @@ class MigrationCountEvent extends Event
      *
      * @param string $bundle
      *
-     * @return MigrationEvent
+     * @return MigrationCountEvent
      */
     public function setBundle ($bundle)
     {
@@ -83,7 +83,7 @@ class MigrationCountEvent extends Event
      *
      * @param integer count
      *
-     * @return MigrationEvent
+     * @return MigrationCountEvent
      */
     public function setCount ($count)
     {
