@@ -267,7 +267,7 @@ class AssetController extends FormController
             return $this->accessDenied();
         }
 
-        $maxSize    = $this->factory->getParameter('max_size');
+        $maxSize    =  $model->getMaxUploadSize();
         $extensions = '.' . implode(', .', $this->factory->getParameter('allowed_extensions'));
 
         $maxSizeError = $this->get('translator')->trans('mautic.asset.asset.error.file.size', array(
@@ -351,7 +351,7 @@ class AssetController extends FormController
         }
 
         // Check for integrations to cloud providers
-        /** @var \Mautic\AddonBundle\Helper\IntegrationHelper $integrationHelper */
+        /** @var \Mautic\PluginBundle\Helper\IntegrationHelper $integrationHelper */
         $integrationHelper = $this->factory->getHelper('integration');
 
         $integrations = $integrationHelper->getIntegrationObjects(null, array('cloud_storage'));
@@ -399,7 +399,7 @@ class AssetController extends FormController
         $session    = $this->factory->getSession();
         $page       = $this->factory->getSession()->get('mautic.asset.page', 1);
         $method     = $this->request->getMethod();
-        $maxSize    = $this->factory->getParameter('max_size');
+        $maxSize    = $model->getMaxUploadSize();
         $extensions = '.' . implode(', .', $this->factory->getParameter('allowed_extensions'));
 
         $maxSizeError = $this->get('translator')->trans('mautic.asset.asset.error.file.size', array(
@@ -516,7 +516,7 @@ class AssetController extends FormController
         }
 
         // Check for integrations to cloud providers
-        /** @var \Mautic\AddonBundle\Helper\IntegrationHelper $integrationHelper */
+        /** @var \Mautic\PluginBundle\Helper\IntegrationHelper $integrationHelper */
         $integrationHelper = $this->factory->getHelper('integration');
 
         $integrations = $integrationHelper->getIntegrationObjects(null, array('cloud_storage'));
@@ -723,7 +723,7 @@ class AssetController extends FormController
     public function remoteAction ()
     {
         // Check for integrations to cloud providers
-        /** @var \Mautic\AddonBundle\Helper\IntegrationHelper $integrationHelper */
+        /** @var \Mautic\PluginBundle\Helper\IntegrationHelper $integrationHelper */
         $integrationHelper = $this->factory->getHelper('integration');
 
         $integrations = $integrationHelper->getIntegrationObjects(null, array('cloud_storage'));

@@ -93,6 +93,8 @@ MauticVars.moderatedIntervals    = {};
 MauticVars.intervalsInProgress   = {};
 
 var Mautic = {
+    loadedContent: {},
+
     /**
      * Binds global keyboard shortcuts
      */
@@ -326,9 +328,8 @@ var Mautic = {
             Mautic.activateDateTimeInputs(this, 'time');
         });
 
-        mQuery(container + " input[data-toggle='color']").pickAColor({
-            fadeMenuToggle: false,
-            inlineDropdown: true
+        mQuery(container + " input[data-toggle='color']").each(function() {
+            Mautic.activateColorPicker(this);
         });
 
         mQuery(container + " select").not('.multiselect, .not-chosen').each(function() {
@@ -553,6 +554,7 @@ var Mautic = {
 
         if (contentSpecific && typeof Mautic[contentSpecific + "OnLoad"] == 'function') {
             Mautic[contentSpecific + "OnLoad"](container, response);
+            Mautic.loadedContent[contentSpecific] = true;
         }
 
         if (!inModal && container == 'body') {
@@ -803,6 +805,10 @@ var Mautic = {
             mQuery('html')
                 .off('fa.sidebar.minimize')
                 .off('fa.sidebar.maximize');
+
+            mQuery(container + " input[data-toggle='color']").each(function() {
+                mQuery(this).minicolors('destroy');
+            });
         }
 
         //run specific unloads
@@ -816,8 +822,14 @@ var Mautic = {
             contentSpecific = response.mauticContent;
         }
 
-        if (contentSpecific && typeof Mautic[contentSpecific + "OnUnload"] == 'function') {
-            Mautic[contentSpecific + "OnUnload"](container, response);
+        if (contentSpecific) {
+            if (typeof Mautic[contentSpecific + "OnUnload"] == 'function') {
+                Mautic[contentSpecific + "OnUnload"](container, response);
+            }
+
+            if (typeof (Mautic.loadedContent[contentSpecific])) {
+                delete Mautic.loadedContent[contentSpecific];
+            }
         }
     },
 
@@ -927,11 +939,17 @@ var Mautic = {
         // Note that asset has been appended
         Mautic.headLoadedAssets[url] = 1;
 
-        var s = document.createElement('script');
-        s.type = 'text/javascript';
-        s.async = true;
-        s.src = url;
-        mQuery('head').append(s);
+        mQuery.getScript(url, function( data, textStatus, jqxhr ) {
+            if (textStatus == 'success') {
+                // Likely a page refresh; execute onLoad content
+                if (typeof Mautic.loadedContent[mauticContent] == 'undefined') {
+                    if (typeof Mautic[mauticContent + "OnLoad"] == 'function') {
+                        Mautic[mauticContent + "OnLoad"]('#app-content', {});
+                        Mautic.loadedContent[mauticContent] = true;
+                    }
+                }
+            }
+        });
     },
 
     /**
@@ -1052,6 +1070,15 @@ var Mautic = {
     },
 
     /**
+     * Deactivates backdrop
+     */
+    deactivateBackgroup: function() {
+        if (mQuery('#mautic-backdrop').length) {
+            mQuery('#mautic-backdrop').remove();
+        }
+    },
+
+    /**
      * Posts a form and returns the output.
      * Uses jQuery form plugin so it handles files as well.
      *
@@ -1117,6 +1144,8 @@ var Mautic = {
      */
     processPageContent: function (response) {
         if (response) {
+            Mautic.deactivateBackgroup();
+
             if (!response.target) {
                 response.target = '#app-content';
             }
@@ -1494,6 +1523,7 @@ var Mautic = {
                 if (response.mauticContent) {
                     if (typeof Mautic[response.mauticContent + "OnLoad"] == 'function') {
                         Mautic[response.mauticContent + "OnLoad"](target, response);
+                        Mautic.loadedContent[contentSpecific] = true;
                     }
                 }
             } else {
@@ -2761,6 +2791,21 @@ var Mautic = {
     },
 
     /**
+     * Converts an input to a color picker
+     * @param el
+     */
+    activateColorPicker: function(el) {
+        var pickerOptions = mQuery(el).data('color-options');
+        if (!pickerOptions) {
+            pickerOptions = {
+                theme: 'bootstrap'
+            };
+        }
+
+        mQuery(el).minicolors(pickerOptions);
+    },
+
+    /**
      * Activates typeahead
      * @param el
      * @param options
@@ -3417,8 +3462,9 @@ var Mautic = {
      * @param action
      * @param data
      * @param successClosure
+     * @param showLoadingBar
      */
-    ajaxActionRequest: function(action, data, successClosure) {
+    ajaxActionRequest: function(action, data, successClosure, showLoadingBar) {
         if (typeof Mautic.ajaxActionXhr == 'undefined') {
             Mautic.ajaxActionXhr = {};
         } else if (typeof Mautic.ajaxActionXhr[action] != 'undefined') {
@@ -3426,10 +3472,15 @@ var Mautic = {
             Mautic.ajaxActionXhr[action].abort();
         }
 
+        if (typeof showLoadingBar == 'undefined') {
+            showLoadingBar = false;
+        }
+
         Mautic.ajaxActionXhr[action] = mQuery.ajax({
             url: mauticAjaxUrl + '?action=' + action,
             type: 'POST',
             data: data,
+            showLoadingBar: showLoadingBar,
             success: function (response) {
                 if (typeof successClosure == 'function') {
                     successClosure(response);

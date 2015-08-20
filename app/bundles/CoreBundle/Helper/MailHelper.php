@@ -20,6 +20,7 @@ use Mautic\EmailBundle\Entity\Email;
 use Mautic\EmailBundle\Entity\Stat;
 use Mautic\EmailBundle\Event\EmailSendEvent;
 use Mautic\EmailBundle\Helper\PlainTextHelper;
+use Mautic\CoreBundle\Helper\EmojiHelper;
 
 /**
  * Class MailHelper
@@ -66,6 +67,11 @@ class MailHelper
      * @var null
      */
     private $from;
+
+    /**
+     * @var string
+     */
+    private $returnPath;
 
     /**
      * @var array
@@ -180,8 +186,9 @@ class MailHelper
             $this->logError($e);
         }
 
-        $this->from    = (!empty($from)) ? $from : array($factory->getParameter('mailer_from_email') => $factory->getParameter('mailer_from_name'));
-        $this->message = $this->getMessageInstance();
+        $this->from       = (!empty($from)) ? $from : array($factory->getParameter('mailer_from_email') => $factory->getParameter('mailer_from_name'));
+        $this->returnPath = $factory->getParameter('mailer_return_path');
+        $this->message    = $this->getMessageInstance();
 
         // Check if batching is supported by the transport
         if ($this->factory->getParameter('mailer_spool_type') == 'memory' && $this->transport instanceof InterfaceTokenTransport) {
@@ -208,6 +215,12 @@ class MailHelper
         $from = $this->message->getFrom();
         if (empty($from)) {
             $this->setFrom($this->from);
+        }
+
+        // Set system return path if applicable
+        $returnPath = $this->message->getReturnPath();
+        if (empty($returnPath) && !empty($this->returnPath)) {
+            $this->message->setReturnPath($this->returnPath);
         }
 
         if (empty($this->errors)) {
@@ -261,10 +274,21 @@ class MailHelper
 
                 if (!empty($failures)) {
                     $this->errors['failures'] = $failures;
-                    $this->factory->getLogger()->log('error', '[MAIL ERROR] '.$this->logger->dump());
+
+                    $this->logError('Sending failed for one or more recipients');
                 }
+
+                // Clear the log so that previous output is not associated with new errors
+                $this->logger->clear();
             } catch (\Exception $e) {
                 $this->logError($e);
+
+                // Exception encountered when sending so all recipients are considered failures
+                $this->errors['failures'] = array_merge(
+                    array_keys((array) $this->message->getTo()),
+                    array_keys((array) $this->message->getCc()),
+                    array_keys((array) $this->message->getBcc())
+                );
             }
         }
 
@@ -279,11 +303,20 @@ class MailHelper
      * If batching is supported and enabled, the message will be queued and will on be sent upon flushQueue().
      * Otherwise, the message will be sent to the transport immediately
      *
-     * @param bool $dispatchSendEvent
+     * @param bool   $dispatchSendEvent
+     * @param string $immediateSendMessageHandling If tokenization is not supported by the mailer, this argument determines
+     *                                             what should happen to $this->message after the email send is attempted.
+     *                                             Options are:
+     *                                             RESET_TO           resets the to recipients and resets errors
+     *                                             FULL_RESET         creates a new MauticMessage instance and resets errors
+     *                                             DO_NOTHING         leaves the current errors array and MauticMessage instance intact
+     *                                             NOTHING_IF_FAILED  leaves the current errors array MauticMessage instance intact if it fails, otherwise reset_to
+     *
+     *
      *
      * @return bool
      */
-    public function queue($dispatchSendEvent = false)
+    public function queue($dispatchSendEvent = false, $immediateSendMessageHandling = 'RESET_TO')
     {
         if ($this->tokenizationEnabled) {
 
@@ -318,7 +351,30 @@ class MailHelper
 
             // Reset the message for the next
             $this->queuedRecipients = array();
-            $this->message          = $this->getMessageInstance();
+
+            // Reset message
+            switch (ucwords($immediateSendMessageHandling)) {
+                case 'RESET_TO':
+                    $this->message->setTo(array());
+                    $this->clearErrors();
+                    break;
+                case 'NOTHING_IF_FAILED':
+                    if ($success) {
+                        $this->message->setTo(array());
+                        $this->clearErrors();
+                    }
+
+                    break;
+                case 'FULL_RESET':
+                    $this->message = $this->getMessageInstance();
+                    $this->clearErrors();
+                    break;
+                case 'DO_NOTHING':
+                default:
+                    // Nada
+
+                    break;
+            }
 
             return $success;
         }
@@ -523,14 +579,6 @@ class MailHelper
     }
 
     /**
-     * @return array
-     */
-    public function getErrors()
-    {
-        return $this->errors;
-    }
-
-    /**
      * Add an attachment to email
      *
      * @param string $filePath
@@ -684,6 +732,8 @@ class MailHelper
      *
      * @param $addresses
      * @param $name
+     *
+     * @return bool
      */
     public function setTo($addresses, $name = null)
     {
@@ -696,8 +746,12 @@ class MailHelper
         try {
             $this->message->setTo($addresses);
             $this->queuedRecipients = array_merge($this->queuedRecipients, $addresses);
+
+            return true;
         } catch (\Exception $e) {
             $this->logError($e);
+
+            return false;
         }
     }
 
@@ -706,6 +760,8 @@ class MailHelper
      *
      * @param      $address
      * @param null $name
+     *
+     * @return bool
      */
     public function addTo($address, $name = null)
     {
@@ -714,8 +770,12 @@ class MailHelper
         try {
             $this->message->addTo($address, $name);
             $this->queuedRecipients[$address] = $name;
+
+            return true;
         } catch (\Exception $e) {
             $this->logError($e);
+
+            return false;
         }
     }
 
@@ -724,6 +784,8 @@ class MailHelper
      *
      * @param $addresses
      * @param $name
+     *
+     * @return bool
      */
     public function setCc($addresses, $name = null)
     {
@@ -731,8 +793,12 @@ class MailHelper
 
         try {
             $this->message->setCc($addresses, $name);
+
+            return true;
         } catch (\Exception $e) {
             $this->logError($e);
+
+            return false;
         }
     }
 
@@ -741,6 +807,8 @@ class MailHelper
      *
      * @param      $address
      * @param null $name
+     *
+     * @return bool
      */
     public function addCc($address, $name = null)
     {
@@ -748,8 +816,12 @@ class MailHelper
 
         try {
             $this->message->addCc($address, $name);
+
+            return true;
         } catch (\Exception $e) {
             $this->logError($e);
+
+            return false;
         }
     }
 
@@ -758,6 +830,8 @@ class MailHelper
      *
      * @param $addresses
      * @param $name
+     *
+     * @return bool
      */
     public function setBcc($addresses, $name = null)
     {
@@ -765,8 +839,12 @@ class MailHelper
 
         try {
             $this->message->setBcc($addresses, $name);
+
+            return true;
         } catch (\Exception $e) {
             $this->logError($e);
+
+            return false;
         }
     }
 
@@ -775,6 +853,8 @@ class MailHelper
      *
      * @param      $address
      * @param null $name
+     *
+     * @return bool
      */
     public function addBcc($address, $name = null)
     {
@@ -782,8 +862,12 @@ class MailHelper
 
         try {
             $this->message->addBcc($address, $name);
+
+            return true;
         } catch (\Exception $e) {
             $this->logError($e);
+
+            return false;
         }
     }
 
@@ -819,6 +903,20 @@ class MailHelper
     {
         try {
             $this->message->setReplyTo($addresses, $name);
+        } catch (\Exception $e) {
+            $this->logError($e);
+        }
+    }
+
+    /**
+     * Set a custom return path
+     *
+     * @param $address
+     */
+    public function setReturnPath($address)
+    {
+        try {
+            $this->message->setReturnPath($address);
         } catch (\Exception $e) {
             $this->logError($e);
         }
@@ -953,8 +1051,13 @@ class MailHelper
     {
         $this->email = $email;
 
+        $subject = $email->getSubject();
+
+        // Convert short codes to emoji
+        $subject = EmojiHelper::toEmoji($subject, 'short');
+
         // Set message settings from the email
-        $this->setSubject($email->getSubject());
+        $this->setSubject($subject);
 
         $fromEmail = $email->getFromAddress();
         $fromName  = $email->getFromName();
@@ -1004,6 +1107,11 @@ class MailHelper
             $customHtml = $email->getCustomHtml();
         }
 
+        // Convert short codes to emoji
+        $customHtml = EmojiHelper::toEmoji($customHtml, 'short');
+
+        $this->setBody($customHtml, 'text/html', null, $ignoreTrackingPixel);
+
         if (empty($assetAttachments)) {
             if ($assets = $email->getAssetAttachments()) {
                 foreach ($assets as $asset) {
@@ -1015,8 +1123,6 @@ class MailHelper
                 $this->attachAsset($asset);
             }
         }
-
-        $this->setBody($customHtml, 'text/html', null, $ignoreTrackingPixel);
     }
 
     /**
@@ -1044,7 +1150,7 @@ class MailHelper
      *
      * @param array $tokens
      *
-     * @depracated Since 1.1.  Use setTokens() instead. To be removed in 2.0
+     * @deprecated Since 1.1.  Use setTokens() instead. To be removed in 2.0
      */
     public function setCustomTokens(array $tokens)
     {
@@ -1142,16 +1248,42 @@ class MailHelper
             $this->fatal = true;
         }
 
-        $this->errors[] = $error;
-
         $logDump = $this->logger->dump();
-
-        if (!empty($logDump)) {
-            $error .= "; $logDump";
-            $this->logger->clear();
+        if (!empty($logDump) && strpos($error, $logDump) === false) {
+            $error .= " Log data: $logDump";
         }
 
+        $this->errors[] = $error;
+
+        $this->logger->clear();
+
         $this->factory->getLogger()->log('error', '[MAIL ERROR] ' . $error);
+    }
+
+    /**
+     * Get list of errors
+     *
+     * @param bool $reset Resets the error array in preparation for the next mail send or else it'll fail
+     *
+     * @return array
+     */
+    public function getErrors($reset = true)
+    {
+        $errors = $this->errors;
+
+        if ($reset) {
+            $this->clearErrors();
+        }
+
+        return $errors;
+    }
+
+    /**
+     * Clears the errors from a previous send
+     */
+    public function clearErrors()
+    {
+        $this->errors = array();
     }
 
     /**

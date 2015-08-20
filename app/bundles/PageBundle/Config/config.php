@@ -56,7 +56,8 @@ return array(
                 'path'       => '/{slug}',
                 'controller' => 'MauticPageBundle:Public:index',
                 'requirements' => array(
-                    'slug' => '^(?!(_(profiler|wdt)|css|images|js|favicon.ico|apps/bundles/|addons/)).+'
+                    // @deprecated support for /addons; to be removed in 2.0
+                    'slug' => '^(?!(_(profiler|wdt)|css|images|js|favicon.ico|apps/bundles/|plugins/|addons/)).+'
                 )
             ),
         )
@@ -64,7 +65,7 @@ return array(
 
     'menu'       => array(
         'main' => array(
-            'priority' => 9,
+            'priority' => 30,
             'items'    => array(
                 'mautic.page.pages' => array(
                     'id'        => 'mautic_page_root',
@@ -160,12 +161,22 @@ return array(
             'mautic.form.type.slideshow_slide_config'   => array(
                 'class' => 'Mautic\PageBundle\Form\Type\SlideshowSlideConfigType',
                 'alias' => 'slideshow_slide_config'
+            ),
+            'mautic.form.type.redirect_list'            => array(
+                'class' => 'Mautic\PageBundle\Form\Type\RedirectListType',
+                'arguments' => 'mautic.factory',
+                'alias' => 'redirect_list'
             )
         )
     ),
 
     'parameters' => array(
         'cat_in_page_url'  => false,
-        'google_analytics' => false
+        'google_analytics' => false,
+
+        'redirect_list_types' => array(
+            '301' => 'mautic.page.form.redirecttype.permanent',
+            '302' => 'mautic.page.form.redirecttype.temporary'
+        )
     )
 );
