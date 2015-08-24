@@ -67,7 +67,7 @@ class ExportMigrationCommand extends ContainerAwareCommand
         $force        = $input->getOption('force');
 
         // Prevent script overlap
-        $checkFile      = $checkFile = $container->getParameter('kernel.cache_dir').'/../script_executions.json';
+        $checkFile      = $checkFile = $container->getParameter('kernel.cache_dir') . '/../script_executions.json';
         $command        = 'mautic:migrations:export';
         $key            = ($id) ? $id : 'all';
         $executionTimes = array();

@@ -109,19 +109,37 @@ class MigrationModel extends FormModel
                 $event->setEntity($props['entity']);
                 $event->setStart($props['processed']);
                 $event->setLimit(10);
+
                 $this->dispatcher->dispatch(MigrationEvents::MIGRATION_ON_EXPORT, $event);
+
                 $entities = $event->getEntities();
-                $serializer = $this->factory->getSerializer();
+                $dir      = $this->factory->getSystemPath('root') . '/exports/' . $migration->getId();
+                $file     = $props['bundle'] . '.' . $props['entity'] . '.csv';
+                $path     = $dir . '/' . $file;
+
+                if (!is_dir($dir)) {
+                    mkdir($dir, 0775, true);
+                }
+
+                $handle      = fopen($path, 'w');
+                $headerBuilt = false;
 
                 foreach ($entities as $entity) {
                     $entityAr = $this->entityToArray($entity);
-                    // TODO convert to CSV
+
+                    if (!$props['processed'] && $headerBuilt === false) {
+                        $headers = array_keys($entityAr);
+                        fputcsv($handle, $headers);
+                        $headerBuilt = true;
+                    }
+
+                    fputcsv($handle, $entityAr);
                 }
+
+                fclose($handle);
 
                 break; // Process only one batch.
             }
-
-            // TODO implement file export
         }
 
         return $progress;
@@ -169,11 +187,12 @@ class MigrationModel extends FormModel
     /**
      * Convert an entity to array
      *
-     * @param  \Mautic\CoreBundle\Entity $action
+     * @param  object $entity
      * @return array
      */
-    protected function entityToArray(\Mautic\CoreBundle\Entity $entity)
+    protected function entityToArray($entity)
     {
+        $serializer = $this->factory->getSerializer();
         $entityJson = $serializer->serialize($entity, 'json');
         return json_decode($entityJson, true);
     }

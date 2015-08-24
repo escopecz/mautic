@@ -19,6 +19,7 @@
 /bin/*
 /composer.phar
 /bundles
+/exports
 /media/files/*
 /node_modules
 /build/packaging
