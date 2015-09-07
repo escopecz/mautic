@@ -183,6 +183,9 @@ return array(
             'mautic.webhook.subscriber'                => array(
                 'class' => 'Mautic\LeadBundle\EventListener\WebhookSubscriber'
             ),
+            'mautic.lead.migrationbundle.subscriber' => array(
+                'class' => 'Mautic\LeadBundle\EventListener\MigrationSubscriber'
+            )
         ),
         'forms'   => array(
             'mautic.form.type.lead'                           => array(
