@@ -13,7 +13,7 @@ use Doctrine\ORM\EntityManager;
 use Mautic\CoreBundle\Entity\IpAddress;
 use Mautic\CoreBundle\Exception\FileNotFoundException;
 use Mautic\CoreBundle\Helper\DateTimeHelper;
-use Mautic\CoreBundle\Helper\MailHelper;
+use Mautic\EmailBundle\Helper\MailHelper;
 use Mautic\CoreBundle\Templating\Helper\ThemeHelper;
 use Mautic\UserBundle\Entity\User;
 use Symfony\Bundle\FrameworkBundle\Routing\Router;
@@ -386,29 +386,33 @@ class MauticFactory
     {
         $paths = $this->getParameter('paths');
 
-        if ($name == 'currentTheme') {
+        if ($name == 'currentTheme' || $name == 'current_theme') {
             $theme = $this->getParameter('theme');
             $path  = $paths['themes']."/$theme";
         } elseif ($name == 'cache' || $name == 'log') {
             //these are absolute regardless as they are configurable
             return $this->container->getParameter("kernel.{$name}_dir");
         } elseif ($name == 'images') {
-            $imageDir = $this->getParameter('image_path');
-            if (substr($imageDir, -1) === '/') {
-                $imageDir = substr($imageDir, 0, -1);
+            $path = $this->getParameter('image_path');
+            if (substr($path, -1) === '/') {
+                $path = substr($path, 0, -1);
             }
-
-            // Use local root if set if different than the system's root (for symlinked scenarios)
-            $root = (isset($paths['local_root'])) ? $paths['local_root'] : $paths['root'];
-
-            return ($fullPath)  ? $root  . '/' . $imageDir : $imageDir;
         } elseif (isset($paths[$name])) {
             $path = $paths[$name];
+        } elseif (strpos($name, '_root') !== false) {
+            // Assume system root if one is not set specifically
+            $path = $paths['root'];
         } else {
             throw new \InvalidArgumentException("$name does not exist.");
         }
 
-        return ($fullPath) ? $paths['root'].'/'.$path : $path;
+        if ($fullPath) {
+            $rootPath = (!empty($paths[$name . '_root'])) ? $paths[$name . '_root'] : $paths['root'];
+
+            return $rootPath . '/' . $path;
+        }
+
+        return $path;
     }
 
     /**
@@ -661,7 +665,7 @@ class MauticFactory
      *
      * @param bool|false $system
      *
-     * @return object
+     * @return \Monolog\Logger
      */
     public function getLogger($system = false)
     {
