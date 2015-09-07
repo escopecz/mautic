@@ -108,7 +108,11 @@ class ExportMigrationCommand extends ContainerAwareCommand
 
             if ($migration !== null && $migration->isPublished()) {
                 $output->writeln('<info>'.$translator->trans('mautic.migration.export.starting', array('%id%' => $id)).'</info>');
-                $migrationModel->triggerExport($migration, $batch, $output);
+                $blueprint = $migrationModel->triggerExport($migration, $batch, $output);
+                $output->writeln('<info>'.$translator->trans('mautic.migration.export.progress', array(
+                    '%processedEntities%' => $blueprint['processedEntities'],   
+                    '%totalEntities%' => $blueprint['totalEntities']
+                )).'</info>');
             } else {
                 $output->writeln('<error>'.$translator->trans('mautic.migration.template.not_found', array('%id%' => $id)).'</error>');
             }

@@ -14,6 +14,7 @@ use Mautic\MigrationBundle\MigrationEvents;
 use Mautic\MigrationBundle\Event\MigrationEditEvent;
 use Mautic\MigrationBundle\Event\MigrationCountEvent;
 use Mautic\MigrationBundle\Event\MigrationEvent;
+use Doctrine\ORM\Query;
 
 /**
  * Class MigrationSubscriber
@@ -50,7 +51,7 @@ class MigrationSubscriber extends CommonSubscriber
      * @return void
      */
     public function onMigrationEditGenerate (MigrationEditEvent $event)
-    {var_dump($this->entities);
+    {
         foreach ($this->entities as $entity) {
             $event->addEntity($this->bundleName, $entity);
         }
@@ -91,18 +92,26 @@ class MigrationSubscriber extends CommonSubscriber
         if ($event->getBundle() == $this->bundleName) {
             $factory = $event->getFactory();
             if ($event->getEntity() == 'Asset') {
-                $model = $this->factory->getModel('asset.asset');
+                $q = $factory->getEntityManager()->getRepository('MauticAssetBundle:Asset')->createQueryBuilder('a');
 
-                $event->setEntities(
-                    $model->getEntities(
-                        array(
-                            'start'      => $event->getStart(),
-                            'limit'      => $event->getLimit(),
-                            'orderBy'    => 'a.id',
-                            'orderByDir' => 'asc'
-                        )
-                    )
-                );
+                $entities = $q
+                    ->setMaxResults($event->getLimit())
+                    ->setFirstResult($event->getStart())
+                    ->orderBy('a.id')
+                    ->getQuery()
+                    ->getResult(Query::HYDRATE_SCALAR);
+                $event->setEntities($entities);
+            }
+            if ($event->getEntity() == 'Download') {
+                $q = $factory->getEntityManager()->getRepository('MauticAssetBundle:Download')->createQueryBuilder('d');
+
+                $entities = $q
+                    ->setMaxResults($event->getLimit())
+                    ->setFirstResult($event->getStart())
+                    ->orderBy('d.id')
+                    ->getQuery()
+                    ->getResult(Query::HYDRATE_SCALAR);
+                $event->setEntities($entities);
             }
         }
     }

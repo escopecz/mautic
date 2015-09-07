@@ -346,4 +346,12 @@ class Download
     {
         $this->email = $email;
     }
+
+    /**
+     * @return array
+     */
+    public function convertToArray()
+    {
+        return get_object_vars($this);
+    }
 }

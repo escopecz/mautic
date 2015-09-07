@@ -304,4 +304,19 @@ class DownloadRepository extends CommonRepository
             ->where('lead_id = ' . (int) $fromLeadId)
             ->execute();
     }
+
+    /**
+     * Count all downloades
+     *
+     * @return integer
+     */
+    public function count()
+    {
+        $count = $this->createQueryBuilder('d')
+            ->select('count(d.id)')
+            ->getQuery()
+            ->getSingleScalarResult();
+
+        return $count;
+    }
 }

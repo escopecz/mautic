@@ -92,13 +92,13 @@ class MigrationModel extends FormModel
      * @param  OutputInterface  $output
      * @return array of updated blueprint
      */
-    public function triggerExport(Migration $migration, $batch, $output)
+    public function triggerExport(Migration $migration, $batch = 10, $output)
     {
         $blueprint = $this->getBlueprint($migration);
 
         if ($this->dispatcher->hasListeners(MigrationEvents::MIGRATION_ON_EXPORT)) {
-            foreach ($blueprint['entities'] as $entity => $props) {
-                if ($props['count'] == $props['processed']) {
+            foreach ($blueprint['entities'] as &$props) {
+                if ($props['processed'] >= $props['count']) {
                     continue;
                 }
 
@@ -106,7 +106,7 @@ class MigrationModel extends FormModel
                 $event->setBundle($props['bundle']);
                 $event->setEntity($props['entity']);
                 $event->setStart($props['processed']);
-                $event->setLimit(10);
+                $event->setLimit($batch);
 
                 $this->dispatcher->dispatch(MigrationEvents::MIGRATION_ON_EXPORT, $event);
 
@@ -119,7 +119,7 @@ class MigrationModel extends FormModel
                     mkdir($dir, 0775, true);
                 }
 
-                $handle      = fopen($path, 'w');
+                $handle      = fopen($path, 'a');
                 $headerBuilt = false;
 
                 foreach ($entities as $entity) {
@@ -136,11 +136,17 @@ class MigrationModel extends FormModel
 
                 fclose($handle);
 
+                $processed = count($entities);
+                $props['processed'] += $processed;
+                $blueprint['processedEntities'] += $processed;
+
                 break; // Process only one batch.
             }
         }
 
         $this->saveBlueprint($migration->getId(), $blueprint);
+
+        return $blueprint;
     }
 
     /**
@@ -183,7 +189,7 @@ class MigrationModel extends FormModel
             }
         }
 
-        if (strnatcmp(phpversion(),'5.4.0') >= 0)
+        if (strnatcmp(phpversion(), '5.4.0') >= 0)
         {
             $content = json_encode($content, JSON_PRETTY_PRINT);
         }
@@ -208,7 +214,14 @@ class MigrationModel extends FormModel
      */
     public function buildBlueprint(Migration $migration)
     {
-        $blueprint = array('entities' => array(), 'folders' => array());
+        $blueprint = array(
+            'entities' => array(),
+            'folders' => array(),
+            'totalEntities' => 0,
+            'processedEntities' => 0,
+            'totalFiles' => 0,
+            'processedFiles' => 0
+        );
 
         if ($this->dispatcher->hasListeners(MigrationEvents::MIGRATION_ON_ENTITY_COUNT)) {
             foreach ($migration->getEntities() as $entity) {
@@ -218,6 +231,7 @@ class MigrationModel extends FormModel
                 $event->setEntity($parts[1]);
 
                 $this->dispatcher->dispatch(MigrationEvents::MIGRATION_ON_ENTITY_COUNT, $event);
+                $blueprint['totalEntities'] += $event->getCount();
                 $blueprint['entities'][$entity] = array(
                     'bundle' => $event->getBundle(),
                     'entity' => $event->getEntity(),
@@ -229,7 +243,9 @@ class MigrationModel extends FormModel
             foreach ($migration->getFolders() as $folder) {
                 $parts = explode('.', $folder);
                 $files = new \FilesystemIterator($parts[1], \FilesystemIterator::SKIP_DOTS);
-                $blueprint['folders'][$folder] = array('count' => iterator_count($files), 'processed' => 0);
+                $count = iterator_count($files);
+                $blueprint['totalFiles'] += $count;
+                $blueprint['folders'][$folder] = array('count' => $count, 'processed' => 0);
             }
         }
 
@@ -244,6 +260,9 @@ class MigrationModel extends FormModel
      */
     protected function entityToArray($entity)
     {
+        if (method_exists($entity, 'convertToArray')) {
+            return $entity->convertToArray();
+        }
         $serializer = $this->factory->getSerializer();
         $entityJson = $serializer->serialize($entity, 'json');
         return json_decode($entityJson, true);

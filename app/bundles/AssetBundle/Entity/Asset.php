@@ -1374,4 +1374,12 @@ class Asset extends FormEntity
 
         return $this;
     }
+
+    /**
+     * @return array
+     */
+    public function convertToArray()
+    {
+        return get_object_vars($this);
+    }
 }
