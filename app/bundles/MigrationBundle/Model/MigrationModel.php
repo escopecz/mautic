@@ -183,7 +183,16 @@ class MigrationModel extends FormModel
             }
         }
 
-        if (file_put_contents($file, json_encode($content)) === false) {
+        if (strnatcmp(phpversion(),'5.4.0') >= 0)
+        {
+            $content = json_encode($content, JSON_PRETTY_PRINT);
+        }
+        else
+        {
+            $content = json_encode($content);
+        }
+
+        if (file_put_contents($file, $content) === false) {
             throw new \Exception($translator->trans('mautic.migration.file.not.written', array('%file%' => $file)));
         }
     }
