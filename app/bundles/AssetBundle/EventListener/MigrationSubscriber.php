@@ -28,6 +28,11 @@ class MigrationSubscriber extends CommonSubscriber
     protected $bundleName = 'AssetBundle';
 
     /**
+     * @var string
+     */
+    protected $entities = array('Asset', 'Download');
+
+    /**
      * @return array
      */
     static public function getSubscribedEvents ()
@@ -45,9 +50,11 @@ class MigrationSubscriber extends CommonSubscriber
      * @return void
      */
     public function onMigrationEditGenerate (MigrationEditEvent $event)
-    {
-        $event->addEntity($this->bundleName, 'Asset');
-        $event->addEntity($this->bundleName, 'Download');
+    {var_dump($this->entities);
+        foreach ($this->entities as $entity) {
+            $event->addEntity($this->bundleName, $entity);
+        }
+
         $event->addFolder($this->bundleName, realpath($event->getFactory()->getParameter('upload_dir')));
 
         // No need for special form for now
@@ -65,10 +72,11 @@ class MigrationSubscriber extends CommonSubscriber
      */
     public function onEntityCount (MigrationCountEvent $event)
     {
-        if ($event->getBundle() == 'AssetBundle') {
+        if ($event->getBundle() == $this->bundleName) {
             $factory = $event->getFactory();
-            if ($event->getEntity() == 'Asset') {
-                $event->setCount($factory->getEntityManager()->getRepository('MauticAssetBundle:Asset')->count());
+            $key = array_search($event->getEntity(), $this->entities);
+            if ($key !== false) {
+                $event->setCount($factory->getEntityManager()->getRepository('Mautic' . $this->bundleName . ':' . $this->entities[$key])->count());
             }
         }
     }
@@ -80,7 +88,7 @@ class MigrationSubscriber extends CommonSubscriber
      */
     public function onExport (MigrationEvent $event)
     {
-        if ($event->getBundle() == 'AssetBundle') {
+        if ($event->getBundle() == $this->bundleName) {
             $factory = $event->getFactory();
             if ($event->getEntity() == 'Asset') {
                 $model = $this->factory->getModel('asset.asset');
