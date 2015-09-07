@@ -87,19 +87,17 @@ class MigrationModel extends FormModel
      * Trigger export of a specific migration template
      *
      * @param  Migration        $migration
-     * @param  array            $progress
+     * @param  array            $blueprint
      * @param  integer          $batch limit
      * @param  OutputInterface  $output
-     * @return array of updated progress
+     * @return array of updated blueprint
      */
-    public function triggerExport(Migration $migration, $progress, $batch, $output)
+    public function triggerExport(Migration $migration, $batch, $output)
     {
-        if (!$progress) {
-            $progress = $this->buildProgress($migration);
-        }
+        $blueprint = $this->getBlueprint($migration);
 
         if ($this->dispatcher->hasListeners(MigrationEvents::MIGRATION_ON_EXPORT)) {
-            foreach ($progress['entities'] as $entity => $props) {
+            foreach ($blueprint['entities'] as $entity => $props) {
                 if ($props['count'] == $props['processed']) {
                     continue;
                 }
@@ -142,21 +140,66 @@ class MigrationModel extends FormModel
             }
         }
 
-        return $progress;
+        $this->saveBlueprint($migration->getId(), $blueprint);
+    }
+
+    /**
+     * Get migration blueprint from a json file or create fresh one
+     *
+     * @param  Migration  $migration
+     *
+     * @return array of updated blueprint
+     */
+    public function getBlueprint($migration)
+    {
+        $dir     = $this->factory->getSystemPath('root') . '/exports/' . $migration->getId();
+        $file    = $dir . '/blueprint.json';
+
+        if (file_exists($file)) {
+            $blueprint = json_decode(file_get_contents($file), true);
+        } else {
+            $blueprint = $this->buildBlueprint($migration);
+        }
+
+        return $blueprint;
+    }
+
+    /**
+     * Save migration blueprint to a json file
+     *
+     * @param  integer  $id of the migration
+     * @param  array    $content of the migration blueprint
+     *
+     * @return void
+     */
+    public function saveBlueprint($id, array $content)
+    {
+        $dir     = $this->factory->getSystemPath('root') . '/exports/' . $id;
+        $file    = $dir . '/blueprint.json';
+
+        if (!is_dir($dir)) {
+            if (mkdir($dir, 0775, true)) {
+                throw new \Exception($translator->trans('mautic.migration.folder.not.written', array('%folder%' => $dir)));
+            }
+        }
+
+        if (file_put_contents($file, json_encode($content)) === false) {
+            throw new \Exception($translator->trans('mautic.migration.file.not.written', array('%file%' => $file)));
+        }
     }
 
     /**
      * Trigger export of a specific migration template
      *
      * @param  Migration        $migration
-     * @param  array            $progress
+     * @param  array            $blueprint
      * @param  integer          $batch limit
      * @param  OutputInterface  $output
-     * @return array of updated progress
+     * @return array of updated blueprint
      */
-    public function buildProgress(Migration $migration)
+    public function buildBlueprint(Migration $migration)
     {
-        $progress = array('entities' => array(), 'folders' => array());
+        $blueprint = array('entities' => array(), 'folders' => array());
 
         if ($this->dispatcher->hasListeners(MigrationEvents::MIGRATION_ON_ENTITY_COUNT)) {
             foreach ($migration->getEntities() as $entity) {
@@ -166,7 +209,7 @@ class MigrationModel extends FormModel
                 $event->setEntity($parts[1]);
 
                 $this->dispatcher->dispatch(MigrationEvents::MIGRATION_ON_ENTITY_COUNT, $event);
-                $progress['entities'][$entity] = array(
+                $blueprint['entities'][$entity] = array(
                     'bundle' => $event->getBundle(),
                     'entity' => $event->getEntity(),
                     'count' => $event->getCount(),
@@ -177,11 +220,11 @@ class MigrationModel extends FormModel
             foreach ($migration->getFolders() as $folder) {
                 $parts = explode('.', $folder);
                 $files = new \FilesystemIterator($parts[1], \FilesystemIterator::SKIP_DOTS);
-                $progress['folders'][$folder] = array('count' => iterator_count($files), 'processed' => 0);
+                $blueprint['folders'][$folder] = array('count' => iterator_count($files), 'processed' => 0);
             }
         }
 
-        return $progress;
+        return $blueprint;
     }
 
     /**

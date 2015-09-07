@@ -107,26 +107,8 @@ class ExportMigrationCommand extends ContainerAwareCommand
             $migration = $migrationModel->getEntity($id);
 
             if ($migration !== null && $migration->isPublished()) {
-                $progressFolder = $container->getParameter('kernel.cache_dir') . '/migration/export';
-                $progressFile = $progressFolder . '/' . $id . '.json';
-                $progress = array();
-                if (file_exists($progressFile)) {
-                    // Get the progress in the file
-                    $progress = json_decode(file_get_contents($progressFile), true);
-
-                }
                 $output->writeln('<info>'.$translator->trans('mautic.migration.export.starting', array('%id%' => $id)).'</info>');
-                $progress = $migrationModel->triggerExport($migration, $progress, $batch, $output);
-                // $output->writeln(
-                //     '<comment>'.$translator->trans('mautic.migration.trigger.events_executed', array('%events%' => $processed)).'</comment>'."\n"
-                // );
-
-                if (!is_dir($progressFolder)) {
-                    mkdir($progressFolder, 0775, true);
-                }
-
-                file_put_contents($progressFile, json_encode($progress));
-
+                $migrationModel->triggerExport($migration, $batch, $output);
             } else {
                 $output->writeln('<error>'.$translator->trans('mautic.migration.template.not_found', array('%id%' => $id)).'</error>');
             }
@@ -154,7 +136,6 @@ class ExportMigrationCommand extends ContainerAwareCommand
                     );
 
                     if ($max && $totalProcessed >= $max) {
-
                         continue;
                     }
                 }
