@@ -283,11 +283,20 @@ class MigrationModel extends FormModel
     protected function entityToArray($entity)
     {
         if (method_exists($entity, 'convertToArray')) {
-            return $entity->convertToArray();
+            $array = $entity->convertToArray();
+        } else {
+            $serializer = $this->factory->getSerializer();
+            $entityJson = $serializer->serialize($entity, 'json');
+            $array =  json_decode($entityJson, true);
         }
-        $serializer = $this->factory->getSerializer();
-        $entityJson = $serializer->serialize($entity, 'json');
-        return json_decode($entityJson, true);
+
+        foreach ($array as &$item) {
+            if (is_array($item)) {
+                $item = json_encode($item);
+            }
+        }
+
+        return $array;
     }
 
     /**
