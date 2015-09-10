@@ -31,4 +31,20 @@ class MigrationSubscriber extends MigrationParentSubscriber
      * @var string
      */
     protected $entities = array('Lead', 'LeadField', 'LeadList', 'LeadNote', 'ListLead', 'PointsChangeLog', 'Tag');
+
+
+    /**
+     * @param  MigrationTemplateEvent $event
+     *
+     * @return void
+     */
+    public function onExport(MigrationEvent $event)
+    {
+        if ($event->getBundle() == $this->bundleName && $event->getEntity() == 'ListLead') {
+            $entities = $this->getEntities($event, 'ListLead', 'dateAdded');
+            $event->setEntities($entities);
+        } else {
+            parent::onExport($event);
+        }
+    }
 }

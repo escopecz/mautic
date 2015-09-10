@@ -39,7 +39,7 @@ class ExportMigrationCommand extends ContainerAwareCommand
                 'Export a specific migration template.  Otherwise, all migration templates will be exported.',
                 null
             )
-            ->addOption('--batch-limit', '-l', InputOption::VALUE_OPTIONAL, 'Set batch size of entities to process per round. Defaults to 100.', 100)
+            ->addOption('--batch-limit', '-l', InputOption::VALUE_OPTIONAL, 'Set batch size of entities to process per round. Defaults to 10000.', 10000)
             ->addOption('--force', '-f', InputOption::VALUE_NONE, 'Force execution even if another process is assumed running.');
     }
 
@@ -110,7 +110,7 @@ class ExportMigrationCommand extends ContainerAwareCommand
                 $output->writeln('<info>'.$translator->trans('mautic.migration.export.starting', array('%id%' => $id)).'</info>');
                 $blueprint = $migrationModel->triggerExport($migration, $batch, $output);
                 $output->writeln('<info>'.$translator->trans('mautic.migration.export.progress', array(
-                    '%processedEntities%' => $blueprint['processedEntities'],   
+                    '%processedEntities%' => $blueprint['processedEntities'],
                     '%totalEntities%' => $blueprint['totalEntities']
                 )).'</info>');
             } else {
