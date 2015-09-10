@@ -465,6 +465,14 @@ class FormEntity extends CommonEntity
     }
 
     /**
+     * @return array
+     */
+    public function convertToArray()
+    {
+        return get_object_vars($this);
+    }
+
+    /**
      * @return string
      */
     public function getCheckedOutByUser()

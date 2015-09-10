@@ -42,6 +42,11 @@ return array(
     ),
 
     'services' => array(
+        'events' => array(
+            'mautic.migration.migrationbundle.subscriber' => array(
+                'class' => 'Mautic\MigrationBundle\EventListener\MigrationSubscriber'
+            )
+        ),
         'forms' => array(
             'mautic.form.type.migration' => array(
                 'class' => 'Mautic\MigrationBundle\Form\Type\MigrationType',
