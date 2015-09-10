@@ -9,7 +9,7 @@
 
 namespace Mautic\AssetBundle\EventListener;
 
-use Mautic\CoreBundle\EventListener\CommonSubscriber;
+use Mautic\MigrationBundle\EventListener\MigrationSubscriber as MigrationParentSubscriber;
 use Mautic\MigrationBundle\MigrationEvents;
 use Mautic\MigrationBundle\Event\MigrationEditEvent;
 use Mautic\MigrationBundle\Event\MigrationCountEvent;
@@ -21,7 +21,7 @@ use Doctrine\ORM\Query;
  *
  * @package Mautic\AssetBundle\EventListener
  */
-class MigrationSubscriber extends CommonSubscriber
+class MigrationSubscriber extends MigrationParentSubscriber
 {
     /**
      * @var string
@@ -34,52 +34,15 @@ class MigrationSubscriber extends CommonSubscriber
     protected $entities = array('Asset', 'Download');
 
     /**
-     * @return array
-     */
-    static public function getSubscribedEvents ()
-    {
-        return array(
-            MigrationEvents::MIGRATION_TEMPLATE_ON_EDIT_DISPLAY => array('onMigrationEditGenerate', 0),
-            MigrationEvents::MIGRATION_ON_ENTITY_COUNT => array('onEntityCount', 0),
-            MigrationEvents::MIGRATION_ON_EXPORT => array('onExport', 0)
-        );
-    }
-
-    /**
      * @param  MigrationTemplateEvent $event
      *
      * @return void
      */
     public function onMigrationEditGenerate (MigrationEditEvent $event)
     {
-        foreach ($this->entities as $entity) {
-            $event->addEntity($this->bundleName, $entity);
-        }
+        $this->folders[] = $event->getFactory()->getParameter('upload_dir');
 
-        $event->addFolder($this->bundleName, realpath($event->getFactory()->getParameter('upload_dir')));
-
-        // No need for special form for now
-        // $event->addForm(array(
-        //     'name'       => 'Assets',
-        //     'formAlias'  => 'assetmigration',
-        //     'formTheme'  => 'MauticAssetBundle:FormTheme\Migration'
-        // ));
-    }
-
-    /**
-     * @param  MigrationTemplateEvent $event
-     *
-     * @return void
-     */
-    public function onEntityCount (MigrationCountEvent $event)
-    {
-        if ($event->getBundle() == $this->bundleName) {
-            $factory = $event->getFactory();
-            $key = array_search($event->getEntity(), $this->entities);
-            if ($key !== false) {
-                $event->setCount($factory->getEntityManager()->getRepository('Mautic' . $this->bundleName . ':' . $this->entities[$key])->count());
-            }
-        }
+        parent::onMigrationEditGenerate($event);
     }
 
     /**
@@ -92,25 +55,11 @@ class MigrationSubscriber extends CommonSubscriber
         if ($event->getBundle() == $this->bundleName) {
             $factory = $event->getFactory();
             if ($event->getEntity() == 'Asset') {
-                $q = $factory->getEntityManager()->getRepository('MauticAssetBundle:Asset')->createQueryBuilder('a');
-
-                $entities = $q
-                    ->setMaxResults($event->getLimit())
-                    ->setFirstResult($event->getStart())
-                    ->orderBy('a.id')
-                    ->getQuery()
-                    ->getResult(Query::HYDRATE_SCALAR);
+                $entities = $this->getEntities($event, 'Asset', 'a');
                 $event->setEntities($entities);
             }
             if ($event->getEntity() == 'Download') {
-                $q = $factory->getEntityManager()->getRepository('MauticAssetBundle:Download')->createQueryBuilder('d');
-
-                $entities = $q
-                    ->setMaxResults($event->getLimit())
-                    ->setFirstResult($event->getStart())
-                    ->orderBy('d.id')
-                    ->getQuery()
-                    ->getResult(Query::HYDRATE_SCALAR);
+                $entities = $this->getEntities($event, 'Download', 'd');
                 $event->setEntities($entities);
             }
         }

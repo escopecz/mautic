@@ -110,7 +110,7 @@ class MigrationSubscriber extends CommonSubscriber
     {
         if ($event->getBundle() == $this->bundleName) {
             if ($event->getEntity() == 'Migration') {
-                $entities = $this->getEntities($event, 'Migration', 'm', 'id');
+                $entities = $this->getEntities($event, 'Migration', 'm');
                 $event->setEntities($entities);
             }
         }
@@ -126,7 +126,7 @@ class MigrationSubscriber extends CommonSubscriber
      *
      * @return array
      */
-    public function getEntities($event, $entityName, $tableAlias, $keyName)
+    public function getEntities($event, $entityName, $tableAlias, $keyName = 'id')
     {
         $q = $event->getFactory()->getEntityManager()
             ->getRepository($this->classPrefix . $this->bundleName . ':' . $entityName)
