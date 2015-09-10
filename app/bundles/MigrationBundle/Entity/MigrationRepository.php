@@ -48,7 +48,7 @@ class MigrationRepository extends CommonRepository
     public function count()
     {
         $count = $this->createQueryBuilder('m')
-            ->select('count(d.id)')
+            ->select('count(m.id)')
             ->getQuery()
             ->getSingleScalarResult();
 

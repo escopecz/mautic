@@ -79,6 +79,8 @@ class MigrationSubscriber extends CommonSubscriber
     }
 
     /**
+     * Called on entity count
+     *
      * @param  MigrationTemplateEvent $event
      *
      * @return void
@@ -98,6 +100,8 @@ class MigrationSubscriber extends CommonSubscriber
     }
 
     /**
+     * Method executed on migration export
+     *
      * @param  MigrationTemplateEvent $event
      *
      * @return void
@@ -106,25 +110,25 @@ class MigrationSubscriber extends CommonSubscriber
     {
         if ($event->getBundle() == $this->bundleName) {
             if ($event->getEntity() == 'Migration') {
-                $entities = $this->getEntities($event->getFactory(), 'Migration', 'm', 'id');
+                $entities = $this->getEntities($event, 'Migration', 'm', 'id');
                 $event->setEntities($entities);
             }
         }
     }
 
     /**
-     * Get entities from a Entity
+     * Get rows from a Entity
      *
-     * @param  Factory $factory
-     * @param  string  $entityName
-     * @param  string  $tableAlias
-     * @param  string  $KeyName
+     * @param  MigrationEvent $event
+     * @param  string         $entityName
+     * @param  string         $tableAlias
+     * @param  string         $KeyName
      *
-     * @return void
+     * @return array
      */
-    public function getEntities($factory, $entityName, $tableAlias, $keyName)
+    public function getEntities($event, $entityName, $tableAlias, $keyName)
     {
-        $q = $factory->getEntityManager()
+        $q = $event->getFactory()->getEntityManager()
             ->getRepository($this->classPrefix . $this->bundleName . ':' . $entityName)
             ->createQueryBuilder($tableAlias);
 
