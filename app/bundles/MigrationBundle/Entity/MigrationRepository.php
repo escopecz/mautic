@@ -39,19 +39,4 @@ class MigrationRepository extends CommonRepository
     {
         return 'm';
     }
-
-    /**
-     * Count all downloades
-     *
-     * @return integer
-     */
-    public function count()
-    {
-        $count = $this->createQueryBuilder('m')
-            ->select('count(m.id)')
-            ->getQuery()
-            ->getSingleScalarResult();
-
-        return $count;
-    }
 }

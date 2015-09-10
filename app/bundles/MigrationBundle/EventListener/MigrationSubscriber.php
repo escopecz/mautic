@@ -109,9 +109,11 @@ class MigrationSubscriber extends CommonSubscriber
     public function onExport(MigrationEvent $event)
     {
         if ($event->getBundle() == $this->bundleName) {
-            if ($event->getEntity() == 'Migration') {
-                $entities = $this->getEntities($event, 'Migration', 'm');
-                $event->setEntities($entities);
+            foreach ($this->entities as $entity) {
+                if ($event->getEntity() == $entity) {
+                    $entities = $this->getEntities($event, $entity);
+                    $event->setEntities($entities);
+                }
             }
         }
     }
@@ -121,13 +123,13 @@ class MigrationSubscriber extends CommonSubscriber
      *
      * @param  MigrationEvent $event
      * @param  string         $entityName
-     * @param  string         $tableAlias
      * @param  string         $KeyName
      *
      * @return array
      */
-    public function getEntities($event, $entityName, $tableAlias, $keyName = 'id')
+    public function getEntities($event, $entityName, $keyName = 'id')
     {
+        $tableAlias = 'ta';
         $q = $event->getFactory()->getEntityManager()
             ->getRepository($this->classPrefix . $this->bundleName . ':' . $entityName)
             ->createQueryBuilder($tableAlias);

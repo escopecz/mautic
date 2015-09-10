@@ -44,24 +44,4 @@ class MigrationSubscriber extends MigrationParentSubscriber
 
         parent::onMigrationEditGenerate($event);
     }
-
-    /**
-     * @param  MigrationTemplateEvent $event
-     *
-     * @return void
-     */
-    public function onExport (MigrationEvent $event)
-    {
-        if ($event->getBundle() == $this->bundleName) {
-            $factory = $event->getFactory();
-            if ($event->getEntity() == 'Asset') {
-                $entities = $this->getEntities($event, 'Asset', 'a');
-                $event->setEntities($entities);
-            }
-            if ($event->getEntity() == 'Download') {
-                $entities = $this->getEntities($event, 'Download', 'd');
-                $event->setEntities($entities);
-            }
-        }
-    }
 }

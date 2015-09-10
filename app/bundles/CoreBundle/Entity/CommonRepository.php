@@ -936,5 +936,19 @@ class CommonRepository extends EntityRepository
 
         return $q->execute()->fetchAll();
     }
-}
 
+    /**
+     * Count all rows
+     *
+     * @return integer
+     */
+    public function count()
+    {
+        $count = $this->createQueryBuilder('e')
+            ->select('count(e.id)')
+            ->getQuery()
+            ->getSingleScalarResult();
+
+        return $count;
+    }
+}
