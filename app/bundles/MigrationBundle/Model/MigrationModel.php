@@ -20,6 +20,7 @@ use Mautic\MigrationBundle\Event\MigrationEvent;
 use Mautic\MigrationBundle\MigrationEvents;
 use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
 use Symfony\Component\EventDispatcher\Event;
+use Symfony\Component\Console\Helper\ProgressBar;
 
 /**
  * Class MigrationModel
@@ -88,17 +89,30 @@ class MigrationModel extends FormModel
      *
      * @param  Migration        $migration
      * @param  array            $blueprint
-     * @param  integer          $batch limit
+     * @param  integer          $batchLimit limit
      * @param  OutputInterface  $output
      * @return array of updated blueprint
      */
-    public function triggerExport(Migration $migration, $batch = 10, $output)
+    public function triggerExport(Migration $migration, $batchLimit = 1000, $output)
     {
         $blueprint = $this->getBlueprint($migration);
+        $count = 0;
+
+        $maxCount = ($batchLimit > $blueprint['totalEntities']) ? $batchLimit : $blueprint['totalEntities'];
+
+        if ($output) {
+            $progress = new ProgressBar($output, $maxCount);
+            $progress->start();
+        }
 
         if ($this->dispatcher->hasListeners(MigrationEvents::MIGRATION_ON_EXPORT)) {
             foreach ($blueprint['entities'] as &$props) {
+                if ($count >= $batchLimit) {
+                    // Bath amount is completed
+                    break;
+                }
                 if ($props['processed'] >= $props['count']) {
+                    // Data of this entity is already exported
                     continue;
                 }
 
@@ -106,7 +120,7 @@ class MigrationModel extends FormModel
                 $event->setBundle($props['bundle']);
                 $event->setEntity($props['entity']);
                 $event->setStart($props['processed']);
-                $event->setLimit($batch);
+                $event->setLimit($batchLimit);
 
                 $this->dispatcher->dispatch(MigrationEvents::MIGRATION_ON_EXPORT, $event);
 
@@ -139,12 +153,20 @@ class MigrationModel extends FormModel
                 $processed = count($entities);
                 $props['processed'] += $processed;
                 $blueprint['processedEntities'] += $processed;
+                $count += $processed;
 
-                break; // Process only one batch.
+                if ($output && $count <= $maxCount) {
+                    $progress->setCurrent($count);
+                }
             }
         }
 
         $this->saveBlueprint($migration->getId(), $blueprint);
+
+        if ($output) {
+            $progress->finish();
+            $output->writeln('');
+        }
 
         return $blueprint;
     }
@@ -208,7 +230,7 @@ class MigrationModel extends FormModel
      *
      * @param  Migration        $migration
      * @param  array            $blueprint
-     * @param  integer          $batch limit
+     * @param  integer          $batchLimit limit
      * @param  OutputInterface  $output
      * @return array of updated blueprint
      */
