@@ -945,7 +945,7 @@ class CommonRepository extends EntityRepository
     public function count()
     {
         $count = $this->createQueryBuilder('e')
-            ->select('count(e.id)')
+            ->select('count(e)')
             ->getQuery()
             ->getSingleScalarResult();
 
