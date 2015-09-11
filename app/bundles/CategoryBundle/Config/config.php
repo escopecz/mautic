@@ -25,6 +25,9 @@ return array(
         'events' => array(
             'mautic.category.subscriber' => array(
                 'class' => 'Mautic\CategoryBundle\EventListener\CategorySubscriber'
+            ),
+            'mautic.category.migrationbundle.subscriber' => array(
+                'class' => 'Mautic\CategoryBundle\EventListener\MigrationSubscriber'
             )
         ),
         'forms'  => array(
