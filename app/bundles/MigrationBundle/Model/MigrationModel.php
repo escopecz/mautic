@@ -98,7 +98,7 @@ class MigrationModel extends FormModel
         $blueprint = $this->getBlueprint($migration);
         $count = 0;
 
-        $maxCount = ($batchLimit > $blueprint['totalEntities']) ? $batchLimit : $blueprint['totalEntities'];
+        $maxCount = ($batchLimit < $blueprint['totalEntities']) ? $batchLimit : $blueprint['totalEntities'];
 
         if ($output) {
             $progress = new ProgressBar($output, $maxCount);
