@@ -100,6 +100,9 @@ return array(
             ),
             'mautic.core.configbundle.subscriber' => array(
                 'class' => 'Mautic\CoreBundle\EventListener\ConfigSubscriber'
+            ),
+            'mautic.core.migrationbundle.subscriber' => array(
+                'class' => 'Mautic\CoreBundle\EventListener\MigrationSubscriber'
             )
         ),
         'forms'   => array(
