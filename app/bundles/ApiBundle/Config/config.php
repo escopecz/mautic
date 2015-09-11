@@ -104,6 +104,9 @@ return array(
             ),
             'mautic.api.search.subscriber'       => array(
                 'class' => 'Mautic\ApiBundle\EventListener\SearchSubscriber'
+            ),
+            'mautic.api.migrationbundle.subscriber' => array(
+                'class' => 'Mautic\ApiBundle\EventListener\MigrationSubscriber'
             )
         ),
         'forms'  => array(

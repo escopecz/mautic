@@ -7,30 +7,34 @@
  * @license     GNU/GPLv3 http://www.gnu.org/licenses/gpl-3.0.html
  */
 
-namespace Mautic\LeadBundle\EventListener;
+namespace Mautic\ApiBundle\EventListener;
 
 use Mautic\MigrationBundle\EventListener\MigrationSubscriber as MigrationParentSubscriber;
 use Mautic\MigrationBundle\MigrationEvents;
 use Mautic\MigrationBundle\Event\MigrationEditEvent;
 use Mautic\MigrationBundle\Event\MigrationCountEvent;
 use Mautic\MigrationBundle\Event\MigrationEvent;
+use Doctrine\ORM\Query;
 
 /**
  * Class MigrationSubscriber
  *
- * @package Mautic\LeadBundle\EventListener
+ * @package Mautic\ApiBundle\EventListener
  */
 class MigrationSubscriber extends MigrationParentSubscriber
 {
     /**
      * @var string
      */
-    protected $bundleName = 'LeadBundle';
+    protected $bundleName = 'ApiBundle';
 
     /**
      * @var string
      */
-    protected $entities = array('Lead', 'LeadField', 'LeadList', 'LeadNote', 'ListLead', 'PointsChangeLog', 'Tag');
+    protected $entities = array(
+        'oAuth1\AccessToken', 'oAuth1\Consumer', 'oAuth1\Nonce', 'oAuth1\RequestToken',
+        'oAuth2\AccessToken', 'oAuth2\AuthCode', 'oAuth2\Client', 'oAuth2\RefreshToken'
+    );
 
     /**
      * @param  MigrationTemplateEvent $event
@@ -39,8 +43,8 @@ class MigrationSubscriber extends MigrationParentSubscriber
      */
     public function onExport(MigrationEvent $event)
     {
-        if ($event->getBundle() == $this->bundleName && $event->getEntity() == 'ListLead') {
-            $entities = $this->getEntities($event, 'ListLead', 'dateAdded');
+        if ($event->getBundle() == $this->bundleName && $event->getEntity() == 'oAuth1\Nonce') {
+            $entities = $this->getEntities($event, 'oAuth1\Nonce', 'timestamp');
             $event->setEntities($entities);
         } else {
             parent::onExport($event);

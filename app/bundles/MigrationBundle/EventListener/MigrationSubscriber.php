@@ -91,10 +91,18 @@ class MigrationSubscriber extends CommonSubscriber
             $factory = $event->getFactory();
             $key = array_search($event->getEntity(), $this->entities);
             if ($key !== false) {
-                $repository = $this->classPrefix . $this->bundleName . ':' . $this->entities[$key];
-                $event->setCount(
-                    $factory->getEntityManager()->getRepository($repository)->count()
-                );
+                $repositoryName = $this->classPrefix . $this->bundleName . ':' . $this->entities[$key];
+                $repository = $factory->getEntityManager()->getRepository($repositoryName);
+
+                if (method_exists($repository, 'count')) {
+                    $count = $repository->count();
+                } else {
+                    $count = $repository->createQueryBuilder('e')
+                        ->select('count(e)')
+                        ->getQuery()
+                        ->getSingleScalarResult();
+                }
+                $event->setCount($count);
             }
         }
     }
