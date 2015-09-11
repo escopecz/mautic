@@ -90,6 +90,9 @@ return array(
             ),
             'mautic.campaign.search.subscriber'         => array(
                 'class' => 'Mautic\CampaignBundle\EventListener\SearchSubscriber'
+            ),
+            'mautic.campaign.migrationbundle.subscriber' => array(
+                'class' => 'Mautic\CampaignBundle\EventListener\MigrationSubscriber'
             )
         ),
         'forms'  => array(
