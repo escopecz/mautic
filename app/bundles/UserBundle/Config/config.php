@@ -102,6 +102,9 @@ return array(
             ),
             'mautic.user.search.subscriber' => array(
                 'class'     => 'Mautic\UserBundle\EventListener\SearchSubscriber'
+            ),
+            'mautic.user.migrationbundle.subscriber' => array(
+                'class' => 'Mautic\UserBundle\EventListener\MigrationSubscriber'
             )
         ),
         'forms'  => array(
