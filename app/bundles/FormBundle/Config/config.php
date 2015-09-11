@@ -135,6 +135,9 @@ return array(
             'mautic.form.webhook.subscriber'                => array(
                 'class' => 'Mautic\FormBundle\EventListener\WebhookSubscriber'
             ),
+            'mautic.form.migrationbundle.subscriber' => array(
+                'class' => 'Mautic\FormBundle\EventListener\MigrationSubscriber'
+            )
         ),
         'forms'  => array(
             'mautic.form.type.form'                      => array(
