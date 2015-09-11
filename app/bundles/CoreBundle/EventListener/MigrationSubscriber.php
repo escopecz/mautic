@@ -10,11 +10,7 @@
 namespace Mautic\CoreBundle\EventListener;
 
 use Mautic\MigrationBundle\EventListener\MigrationSubscriber as MigrationParentSubscriber;
-use Mautic\MigrationBundle\MigrationEvents;
 use Mautic\MigrationBundle\Event\MigrationEditEvent;
-use Mautic\MigrationBundle\Event\MigrationCountEvent;
-use Mautic\MigrationBundle\Event\MigrationEvent;
-use Doctrine\ORM\Query;
 
 /**
  * Class MigrationSubscriber
@@ -40,7 +36,7 @@ class MigrationSubscriber extends MigrationParentSubscriber
      */
     public function onMigrationEditGenerate (MigrationEditEvent $event)
     {
-        $root   = $this->factory->getSystemPath('themes_root');
+        $root   = $event->getFactory()->getSystemPath('root');
         $themes = $event->getFactory()->getInstalledThemes();
 
         foreach ($themes as $folder => $theme) {

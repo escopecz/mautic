@@ -10,6 +10,7 @@
 namespace Mautic\PluginBundle\EventListener;
 
 use Mautic\MigrationBundle\EventListener\MigrationSubscriber as MigrationParentSubscriber;
+use Mautic\MigrationBundle\Event\MigrationEditEvent;
 
 /**
  * Class MigrationSubscriber
@@ -27,4 +28,23 @@ class MigrationSubscriber extends MigrationParentSubscriber
      * @var string
      */
     protected $entities = array('Integration', 'Plugin');
+
+    /**
+     * @param  MigrationTemplateEvent $event
+     *
+     * @return void
+     */
+    public function onMigrationEditGenerate(MigrationEditEvent $event)
+    {
+        /** @var \Mautic\PluginBundle\Model\PluginModel $model */
+        $model   = $event->getFactory()->getModel('plugin');
+        $root    = $event->getFactory()->getSystemPath('root');
+        $plugins = $model->getEntities(array('index' => 'bundle'));
+
+        foreach ($plugins as $folder => $plugin) {
+            $this->folders[] = $root . '/plugins/' . $folder;
+        }
+
+        parent::onMigrationEditGenerate($event);
+    }
 }
