@@ -71,6 +71,9 @@ return array(
             ),
             'mautic.report.report.subscriber' => array(
                 'class'     => 'Mautic\ReportBundle\EventListener\ReportSubscriber'
+            ),
+            'mautic.report.migrationbundle.subscriber' => array(
+                'class' => 'Mautic\ReportBundle\EventListener\MigrationSubscriber'
             )
         ),
         'forms'  => array(
