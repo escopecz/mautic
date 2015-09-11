@@ -65,6 +65,9 @@ return array(
             'mautic.webhook.audit.subscriber' => array(
                 'class' => 'Mautic\WebhookBundle\EventListener\WebhookSubscriber'
             ),
+            'mautic.webhook.migrationbundle.subscriber' => array(
+                'class' => 'Mautic\WebhookBundle\EventListener\MigrationSubscriber'
+            )
         )
     ),
 
