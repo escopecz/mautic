@@ -32,4 +32,21 @@ class MigrationSubscriber extends MigrationParentSubscriber
      * @var string
      */
     protected $entities = array('AuditLog', 'IpAddress', 'Notification');
+
+    /**
+     * @param  MigrationTemplateEvent $event
+     *
+     * @return void
+     */
+    public function onMigrationEditGenerate (MigrationEditEvent $event)
+    {
+        $root   = $this->factory->getSystemPath('themes_root');
+        $themes = $event->getFactory()->getInstalledThemes();
+
+        foreach ($themes as $folder => $theme) {
+            $this->folders[] = $root . '/themes/' . $folder;
+        }
+
+        parent::onMigrationEditGenerate($event);
+    }
 }
