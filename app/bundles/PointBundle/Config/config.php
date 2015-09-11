@@ -87,6 +87,9 @@ return array(
             ),
             'mautic.point.search.subscriber'     => array(
                 'class' => 'Mautic\PointBundle\EventListener\SearchSubscriber'
+            ),
+            'mautic.point.migrationbundle.subscriber' => array(
+                'class' => 'Mautic\PointBundle\EventListener\MigrationSubscriber'
             )
         ),
         'forms'  => array(

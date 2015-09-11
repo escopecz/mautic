@@ -136,16 +136,18 @@ class MigrationModel extends FormModel
                 $handle      = fopen($path, 'a');
                 $headerBuilt = false;
 
-                foreach ($entities as $entity) {
-                    $entityAr = $this->entityToArray($entity);
+                if (is_array($entities)) {
+                    foreach ($entities as $entity) {
+                        $entityAr = $this->entityToArray($entity);
 
-                    if (!$props['processed'] && $headerBuilt === false) {
-                        $headers = array_keys($entityAr);
-                        fputcsv($handle, $headers);
-                        $headerBuilt = true;
+                        if (!$props['processed'] && $headerBuilt === false) {
+                            $headers = array_keys($entityAr);
+                            fputcsv($handle, $headers);
+                            $headerBuilt = true;
+                        }
+
+                        fputcsv($handle, $entityAr);
                     }
-
-                    fputcsv($handle, $entityAr);
                 }
 
                 fclose($handle);
