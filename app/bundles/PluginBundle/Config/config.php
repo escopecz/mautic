@@ -66,6 +66,9 @@ return array(
             ),
             'mautic.plugin.campaignbundle.subscriber' => array(
                 'class' => 'Mautic\PluginBundle\EventListener\CampaignSubscriber'
+            ),
+            'mautic.plugin.migrationbundle.subscriber' => array(
+                'class' => 'Mautic\PluginBundle\EventListener\MigrationSubscriber'
             )
         ),
         'forms'  => array(
