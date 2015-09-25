@@ -96,6 +96,7 @@ class MigrationModel extends FormModel
     public function triggerExport(Migration $migration, $batchLimit = 1000, $output)
     {
         $blueprint = $this->getBlueprint($migration);
+        $this->saveBlueprint($migration->getId(), $blueprint);
         $count = 0;
 
         $maxCount = ($batchLimit < $blueprint['totalEntities']) ? $batchLimit : $blueprint['totalEntities'];
@@ -106,6 +107,8 @@ class MigrationModel extends FormModel
         }
 
         if ($this->dispatcher->hasListeners(MigrationEvents::MIGRATION_ON_EXPORT)) {
+
+            // Make CSV backup of selected entities
             foreach ($blueprint['entities'] as &$props) {
                 if ($count >= $batchLimit) {
                     // Bath amount is completed
@@ -159,6 +162,31 @@ class MigrationModel extends FormModel
 
                 if ($output && $count <= $maxCount) {
                     $progress->setCurrent($count);
+                }
+            }
+
+            // Copy folders recursivly
+            $root = $this->factory->getSystemPath('root') . '/exports/' . $migration->getId();
+            foreach ($blueprint['folders'] as $key => $folder) {
+                $dest = $root . '/' . $key;
+                if (!file_exists($dest)) {
+                    mkdir($dest, 0755);
+                }
+                foreach (
+                    $iterator = new \RecursiveIteratorIterator(
+                    new \RecursiveDirectoryIterator($folder['path'], \RecursiveDirectoryIterator::SKIP_DOTS),
+                    \RecursiveIteratorIterator::SELF_FIRST) as $item
+                ) {
+                    $destPath = $dest . DIRECTORY_SEPARATOR . $iterator->getSubPathName();
+                    if (!file_exists($destPath)) {
+                        if ($item->isDir()) {
+                            mkdir($destPath, 0755);
+                        } else {
+                            copy($item, $destPath);
+                        }
+                        $blueprint['folders'][$key]['processed']++;
+                        $blueprint['processedFiles']++;
+                    }
                 }
             }
         }
@@ -266,10 +294,21 @@ class MigrationModel extends FormModel
 
             foreach ($migration->getFolders() as $folder) {
                 $parts = explode('.', $folder);
-                $files = new \FilesystemIterator($parts[1], \FilesystemIterator::SKIP_DOTS);
-                $count = iterator_count($files);
+                $count = 0;
+                foreach (
+                    $iterator = new \RecursiveIteratorIterator(
+                    new \RecursiveDirectoryIterator($parts[1], \RecursiveDirectoryIterator::SKIP_DOTS),
+                    \RecursiveIteratorIterator::SELF_FIRST) as $item
+                ) {
+                    $count++;
+                }
                 $blueprint['totalFiles'] += $count;
-                $blueprint['folders'][$folder] = array('count' => $count, 'processed' => 0);
+                $blueprint['folders'][] = array(
+                    'path' => $parts[1],
+                    'count' => $count,
+                    'processed' => 0,
+                    'bundle' => $parts[0]
+                );
             }
         }
 
