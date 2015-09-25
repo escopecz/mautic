@@ -466,6 +466,25 @@ class LeadRepository extends CommonRepository
      *
      * @return array
      */
+    public function getFlatEntitiesWithFields($args = array())
+    {
+        $fq = $this->_em->getConnection()->createQueryBuilder();
+        $fq->select('*')
+            ->from(MAUTIC_TABLE_PREFIX . 'leads', 'l')
+            ->setMaxResults($args['limit'])
+            ->setFirstResult($args['start'])
+            ->orderBy($args['orderBy']);
+
+        return $fq->execute()->fetchAll();
+    }
+
+    /**
+     * Get a list of leads
+     *
+     * @param array $args
+     *
+     * @return array
+     */
     public function getEntities($args = array())
     {
         //Get the list of custom fields
