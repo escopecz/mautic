@@ -100,6 +100,7 @@ class MigrationModel extends FormModel
         $count = 0;
 
         $maxCount = ($batchLimit < $blueprint['totalEntities']) ? $batchLimit : $blueprint['totalEntities'];
+        $dir = $this->factory->getSystemPath('root') . '/exports/' . $migration->getId();
 
         if ($output) {
             $progress = new ProgressBar($output, $maxCount);
@@ -128,7 +129,6 @@ class MigrationModel extends FormModel
                 $this->dispatcher->dispatch(MigrationEvents::MIGRATION_ON_EXPORT, $event);
 
                 $entities = $event->getEntities();
-                $dir      = $this->factory->getSystemPath('root') . '/exports/' . $migration->getId();
                 $file     = $props['bundle'] . '.' . $props['entity'] . '.csv';
                 $path     = $dir . '/' . $file;
 
@@ -166,9 +166,8 @@ class MigrationModel extends FormModel
             }
 
             // Copy folders recursivly
-            $root = $this->factory->getSystemPath('root') . '/exports/' . $migration->getId();
             foreach ($blueprint['folders'] as $key => $folder) {
-                $dest = $root . '/' . $key;
+                $dest = $dir . '/' . $key;
                 if (!file_exists($dest)) {
                     mkdir($dest, 0755);
                 }
@@ -177,7 +176,7 @@ class MigrationModel extends FormModel
                     new \RecursiveDirectoryIterator($folder['path'], \RecursiveDirectoryIterator::SKIP_DOTS),
                     \RecursiveIteratorIterator::SELF_FIRST) as $item
                 ) {
-                    $destPath = $dest . DIRECTORY_SEPARATOR . $iterator->getSubPathName();
+                    $destPath = $dest . '/' . $iterator->getSubPathName();
                     if (!file_exists($destPath)) {
                         if ($item->isDir()) {
                             mkdir($destPath, 0755);
@@ -192,6 +191,21 @@ class MigrationModel extends FormModel
         }
 
         $this->saveBlueprint($migration->getId(), $blueprint);
+        if ($blueprint['totalEntities'] == $blueprint['processedEntities'] && $blueprint['totalFiles'] == $blueprint['processedFiles']) {
+            $zip = new \ZipArchive();
+
+            if ($zip->open($this->factory->getSystemPath('root') . '/exports/zip.zip', \ZIPARCHIVE::CREATE) === true) {
+                foreach (
+                    $iterator = new \RecursiveIteratorIterator(
+                    new \RecursiveDirectoryIterator($dir, \RecursiveDirectoryIterator::SKIP_DOTS),
+                    \RecursiveIteratorIterator::SELF_FIRST) as $item
+                ) {
+                    $path = $dir . '/' . $iterator->getSubPathName();
+                    $zip->addFile($path);
+                }
+                $zip->close();
+            }
+        }
 
         if ($output) {
             $progress->finish();
