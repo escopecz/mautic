@@ -171,11 +171,7 @@ class MigrationModel extends FormModel
                 if (!file_exists($dest)) {
                     mkdir($dest, 0755);
                 }
-                foreach (
-                    $iterator = new \RecursiveIteratorIterator(
-                    new \RecursiveDirectoryIterator($folder['path'], \RecursiveDirectoryIterator::SKIP_DOTS),
-                    \RecursiveIteratorIterator::SELF_FIRST) as $item
-                ) {
+                foreach ($iterator = $this->getIterator($folder['path'])as $item) {
                     $destPath = $dest . '/' . $iterator->getSubPathName();
                     if (!file_exists($destPath)) {
                         if ($item->isDir()) {
@@ -193,13 +189,9 @@ class MigrationModel extends FormModel
         $this->saveBlueprint($migration->getId(), $blueprint);
         if ($blueprint['totalEntities'] == $blueprint['processedEntities'] && $blueprint['totalFiles'] == $blueprint['processedFiles']) {
             $zip = new \ZipArchive();
-
-            if ($zip->open($this->factory->getSystemPath('root') . '/exports/zip.zip', \ZIPARCHIVE::CREATE) === true) {
-                foreach (
-                    $iterator = new \RecursiveIteratorIterator(
-                    new \RecursiveDirectoryIterator($dir, \RecursiveDirectoryIterator::SKIP_DOTS),
-                    \RecursiveIteratorIterator::SELF_FIRST) as $item
-                ) {
+            $zipFile = $this->factory->getSystemPath('root') . '/exports/' . $migration->getId() . '.zip';
+            if ($zip->open($zipFile, file_exists($zipFile) ? \ZIPARCHIVE::OVERWRITE : \ZIPARCHIVE::CREATE) === true) {
+                foreach ($iterator = $this->getIterator($dir) as $item) {
                     $file = $dir . '/' . $iterator->getSubPathName();
                     if (!$item->isDir()) {
                         if (!file_exists($file)) {
@@ -211,7 +203,14 @@ class MigrationModel extends FormModel
                         $zip->addFile($file, preg_replace('/^' . preg_quote($dir . '/', '/') . '/', '', $file));
                     }
                 }
+
                 $zip->close();
+
+                if (file_exists($zipFile)) {
+                    $this->deleteFolderRecursivly($dir . '/');
+                } else {
+                    throw new \Exception($this->translator->trans('mautic.migration.file.not.created', array('%file%' => $zipFile)));
+                }
             }
         }
 
@@ -221,6 +220,45 @@ class MigrationModel extends FormModel
         }
 
         return $blueprint;
+    }
+
+    /**
+     * Recursivly remove all content of a folder
+     *
+     * @param  string  $path
+     *
+     * @return void
+     */
+    function deleteFolderRecursivly($path) {
+        if (is_dir($path)) {
+            $files = glob($path . '*', GLOB_MARK);
+
+            foreach ($files as $file)
+            {
+                $this->deleteFolderRecursivly($file);
+            }
+
+            if (file_exists($path)) {
+                rmdir($path);
+            }
+        } elseif (is_file($path)) {
+            unlink($path);
+        }
+    }
+
+    /**
+     * Get iterator for iterating recursivly over folder's content
+     *
+     * @param  string  $path
+     *
+     * @return RecursiveIteratorIterator
+     */
+    public function getIterator($path)
+    {
+        return new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($path, \RecursiveDirectoryIterator::SKIP_DOTS),
+            \RecursiveIteratorIterator::SELF_FIRST
+        );
     }
 
     /**
@@ -258,8 +296,8 @@ class MigrationModel extends FormModel
         $file    = $dir . '/blueprint.json';
 
         if (!is_dir($dir)) {
-            if (mkdir($dir, 0775, true)) {
-                throw new \Exception($this->translator->trans('mautic.migration.folder.not.written', array('%folder%' => $dir)));
+            if (!mkdir($dir, 0775, true)) {
+                throw new \Exception($this->translator->trans('mautic.migration.file.not.created', array('%folder%' => $dir)));
             }
         }
 
@@ -317,11 +355,7 @@ class MigrationModel extends FormModel
             foreach ($migration->getFolders() as $folder) {
                 $parts = explode('.', $folder);
                 $count = 0;
-                foreach (
-                    $iterator = new \RecursiveIteratorIterator(
-                    new \RecursiveDirectoryIterator($parts[1], \RecursiveDirectoryIterator::SKIP_DOTS),
-                    \RecursiveIteratorIterator::SELF_FIRST) as $item
-                ) {
+                foreach ($iterator = $this->getIterator($parts[1]) as $item) {
                     $count++;
                 }
                 $blueprint['totalFiles'] += $count;
