@@ -200,8 +200,16 @@ class MigrationModel extends FormModel
                     new \RecursiveDirectoryIterator($dir, \RecursiveDirectoryIterator::SKIP_DOTS),
                     \RecursiveIteratorIterator::SELF_FIRST) as $item
                 ) {
-                    $path = $dir . '/' . $iterator->getSubPathName();
-                    $zip->addFile($path);
+                    $file = $dir . '/' . $iterator->getSubPathName();
+                    if (!$item->isDir()) {
+                        if (!file_exists($file)) {
+                            throw new \Exception($this->translator->trans('mautic.migration.file.do.not.exist', array('%file%' => $file)));
+                        }
+                        if (!is_readable($file)) {
+                            throw new \Exception($this->translator->trans('mautic.migration.file.not.readable', array('%file%' => $file)));
+                        }
+                        $zip->addFile($file, preg_replace('/^' . preg_quote($dir . '/', '/') . '/', '', $file));
+                    }
                 }
                 $zip->close();
             }
@@ -251,7 +259,7 @@ class MigrationModel extends FormModel
 
         if (!is_dir($dir)) {
             if (mkdir($dir, 0775, true)) {
-                throw new \Exception($translator->trans('mautic.migration.folder.not.written', array('%folder%' => $dir)));
+                throw new \Exception($this->translator->trans('mautic.migration.folder.not.written', array('%folder%' => $dir)));
             }
         }
 
@@ -265,7 +273,7 @@ class MigrationModel extends FormModel
         }
 
         if (file_put_contents($file, $content) === false) {
-            throw new \Exception($translator->trans('mautic.migration.file.not.written', array('%file%' => $file)));
+            throw new \Exception($this->translator->trans('mautic.migration.file.not.written', array('%file%' => $file)));
         }
     }
 
