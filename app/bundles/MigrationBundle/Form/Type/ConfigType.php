@@ -33,11 +33,21 @@ class ConfigType extends AbstractType
             'attr'        => array(
                 'class' => 'form-control',
                 'tooltip' => 'mautic.migration.config.form.export.dir.tooltip'
-                ),
+            ),
             'constraints' => array(
                 new NotBlank(array(
                     'message' => 'mautic.core.value.required'
                 ))
+            )
+        ));
+
+        $builder->add('export_batch_limit', 'text', array(
+            'label'       => 'mautic.migration.config.form.export.batch.limit',
+            'label_attr'  => array('class' => 'control-label'),
+            'required'    => false,
+            'attr'        => array(
+                'class' => 'form-control',
+                'tooltip' => 'mautic.migration.config.form.export.batch.limit.tooltip'
             )
         ));
     }

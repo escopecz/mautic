@@ -94,8 +94,16 @@ class MigrationModel extends FormModel
      * @param  OutputInterface  $output
      * @return array of updated blueprint
      */
-    public function triggerExport(Migration $migration, $batchLimit = 1000, $output = null)
+    public function triggerExport(Migration $migration, $batchLimit = null, $output = null)
     {
+        if (!$batchLimit) {
+            $batchLimit = (int) $this->factory->getParameter('export_batch_limit');
+        }
+
+        if (!$batchLimit) {
+            $batchLimit = 10000;
+        }
+
         $blueprint = $this->getBlueprint($migration);
         $this->saveBlueprint($migration->getId(), $blueprint);
         $count = 0;
