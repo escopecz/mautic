@@ -558,63 +558,63 @@ class MigrationController extends FormController
      *
      * @return \Symfony\Component\HttpFoundation\JsonResponse|\Symfony\Component\HttpFoundation\RedirectResponse
      */
-    // public function deleteAction ($objectId)
-    // {
-    //     $page      = $this->factory->getSession()->get('mautic.migration.page', 1);
-    //     $returnUrl = $this->generateUrl('mautic_migration_index', array('page' => $page));
-    //     $flashes   = array();
+    public function deleteAction ($objectId)
+    {
+        $page      = $this->factory->getSession()->get('mautic.migration.page', 1);
+        $returnUrl = $this->generateUrl('mautic_migration_index', array('page' => $page));
+        $flashes   = array();
 
-    //     $postActionVars = array(
-    //         'returnUrl'       => $returnUrl,
-    //         'viewParameters'  => array('page' => $page),
-    //         'contentTemplate' => 'MauticMigrationBundle:Migration:index',
-    //         'passthroughVars' => array(
-    //             'activeLink'    => 'mautic_migration_index',
-    //             'mauticContent' => 'migration'
-    //         )
-    //     );
+        $postActionVars = array(
+            'returnUrl'       => $returnUrl,
+            'viewParameters'  => array('page' => $page),
+            'contentTemplate' => 'MauticMigrationBundle:Migration:index',
+            'passthroughVars' => array(
+                'activeLink'    => 'mautic_migration_index',
+                'mauticContent' => 'migration'
+            )
+        );
 
-    //     if ($this->request->getMethod() == 'POST') {
-    //         /** @var \Mautic\MigrationBundle\Model\MigrationModel $model */
-    //         $model  = $this->factory->getModel('migration.migration');
-    //         $entity = $model->getEntity($objectId);
+        if ($this->request->getMethod() == 'POST') {
+            /** @var \Mautic\MigrationBundle\Model\MigrationModel $model */
+            $model  = $this->factory->getModel('migration.migration');
+            $entity = $model->getEntity($objectId);
 
-    //         if ($entity === null) {
-    //             $flashes[] = array(
-    //                 'type'    => 'error',
-    //                 'msg'     => 'mautic.migration.migration.error.notfound',
-    //                 'msgVars' => array('%id%' => $objectId)
-    //             );
-    //         } elseif (!$this->factory->getSecurity()->hasEntityAccess(
-    //             'migration:migrations:deleteown',
-    //             'migration:migrations:deleteother',
-    //             $entity->getCreatedBy()
-    //         )
-    //         ) {
-    //             return $this->accessDenied();
-    //         } elseif ($model->isLocked($entity)) {
-    //             return $this->isLocked($postActionVars, $entity, 'migration.migration');
-    //         }
+            if ($entity === null) {
+                $flashes[] = array(
+                    'type'    => 'error',
+                    'msg'     => 'mautic.migration.migration.error.notfound',
+                    'msgVars' => array('%id%' => $objectId)
+                );
+            } elseif (!$this->factory->getSecurity()->hasEntityAccess(
+                'migration:migrations:deleteown',
+                'migration:migrations:deleteother',
+                $entity->getCreatedBy()
+            )
+            ) {
+                return $this->accessDenied();
+            } elseif ($model->isLocked($entity)) {
+                return $this->isLocked($postActionVars, $entity, 'migration.migration');
+            }
 
-    //         $entity->removeUpload();
-    //         $model->deleteEntity($entity);
+            $model->removeExportedFiles($entity->getId());
+            $model->deleteEntity($entity);
 
-    //         $flashes[] = array(
-    //             'type'    => 'notice',
-    //             'msg'     => 'mautic.core.notice.deleted',
-    //             'msgVars' => array(
-    //                 '%name%' => $entity->getName(),
-    //                 '%id%'   => $objectId
-    //             )
-    //         );
-    //     } //else don't do anything
+            $flashes[] = array(
+                'type'    => 'notice',
+                'msg'     => 'mautic.core.notice.deleted',
+                'msgVars' => array(
+                    '%name%' => $entity->getName(),
+                    '%id%'   => $objectId
+                )
+            );
+        } //else don't do anything
 
-    //     return $this->postActionRedirect(
-    //         array_merge($postActionVars, array(
-    //             'flashes' => $flashes
-    //         ))
-    //     );
-    // }
+        return $this->postActionRedirect(
+            array_merge($postActionVars, array(
+                'flashes' => $flashes
+            ))
+        );
+    }
 
     /**
      * Deletes a group of entities

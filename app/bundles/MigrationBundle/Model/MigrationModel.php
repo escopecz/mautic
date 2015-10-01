@@ -226,13 +226,30 @@ class MigrationModel extends FormModel
     }
 
     /**
+     * Remove exported files. The folder and the zip package.
+     *
+     * @param  integer  $id
+     *
+     * @return void
+     */
+    public function removeExportedFiles($id) {
+        $dir = $this->getMigrationDir($id);
+        $zipFile = $this->getZipPackagePath($id);
+
+        $this->deleteFolderRecursivly($dir . '/');
+        if (file_exists($zipFile)) {
+            unlink($zipFile);
+        }
+    }
+
+    /**
      * Get path and other info about last exported package
      *
      * @param  integer  $id
      *
      * @return array
      */
-    function getLastPackageInfo($id) {
+    public function getLastPackageInfo($id) {
         $zipFile = $this->getZipPackagePath($id);
 
         $fileInfo = array(
@@ -258,7 +275,7 @@ class MigrationModel extends FormModel
      *
      * @return string
      */
-    function getMigrationDir($id) {
+    public function getMigrationDir($id) {
         return $this->factory->getParameter('export_dir') . '/' . $id;
     }
 
@@ -269,7 +286,7 @@ class MigrationModel extends FormModel
      *
      * @return string
      */
-    function getZipPackagePath($id) {
+    public function getZipPackagePath($id) {
         return $this->getMigrationDir($id) . '.zip';
     }
 
@@ -280,7 +297,7 @@ class MigrationModel extends FormModel
      *
      * @return void
      */
-    function deleteFolderRecursivly($path) {
+    public function deleteFolderRecursivly($path) {
         if (is_dir($path)) {
             $files = glob($path . '*', GLOB_MARK);
 
