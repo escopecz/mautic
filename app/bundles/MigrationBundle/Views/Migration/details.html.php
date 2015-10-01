@@ -13,6 +13,18 @@ $view['slots']->set("headerTitle", $activeMigration->getName());
 
 $view['slots']->set('actions', $view->render('MauticCoreBundle:Helper:page_actions.html.php', array(
     'item'       => $activeMigration,
+    'customButtons' => array(
+        array(
+            'attr' => array(
+                'href' => $view['router']->generate('mautic_migration_action', array(
+                    'objectAction' => 'export',
+                    'objectId' => $activeMigration->getId()
+                ))
+            ),
+            'btnText'   => $view['translator']->trans('mautic.migration.migration.export'),
+            'iconClass' => 'fa fa-suitcase'
+        )
+    ),
     'templateButtons' => array(
         'edit'       => $security->hasEntityAccess($permissions['migration:migrations:editown'], $permissions['migration:migrations:editother'], $activeMigration->getCreatedBy()),
         'delete'     => $security->hasEntityAccess($permissions['migration:migrations:deleteown'], $permissions['migration:migrations:deleteother'], $activeMigration->getCreatedBy())

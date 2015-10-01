@@ -422,7 +422,7 @@ class MigrationController extends FormController
         return $this->delegateView(array(
             'viewParameters'  => array(
                 'form'             => $form->createView(),
-                'activeMigration'      => $entity,
+                'activeMigration'  => $entity,
             ),
             'contentTemplate' => 'MauticMigrationBundle:Migration:form.html.php',
             'passthroughVars' => array(
@@ -434,6 +434,33 @@ class MigrationController extends FormController
                 ))
             )
         ));
+    }
+
+    /**
+     * Export a migration
+     *
+     * @param int $objectId
+     *
+     * @return JsonResponse|\Symfony\Component\HttpFoundation\RedirectResponse|Response
+     */
+    public function exportAction ($objectId)
+    {
+        /** @var \Mautic\MigrationBundle\Model\MigrationModel $model */
+        $model  = $this->factory->getModel('migration.migration');
+        $entity = $model->getEntity($objectId);
+
+        if ($entity != null) {
+            if (!$this->factory->getSecurity()->hasEntityAccess(
+                    'migration:migrations:viewown', 'migration:migrations:viewother', $entity->getCreatedBy()
+                )
+            ) {
+                return $this->accessDenied();
+            }
+
+            $blueprint = $model->triggerExport($entity);
+        }
+
+        return $this->viewAction($objectId);
     }
 
     /**

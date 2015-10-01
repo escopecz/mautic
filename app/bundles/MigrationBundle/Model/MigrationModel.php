@@ -93,7 +93,7 @@ class MigrationModel extends FormModel
      * @param  OutputInterface  $output
      * @return array of updated blueprint
      */
-    public function triggerExport(Migration $migration, $batchLimit = 1000, $output)
+    public function triggerExport(Migration $migration, $batchLimit = 1000, $output = null)
     {
         $blueprint = $this->getBlueprint($migration);
         $this->saveBlueprint($migration->getId(), $blueprint);
@@ -187,6 +187,8 @@ class MigrationModel extends FormModel
         }
 
         $this->saveBlueprint($migration->getId(), $blueprint);
+
+        // Create a ZIP package of expoted data
         if ($blueprint['totalEntities'] == $blueprint['processedEntities'] && $blueprint['totalFiles'] == $blueprint['processedFiles']) {
             $zip = new \ZipArchive();
             $zipFile = $this->factory->getSystemPath('root') . '/exports/' . $migration->getId() . '.zip';
