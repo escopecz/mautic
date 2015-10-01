@@ -100,7 +100,7 @@ class MigrationModel extends FormModel
         $count = 0;
 
         $maxCount = ($batchLimit < $blueprint['totalEntities']) ? $batchLimit : $blueprint['totalEntities'];
-        $dir = $this->factory->getParameter('upload_dir') . '/' . $migration->getId();
+        $dir = $this->factory->getParameter('export_dir') . '/' . $migration->getId();
 
         if ($output) {
             $progress = new ProgressBar($output, $maxCount);
@@ -191,7 +191,7 @@ class MigrationModel extends FormModel
         // Create a ZIP package of expoted data
         if ($blueprint['totalEntities'] == $blueprint['processedEntities'] && $blueprint['totalFiles'] == $blueprint['processedFiles']) {
             $zip = new \ZipArchive();
-            $zipFile = $this->factory->getParameter('upload_dir') . '/' . $migration->getId() . '.zip';
+            $zipFile = $this->factory->getParameter('export_dir') . '/' . $migration->getId() . '.zip';
             if ($zip->open($zipFile, file_exists($zipFile) ? \ZIPARCHIVE::OVERWRITE : \ZIPARCHIVE::CREATE) === true) {
                 foreach ($iterator = $this->getIterator($dir) as $item) {
                     $file = $dir . '/' . $iterator->getSubPathName();
@@ -232,7 +232,7 @@ class MigrationModel extends FormModel
      * @return array
      */
     function getLastPackageInfo($id) {
-        $this->factory->getParameter('upload_dir');
+        $this->factory->getParameter('export_dir');
     }
 
     /**
@@ -283,7 +283,7 @@ class MigrationModel extends FormModel
      */
     public function getBlueprint($migration)
     {
-        $dir     = $this->factory->getParameter('upload_dir') . '/' . $migration->getId();
+        $dir     = $this->factory->getParameter('export_dir') . '/' . $migration->getId();
         $file    = $dir . '/blueprint.json';
 
         if (file_exists($file)) {
@@ -305,7 +305,7 @@ class MigrationModel extends FormModel
      */
     public function saveBlueprint($id, array $content)
     {
-        $dir     = $this->factory->getParameter('upload_dir') . '/' . $id;
+        $dir     = $this->factory->getParameter('export_dir') . '/' . $id;
         $file    = $dir . '/blueprint.json';
 
         if (!is_dir($dir)) {

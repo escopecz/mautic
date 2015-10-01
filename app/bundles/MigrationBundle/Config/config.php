@@ -70,6 +70,6 @@ return array(
     ),
 
     'parameters' => array(
-        'export_dir'  => '%kernel.root_dir%/exports'
+        'export_dir'  => '%kernel.root_dir%/../exports'
     )
 );
