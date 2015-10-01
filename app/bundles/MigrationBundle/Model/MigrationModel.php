@@ -330,6 +330,25 @@ class MigrationModel extends FormModel
     }
 
     /**
+     * Get migration blueprint from a existing json file
+     *
+     * @param  Migration  $migration
+     *
+     * @return array of updated blueprint | null
+     */
+    public function getExistingBlueprint($migration)
+    {
+        $dir     = $this->getMigrationDir($migration->getId());
+        $file    = $dir . '/blueprint.json';
+
+        if (file_exists($file)) {
+            return json_decode(file_get_contents($file), true);
+        }
+
+        return null;
+    }
+
+    /**
      * Get migration blueprint from a json file or create fresh one
      *
      * @param  Migration  $migration
@@ -338,12 +357,9 @@ class MigrationModel extends FormModel
      */
     public function getBlueprint($migration)
     {
-        $dir     = $this->getMigrationDir($migration->getId());
-        $file    = $dir . '/blueprint.json';
+        $blueprint = $this->getExistingBlueprint($migration);
 
-        if (file_exists($file)) {
-            $blueprint = json_decode(file_get_contents($file), true);
-        } else {
+        if (!$blueprint) {
             $blueprint = $this->buildBlueprint($migration);
         }
 

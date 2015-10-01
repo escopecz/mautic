@@ -47,21 +47,11 @@ $view->extend('MauticMigrationBundle:Migration:index.html.php');
                             'templateButtons' => array(
                                 'edit'       => $security->hasEntityAccess($permissions['migration:migrations:editown'], $permissions['migration:migrations:editother'], $item->getCreatedBy()),
                                 'delete'     => $security->hasEntityAccess($permissions['migration:migrations:deleteown'], $permissions['migration:migrations:deleteother'], $item->getCreatedBy()),
+                                'clone'      => $permissions['migration:migrations:create']
                             ),
                             'routeBase'  => 'migration',
                             'langVar'    => 'migration.migration',
-                            'nameGetter' => 'getName',
-                            'customButtons' => array(
-                                array(
-                                    'attr' => array(
-                                        'data-toggle' => 'ajaxmodal',
-                                        'data-target' => '#MigrationPreviewModal',
-                                        'href' => $view['router']->generate('mautic_migration_action', array('objectAction' => 'preview', 'objectId' => $item->getId()))
-                                    ),
-                                    'btnText'   => $view['translator']->trans('mautic.migration.migration.preview'),
-                                    'iconClass' => 'fa fa-image'
-                                )
-                            )
+                            'nameGetter' => 'getName'
                         ));
                         ?>
                     </td>

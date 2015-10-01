@@ -75,6 +75,7 @@ $view['slots']->set('actions', $view->render('MauticCoreBundle:Helper:page_actio
                 </span>
             </div>
             <!--/ migration detail collapseable toggler -->
+
             <div class="tab-content pa-md">
                 <?php if ($packageInfo['exists']) : ?>
                     <div class="alert alert-success" role="alert">
@@ -95,6 +96,34 @@ $view['slots']->set('actions', $view->render('MauticCoreBundle:Helper:page_actio
                     <div class="alert alert-warning" role="alert">
                         <?php echo $view['translator']->trans('mautic.migration.export.package.does.not.exist'); ?>
                     </div>
+                <?php endif; ?>
+
+                <?php if ($blueprint) : ?>
+                    <div class="alert alert-warning" role="alert">
+                        <?php echo $view['translator']->trans('mautic.migration.export.is.not.fully.exported'); ?>
+                    </div>
+                    <?php if ($blueprint['totalEntities']) : ?>
+                        <h4 class="pt-md pb-md">
+                            <?php echo $view['translator']->trans('mautic.migration.entity.export.progress'); ?>
+                        </h4>
+                        <?php $entityProgress = round($blueprint['processedEntities'] / $blueprint['totalEntities'] * 100); ?>
+                        <div class="progress">
+                            <div class="progress-bar" role="progressbar" aria-valuenow="<?php echo $entityProgress; ?>" aria-valuemin="0" aria-valuemax="100" style="width: <?php echo $entityProgress; ?>%;">
+                                <?php echo $entityProgress; ?>%
+                            </div>
+                        </div>
+                    <?php endif; ?>
+                    <?php if ($blueprint['totalFiles']) : ?>
+                        <h4 class="pt-md pb-md">
+                            <?php echo $view['translator']->trans('mautic.migration.files.export.progress'); ?>
+                        </h4>
+                        <?php $FileProgress = round($blueprint['processedFiles'] / $blueprint['totalFiles'] * 100); ?>
+                        <div class="progress">
+                            <div class="progress-bar" role="progressbar" aria-valuenow="<?php echo $FileProgress; ?>" aria-valuemin="0" aria-valuemax="100" style="width: <?php echo $FileProgress; ?>%;">
+                                <?php echo $FileProgress; ?>%
+                            </div>
+                        </div>
+                    <?php endif; ?>
                 <?php endif; ?>
             </div>
         </div>

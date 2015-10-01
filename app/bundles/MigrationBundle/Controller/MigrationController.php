@@ -192,7 +192,8 @@ class MigrationController extends FormController
                 ), "RETURN_ARRAY"),
                 'security'         => $security,
                 'logs'             => $logs,
-                'packageInfo'      => $model->getLastPackageInfo($activeMigration->getId())
+                'packageInfo'      => $model->getLastPackageInfo($activeMigration->getId()),
+                'blueprint'        => $model->getExistingBlueprint($activeMigration)
             ),
             'contentTemplate' => 'MauticMigrationBundle:Migration:' . $tmpl . '.html.php',
             'passthroughVars' => array(
@@ -524,32 +525,29 @@ class MigrationController extends FormController
      *
      * @return JsonResponse|\Symfony\Component\HttpFoundation\RedirectResponse|Response
      */
-    // public function cloneAction ($objectId)
-    // {
-    //     /** @var \Mautic\MigrationBundle\Model\MigrationModel $model */
-    //     $model  = $this->factory->getModel('migration.migration');
-    //     $entity = $model->getEntity($objectId);
+    public function cloneAction ($objectId)
+    {
+        /** @var \Mautic\MigrationBundle\Model\MigrationModel $model */
+        $model  = $this->factory->getModel('migration.migration');
+        $entity = $model->getEntity($objectId);
 
-    //     if ($entity != null) {
-    //         if (!$this->factory->getSecurity()->isGranted('migration:migrations:create') ||
-    //             !$this->factory->getSecurity()->hasEntityAccess(
-    //                 'migration:migrations:viewown', 'migration:migrations:viewother', $entity->getCreatedBy()
-    //             )
-    //         ) {
-    //             return $this->accessDenied();
-    //         }
+        if ($entity != null) {
+            if (!$this->factory->getSecurity()->isGranted('migration:migrations:create') ||
+                !$this->factory->getSecurity()->hasEntityAccess(
+                    'migration:migrations:viewown', 'migration:migrations:viewother', $entity->getCreatedBy()
+                )
+            ) {
+                return $this->accessDenied();
+            }
 
-    //         $clone = clone $entity;
-    //         $clone->setDownloadCounts(0);
-    //         $clone->setUniqueDownloadCounts(0);
-    //         $clone->setRevision(0);
-    //         $clone->setIsPublished(false);
-    //         $model->saveEntity($clone);
-    //         $objectId = $clone->getId();
-    //     }
+            $clone = clone $entity;
+            $clone->setIsPublished(false);
+            $model->saveEntity($clone);
+            $objectId = $clone->getId();
+        }
 
-    //     return $this->editAction($objectId);
-    // }
+        return $this->editAction($objectId);
+    }
 
     /**
      * Deletes the entity
