@@ -100,7 +100,7 @@ class MigrationModel extends FormModel
         $count = 0;
 
         $maxCount = ($batchLimit < $blueprint['totalEntities']) ? $batchLimit : $blueprint['totalEntities'];
-        $dir = $this->factory->getParameter('export_dir') . '/' . $migration->getId();
+        $dir = $this->getMigrationDir($migration->getId());
 
         if ($output) {
             $progress = new ProgressBar($output, $maxCount);
@@ -232,7 +232,18 @@ class MigrationModel extends FormModel
      * @return array
      */
     function getLastPackageInfo($id) {
-        $this->factory->getParameter('export_dir');
+        $dir = $this->getMigrationDir($id);
+    }
+
+    /**
+     * Get path and other info about last exported package
+     *
+     * @param  integer  $id
+     *
+     * @return array
+     */
+    function getMigrationDir($id) {
+        return $this->factory->getParameter('export_dir') . '/' . $id;
     }
 
     /**
@@ -283,7 +294,7 @@ class MigrationModel extends FormModel
      */
     public function getBlueprint($migration)
     {
-        $dir     = $this->factory->getParameter('export_dir') . '/' . $migration->getId();
+        $dir     = $this->getMigrationDir($migration->getId());
         $file    = $dir . '/blueprint.json';
 
         if (file_exists($file)) {
@@ -305,7 +316,7 @@ class MigrationModel extends FormModel
      */
     public function saveBlueprint($id, array $content)
     {
-        $dir     = $this->factory->getParameter('export_dir') . '/' . $id;
+        $dir     = $this->getMigrationDir($id);
         $file    = $dir . '/blueprint.json';
 
         if (!is_dir($dir)) {
