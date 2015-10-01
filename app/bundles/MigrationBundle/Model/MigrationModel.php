@@ -12,6 +12,7 @@ namespace Mautic\MigrationBundle\Model;
 use Mautic\CoreBundle\Entity\IpAddress;
 use Mautic\CoreBundle\Helper\InputHelper;
 use Mautic\CoreBundle\Model\FormModel;
+use Mautic\CoreBundle\Helper\DateTimeHelper;
 use Mautic\MigrationBundle\Entity\Migration;
 use Mautic\MigrationBundle\Event\MigrationTemplateEvent;
 use Mautic\MigrationBundle\Event\MigrationEditEvent;
@@ -191,7 +192,7 @@ class MigrationModel extends FormModel
         // Create a ZIP package of expoted data
         if ($blueprint['totalEntities'] == $blueprint['processedEntities'] && $blueprint['totalFiles'] == $blueprint['processedFiles']) {
             $zip = new \ZipArchive();
-            $zipFile = $this->factory->getParameter('export_dir') . '/' . $migration->getId() . '.zip';
+            $zipFile = $this->getZipPackagePath($migration->getId());
             if ($zip->open($zipFile, file_exists($zipFile) ? \ZIPARCHIVE::OVERWRITE : \ZIPARCHIVE::CREATE) === true) {
                 foreach ($iterator = $this->getIterator($dir) as $item) {
                     $file = $dir . '/' . $iterator->getSubPathName();
@@ -232,18 +233,44 @@ class MigrationModel extends FormModel
      * @return array
      */
     function getLastPackageInfo($id) {
-        $dir = $this->getMigrationDir($id);
+        $zipFile = $this->getZipPackagePath($id);
+
+        $fileInfo = array(
+            'exists'    => false,
+            'modified'  => null,
+            'file_size' => 0,
+            'path'      => realpath($zipFile)
+        );
+
+        if (file_exists($zipFile)) {
+            $fileInfo['exists'] = true;
+            $fileInfo['modified'] = (new DateTimeHelper(filemtime($zipFile), 'U'))->getDateTime();
+            $fileInfo['file_size'] = round(filesize($zipFile) / 1000000, 3); // in MB
+        }
+
+        return $fileInfo;
     }
 
     /**
-     * Get path and other info about last exported package
+     * Get absolut path and where to store migration files
      *
      * @param  integer  $id
      *
-     * @return array
+     * @return string
      */
     function getMigrationDir($id) {
         return $this->factory->getParameter('export_dir') . '/' . $id;
+    }
+
+    /**
+     * Get absolut path and where to store migration files
+     *
+     * @param  integer  $id
+     *
+     * @return string
+     */
+    function getZipPackagePath($id) {
+        return $this->getMigrationDir($id) . '.zip';
     }
 
     /**

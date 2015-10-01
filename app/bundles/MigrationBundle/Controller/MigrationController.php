@@ -12,6 +12,7 @@ namespace Mautic\MigrationBundle\Controller;
 use Mautic\CoreBundle\Controller\FormController;
 use Symfony\Component\Form\FormError;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Response;
 
 /**
  * Class MigrationController
@@ -191,6 +192,7 @@ class MigrationController extends FormController
                 ), "RETURN_ARRAY"),
                 'security'         => $security,
                 'logs'             => $logs,
+                'packageInfo'      => $model->getLastPackageInfo($activeMigration->getId())
             ),
             'contentTemplate' => 'MauticMigrationBundle:Migration:' . $tmpl . '.html.php',
             'passthroughVars' => array(
@@ -447,6 +449,8 @@ class MigrationController extends FormController
     {
         /** @var \Mautic\MigrationBundle\Model\MigrationModel $model */
         $model  = $this->factory->getModel('migration.migration');
+
+        /** @var \Mautic\MigrationBundle\Entity\Migration $entity */
         $entity = $model->getEntity($objectId);
 
         if ($entity != null) {
@@ -461,6 +465,56 @@ class MigrationController extends FormController
         }
 
         return $this->viewAction($objectId);
+    }
+
+    /**
+     * Download exported zip package
+     *
+     * @param  int $id
+     *
+     * @return void
+     */
+    public function downloadAction($id)
+    {
+        //find the asset
+        $security   = $this->factory->getSecurity();
+
+        /** @var \Mautic\MigrationBundle\Model\MigrationModel $model */
+        $model      = $this->factory->getModel('migration.migration');
+
+        /** @var \Mautic\MigrationBundle\Entity\Migration $entity */
+        $entity     = $model->getEntity($id);
+
+        if (!empty($entity)) {
+            $published    = $entity->isPublished();
+
+            //make sure the user can view the migration or deny access
+            if (!$security->hasEntityAccess('migration:migrations:viewown', 'migration:migrations:viewother', $entity->getCreatedBy())) {
+                return $this->accessDenied();
+            }
+
+            $path = $model->getZipPackagePath($entity->getId());
+
+            if (file_exists($path)) {
+                $contents = file_get_contents($path);
+            } else {
+                return $this->notFound();
+            }
+
+            $response = new Response();
+            $response->headers->set('Content-Type', 'application/zip');
+
+            $stream = $this->request->get('stream', 0);
+            if (!$stream) {
+                $response->headers->set('Content-Disposition', 'attachment;filename="export_' . $entity->getId() . '.zip');
+            }
+            $response->setContent($contents);
+
+            return $response;
+
+        }
+
+        $this->notFound();
     }
 
     /**

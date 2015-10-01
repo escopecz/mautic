@@ -75,7 +75,24 @@ $view['slots']->set('actions', $view->render('MauticCoreBundle:Helper:page_actio
                 </span>
             </div>
             <!--/ migration detail collapseable toggler -->
-
+            <div class="tab-content pa-md">
+                <?php if ($packageInfo['exists']) : ?>
+                    <div class="alert alert-success" role="alert">
+                        <?php echo $view['translator']->trans('mautic.migration.export.package.info', array(
+                            '%path%' => $packageInfo['path'],
+                            '%modified%' => $view['date']->toFullConcat($packageInfo['modified']),
+                            '%file_size%' => $packageInfo['file_size']
+                        )); ?>
+                        <a href="<?php echo $this->container->get('router')->generate('mautic_migration_action', array('objectAction' => 'download', 'objectId' => $activeMigration->getId())); ?>" class="btn btn-default pull-right">
+                            <i class="fa fa-download"></i> Download
+                        </a>
+                    </div>
+                <?php else : ?>
+                    <div class="alert alert-warning" role="alert">
+                        <?php echo $view['translator']->trans('mautic.migration.export.package.does.not.exist'); ?>
+                    </div>
+                <?php endif; ?>
+            </div>
         </div>
     </div>
     <!--/ left section -->
