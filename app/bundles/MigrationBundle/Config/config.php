@@ -34,7 +34,7 @@ return array(
                 'mautic.migration.menu.index' => array(
                     'route'     => 'mautic_migration_index',
                     'id'        => 'mautic_config_index',
-                    'iconClass' => 'fa-exchange',
+                    'iconClass' => 'fa-suitcase',
                     'access'    => 'admin',
                 )
             )
