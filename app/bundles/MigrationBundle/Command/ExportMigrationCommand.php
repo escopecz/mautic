@@ -9,6 +9,8 @@
 
 namespace Mautic\MigrationBundle\Command;
 
+use Mautic\MigrationBundle\Model\MigrationModel;
+use Mautic\MigrationBundle\Entity\Migration;
 use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -105,17 +107,7 @@ class ExportMigrationCommand extends ContainerAwareCommand
         if ($id) {
             /** @var \Mautic\MigrationBundle\Entity\Migration $migration */
             $migration = $migrationModel->getEntity($id);
-
-            if ($migration !== null && $migration->isPublished()) {
-                $output->writeln('<info>'.$translator->trans('mautic.migration.export.starting', array('%id%' => $id)).'</info>');
-                $blueprint = $migrationModel->triggerExport($migration, $batch, $output);
-                $output->writeln('<info>'.$translator->trans('mautic.migration.export.progress', array(
-                    '%processedEntities%' => $blueprint['processedEntities'],
-                    '%totalEntities%' => $blueprint['totalEntities']
-                )).'</info>');
-            } else {
-                $output->writeln('<error>'.$translator->trans('mautic.migration.template.not_found', array('%id%' => $id)).'</error>');
-            }
+            $this->processMigration($migration, $migrationModel, $batch, $output, $translator);
         } else {
             $migrations = $migrationModel->getEntities(
                 array(
@@ -123,29 +115,16 @@ class ExportMigrationCommand extends ContainerAwareCommand
                 )
             );
 
-            while (($c = $migrations->next()) !== false) {
+            while (($migration = $migrations->next()) !== false) {
                 $totalProcessed = 0;
 
                 // Key is ID and not 0
-                $c = reset($c);
+                $migration = reset($migration);
 
-                if ($c->isPublished()) {
-                    $output->writeln('<info>'.$translator->trans('mautic.migration.trigger.triggering', array('%id%' => $c->getId())).'</info>');
+                $this->processMigration($migration, $migrationModel, $batch, $output, $translator);
 
-                    //trigger starting action events for newly added leads
-                    $output->writeln('<comment>'.$translator->trans('mautic.migration.trigger.starting').'</comment>');
-                    $processed = $model->triggerStartingEvents($c, $totalProcessed, $batch, $max, $output);
-                    $output->writeln(
-                        '<comment>'.$translator->trans('mautic.migration.trigger.events_executed', array('%events%' => $processed)).'</comment>'."\n"
-                    );
-
-                    if ($max && $totalProcessed >= $max) {
-                        continue;
-                    }
-                }
-
-                $em->detach($c);
-                unset($c);
+                $em->detach($migration);
+                unset($migration);
             }
 
             unset($migrations);
@@ -155,5 +134,22 @@ class ExportMigrationCommand extends ContainerAwareCommand
         file_put_contents($checkFile, json_encode($executionTimes));
 
         return 0;
+    }
+
+    /**
+     *
+     */
+    protected function processMigration(Migration $migration, MigrationModel $migrationModel, $batch, OutputInterface $output, $translator)
+    {
+        if ($migration !== null && $migration->isPublished()) {
+            $output->writeln('<info>'.$translator->trans('mautic.migration.export.starting', array('%id%' => $migration->getId())).'</info>');
+            $blueprint = $migrationModel->triggerExport($migration, $batch, $output);
+            $output->writeln('<info>'.$translator->trans('mautic.migration.export.progress', array(
+                '%processedEntities%' => $blueprint['processedEntities'],
+                '%totalEntities%' => $blueprint['totalEntities']
+            )).'</info>');
+        } else {
+            $output->writeln('<error>'.$translator->trans('mautic.migration.template.not_found', array('%id%' => $migration->getId())).'</error>');
+        }
     }
 }
