@@ -621,68 +621,69 @@ class MigrationController extends FormController
      *
      * @return \Symfony\Component\HttpFoundation\JsonResponse|\Symfony\Component\HttpFoundation\RedirectResponse
      */
-    // public function batchDeleteAction ()
-    // {
-    //     $page      = $this->factory->getSession()->get('mautic.migration.page', 1);
-    //     $returnUrl = $this->generateUrl('mautic_migration_index', array('page' => $page));
-    //     $flashes   = array();
+    public function batchDeleteAction ()
+    {
+        $page      = $this->factory->getSession()->get('mautic.migration.page', 1);
+        $returnUrl = $this->generateUrl('mautic_migration_index', array('page' => $page));
+        $flashes   = array();
 
-    //     $postActionVars = array(
-    //         'returnUrl'       => $returnUrl,
-    //         'viewParameters'  => array('page' => $page),
-    //         'contentTemplate' => 'MauticMigrationBundle:Migration:index',
-    //         'passthroughVars' => array(
-    //             'activeLink'    => 'mautic_migration_index',
-    //             'mauticContent' => 'migration'
-    //         )
-    //     );
+        $postActionVars = array(
+            'returnUrl'       => $returnUrl,
+            'viewParameters'  => array('page' => $page),
+            'contentTemplate' => 'MauticMigrationBundle:Migration:index',
+            'passthroughVars' => array(
+                'activeLink'    => 'mautic_migration_index',
+                'mauticContent' => 'migration'
+            )
+        );
 
-    //     if ($this->request->getMethod() == 'POST') {
-    //         /** @var \Mautic\MigrationBundle\Model\MigrationModel $model */
-    //         $model     = $this->factory->getModel('migration');
-    //         $ids       = json_decode($this->request->query->get('ids', array()));
-    //         $deleteIds = array();
+        if ($this->request->getMethod() == 'POST') {
+            /** @var \Mautic\MigrationBundle\Model\MigrationModel $model */
+            $model     = $this->factory->getModel('migration');
+            $ids       = json_decode($this->request->query->get('ids', array()));
+            $deleteIds = array();
 
-    //         // Loop over the IDs to perform access checks pre-delete
-    //         foreach ($ids as $objectId) {
-    //             $entity = $model->getEntity($objectId);
+            // Loop over the IDs to perform access checks pre-delete
+            foreach ($ids as $objectId) {
+                $entity = $model->getEntity($objectId);
 
-    //             if ($entity === null) {
-    //                 $flashes[] = array(
-    //                     'type'    => 'error',
-    //                     'msg'     => 'mautic.migration.migration.error.notfound',
-    //                     'msgVars' => array('%id%' => $objectId)
-    //                 );
-    //             } elseif (!$this->factory->getSecurity()->hasEntityAccess(
-    //                 'migration:migrations:deleteown', 'migration:migrations:deleteother', $entity->getCreatedBy()
-    //             )
-    //             ) {
-    //                 $flashes[] = $this->accessDenied(true);
-    //             } elseif ($model->isLocked($entity)) {
-    //                 $flashes[] = $this->isLocked($postActionVars, $entity, 'migration', true);
-    //             } else {
-    //                 $deleteIds[] = $objectId;
-    //             }
-    //         }
+                if ($entity === null) {
+                    $flashes[] = array(
+                        'type'    => 'error',
+                        'msg'     => 'mautic.migration.migration.error.notfound',
+                        'msgVars' => array('%id%' => $objectId)
+                    );
+                } elseif (!$this->factory->getSecurity()->hasEntityAccess(
+                    'migration:migrations:deleteown', 'migration:migrations:deleteother', $entity->getCreatedBy()
+                )
+                ) {
+                    $flashes[] = $this->accessDenied(true);
+                } elseif ($model->isLocked($entity)) {
+                    $flashes[] = $this->isLocked($postActionVars, $entity, 'migration', true);
+                } else {
+                    $deleteIds[] = $objectId;
+                    $model->removeExportedFiles($objectId);
+                }
+            }
 
-    //         // Delete everything we are able to
-    //         if (!empty($deleteIds)) {
-    //             $entities = $model->deleteEntities($deleteIds);
+            // Delete everything we are able to
+            if (!empty($deleteIds)) {
+                $entities = $model->deleteEntities($deleteIds);
 
-    //             $flashes[] = array(
-    //                 'type'    => 'notice',
-    //                 'msg'     => 'mautic.migration.migration.notice.batch_deleted',
-    //                 'msgVars' => array(
-    //                     '%count%' => count($entities)
-    //                 )
-    //             );
-    //         }
-    //     } //else don't do anything
+                $flashes[] = array(
+                    'type'    => 'notice',
+                    'msg'     => 'mautic.migration.migration.notice.batch_deleted',
+                    'msgVars' => array(
+                        '%count%' => count($entities)
+                    )
+                );
+            }
+        } //else don't do anything
 
-    //     return $this->postActionRedirect(
-    //         array_merge($postActionVars, array(
-    //             'flashes' => $flashes
-    //         ))
-    //     );
-    // }
+        return $this->postActionRedirect(
+            array_merge($postActionVars, array(
+                'flashes' => $flashes
+            ))
+        );
+    }
 }
