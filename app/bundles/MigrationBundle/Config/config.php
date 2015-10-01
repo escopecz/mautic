@@ -45,7 +45,10 @@ return array(
         'events' => array(
             'mautic.migration.migrationbundle.subscriber' => array(
                 'class' => 'Mautic\MigrationBundle\EventListener\MigrationSubscriber'
-            )
+            ),
+            'mautic.migration.configbundle.subscriber' => array(
+                'class' => 'Mautic\MigrationBundle\EventListener\ConfigSubscriber'
+            ),
         ),
         'forms' => array(
             'mautic.form.type.migration' => array(
@@ -57,7 +60,16 @@ return array(
                 'class' => 'Mautic\MigrationBundle\Form\Type\EventPropertiesType',
                 'arguments' => 'mautic.factory',
                 'alias' => 'event_properties'
+            ),
+            'mautic.form.type.migration.config' => array(
+                'class' => 'Mautic\MigrationBundle\Form\Type\ConfigType',
+                'arguments' => 'mautic.factory',
+                'alias' => 'migrationconfig'
             )
         )
+    ),
+
+    'parameters' => array(
+        'export_dir'  => '%kernel.root_dir%/exports'
     )
 );
