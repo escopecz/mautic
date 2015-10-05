@@ -684,4 +684,153 @@ class MigrationController extends FormController
             ))
         );
     }
+
+    /**
+     * @param int  $objectId
+     *
+     * @return JsonResponse|\Symfony\Component\HttpFoundation\Response
+     */
+    public function uploadAction($objectId = 0)
+    {
+        $action    = $this->generateUrl('mautic_migration_action', array('objectAction' => 'upload'));
+        $form      = $this->get('form.factory')->create('migration_import', array(), array('action' => $action));
+        $cacheDir  = $this->factory->getSystemPath('cache', true);
+        $username  = $this->factory->getUser()->getUsername();
+        $dirName   = $username . '_migration_import';
+        $fileName  = $dirName . '.zip';
+        $fullPath  = $cacheDir . '/' . $fileName;
+
+        // Check for a submitted form and process it
+        if ($this->request->getMethod() == 'POST') {
+            if (isset($form) && !$cancelled = $this->isFormCancelled($form)) {
+                if ($this->isFormValid($form)) {
+
+                    // Remove previously uploaded file
+                    if (file_exists($fullPath)) {
+                        unlink($fullPath);
+                    }
+
+                    $fileData = $form['file']->getData();
+                    if (!empty($fileData)) {
+                        try {
+                            $fileData->move($cacheDir, $fileName);
+
+                            $zip = new \ZipArchive;
+                            $res = $zip->open($fullPath);
+                            if ($res === TRUE) {
+                                // extract it to the path we determined above
+                                $zip->extractTo($cacheDir . '/' . $dirName);
+                                $zip->close();
+                                return $this->importAction(0);
+                            } else {
+                                $form->addError(
+                                    new FormError(
+                                        $this->factory->getTranslator()->trans('mautic.migration.upload.couldnotunzip', array(), 'validators')
+                                    )
+                                );
+                            }
+                        } catch (\Exception $e) {
+                        }
+
+                        $form->addError(
+                            new FormError(
+                                $this->factory->getTranslator()->trans('mautic.migration.upload.filenotreadable', array(), 'validators')
+                            )
+                        );
+                    }
+
+                    $form->addError(
+                        new FormError(
+                            $this->factory->getTranslator()->trans('mautic.migration.upload.filenotfound', array(), 'validators')
+                        )
+                    );
+                }
+            } else {
+                $this->resetImport($fullPath);
+
+                return $this->importAction(0, true);
+            }
+        }
+
+        return $this->delegateView(
+            array(
+                'viewParameters'  => array('form' => $form->createView()),
+                'contentTemplate' => 'MauticMigrationBundle:Import:form.html.php',
+                'passthroughVars' => array(
+                    'activeLink'    => '#mautic_migration_index',
+                    'mauticContent' => 'migrationImport',
+                    'route'         => $this->generateUrl(
+                        'mautic_migration_action',
+                        array(
+                            'objectAction' => 'import'
+                        )
+                    )
+                )
+            )
+        );
+    }
+
+    /**
+     * @param int  $objectId
+     *
+     * @return JsonResponse|\Symfony\Component\HttpFoundation\Response
+     */
+    public function importAction($objectId = 0)
+    {
+        //Auto detect line endings for the file to work around MS DOS vs Unix new line characters
+        ini_set('auto_detect_line_endings', true);
+
+        /** @var \Mautic\MigrationBundle\Model\MigrationModel $model */
+        $model   = $this->factory->getModel('migration.migration');
+        $session = $this->factory->getSession();
+
+        if (!$this->factory->getSecurity()->isGranted('migration:migrations:create')) {
+            return $this->accessDenied();
+        }
+
+        ///Check for a submitted form and process it
+        if ($this->request->getMethod() == 'POST') {
+
+        }
+
+        return $this->delegateView(
+            array(
+                'viewParameters'  => array(
+                    'blueprint' => $model->getImportedBlueprint(),
+                    // 'stats'    => $stats,
+                    // 'complete' => $complete
+                ),
+                'contentTemplate' => 'MauticMigrationBundle:Import:progress.html.php',
+                'passthroughVars' => array(
+                    'activeLink'    => '#mautic_migration_index',
+                    'mauticContent' => 'migrationImport',
+                    'route'         => $this->generateUrl(
+                        'mautic_migration_action',
+                        array(
+                            'objectAction' => 'import'
+                        )
+                    )
+                )
+            )
+        );
+    }
+
+    /**
+     * @param $filepath
+     */
+    private function resetImport($filepath)
+    {
+        $session = $this->factory->getSession();
+        $session->set('mautic.migration.import.stats', array('merged' => 0, 'created' => 0, 'ignored' => 0));
+        $session->set('mautic.migration.import.headers', array());
+        $session->set('mautic.migration.import.step', 1);
+        $session->set('mautic.migration.import.progress', array(0, 0));
+        $session->set('mautic.migration.import.fields', array());
+        $session->set('mautic.migration.import.defaultowner', null);
+        $session->set('mautic.migration.import.defaultlist', null);
+        $session->set('mautic.migration.import.inprogress', false);
+        $session->set('mautic.migration.import.importfields', array());
+
+        unlink($filepath);
+    }
 }

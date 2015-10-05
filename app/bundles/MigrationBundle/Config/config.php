@@ -65,6 +65,11 @@ return array(
                 'class' => 'Mautic\MigrationBundle\Form\Type\ConfigType',
                 'arguments' => 'mautic.factory',
                 'alias' => 'migrationconfig'
+            ),
+            'mautic.form.type.migration.import' => array(
+                'class' => 'Mautic\MigrationBundle\Form\Type\ImportType',
+                'arguments' => 'mautic.factory',
+                'alias' => 'migration_import'
             )
         )
     ),

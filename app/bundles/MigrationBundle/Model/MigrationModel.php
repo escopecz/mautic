@@ -277,7 +277,7 @@ class MigrationModel extends FormModel
     }
 
     /**
-     * Get absolut path and where to store migration files
+     * Get absolut path where to store migration files
      *
      * @param  integer  $id
      *
@@ -285,6 +285,17 @@ class MigrationModel extends FormModel
      */
     public function getMigrationDir($id) {
         return $this->factory->getParameter('export_dir') . '/' . $id;
+    }
+
+    /**
+     * Get absolut path where the import should be uploaded
+     *
+     * @return string
+     */
+    public function getImportDir() {
+        $username  = $this->factory->getUser()->getUsername();
+        $dirName   = $username . '_migration_import';
+        return $this->factory->getSystemPath('cache', true) . '/' . $dirName;
     }
 
     /**
@@ -347,6 +358,23 @@ class MigrationModel extends FormModel
     public function getExistingBlueprint($migration)
     {
         $dir     = $this->getMigrationDir($migration->getId());
+        $file    = $dir . '/blueprint.json';
+
+        if (file_exists($file)) {
+            return json_decode(file_get_contents($file), true);
+        }
+
+        return null;
+    }
+
+    /**
+     * Get imported blueprint from a existing json file
+     *
+     * @return array | null
+     */
+    public function getImportedBlueprint()
+    {
+        $dir     = $this->getImportDir();
         $file    = $dir . '/blueprint.json';
 
         if (file_exists($file)) {
