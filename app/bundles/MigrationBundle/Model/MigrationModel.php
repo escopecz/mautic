@@ -295,7 +295,7 @@ class MigrationModel extends FormModel
     public function getImportDir() {
         $username  = $this->factory->getUser()->getUsername();
         $dirName   = $username . '_migration_import';
-        return $this->factory->getSystemPath('cache', true) . '/' . $dirName;
+        return $this->factory->getParameter('import_dir') . '/' . $dirName;
     }
 
     /**

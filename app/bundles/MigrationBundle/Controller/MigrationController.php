@@ -692,13 +692,16 @@ class MigrationController extends FormController
      */
     public function uploadAction($objectId = 0)
     {
+        /** @var \Mautic\MigrationBundle\Model\MigrationModel $model */
+        $model   = $this->factory->getModel('migration.migration');
+
         $action    = $this->generateUrl('mautic_migration_action', array('objectAction' => 'upload'));
-        $form      = $this->get('form.factory')->create('migration_import', array(), array('action' => $action));
-        $cacheDir  = $this->factory->getSystemPath('cache', true);
+        $form      = $this->get('form.factory')->create('migration_upload', array(), array('action' => $action));
+        $importDir = $model->getImportDir();
         $username  = $this->factory->getUser()->getUsername();
         $dirName   = $username . '_migration_import';
         $fileName  = $dirName . '.zip';
-        $fullPath  = $cacheDir . '/' . $fileName;
+        $fullPath  = $this->factory->getParameter('import_dir') . '/' . $fileName;
 
         // Check for a submitted form and process it
         if ($this->request->getMethod() == 'POST') {
@@ -713,13 +716,13 @@ class MigrationController extends FormController
                     $fileData = $form['file']->getData();
                     if (!empty($fileData)) {
                         try {
-                            $fileData->move($cacheDir, $fileName);
+                            $fileData->move($this->factory->getParameter('import_dir'), $fileName);
 
                             $zip = new \ZipArchive;
                             $res = $zip->open($fullPath);
                             if ($res === TRUE) {
                                 // extract it to the path we determined above
-                                $zip->extractTo($cacheDir . '/' . $dirName);
+                                $zip->extractTo($importDir);
                                 $zip->close();
                                 return $this->importAction(0);
                             } else {

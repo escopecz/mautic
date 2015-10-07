@@ -50,6 +50,20 @@ class ConfigType extends AbstractType
                 'tooltip' => 'mautic.migration.config.form.export.batch.limit.tooltip'
             )
         ));
+
+        $builder->add('import_dir', 'text', array(
+            'label'       => 'mautic.migration.config.form.import.dir',
+            'label_attr'  => array('class' => 'control-label'),
+            'attr'        => array(
+                'class' => 'form-control',
+                'tooltip' => 'mautic.migration.config.form.import.dir.tooltip'
+            ),
+            'constraints' => array(
+                new NotBlank(array(
+                    'message' => 'mautic.core.value.required'
+                ))
+            )
+        ));
     }
 
     /**

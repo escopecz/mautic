@@ -66,6 +66,11 @@ return array(
                 'arguments' => 'mautic.factory',
                 'alias' => 'migrationconfig'
             ),
+            'mautic.form.type.migration.upload' => array(
+                'class' => 'Mautic\MigrationBundle\Form\Type\UploadType',
+                'arguments' => 'mautic.factory',
+                'alias' => 'migration_upload'
+            ),
             'mautic.form.type.migration.import' => array(
                 'class' => 'Mautic\MigrationBundle\Form\Type\ImportType',
                 'arguments' => 'mautic.factory',
@@ -75,7 +80,8 @@ return array(
     ),
 
     'parameters' => array(
-        'export_dir'  => '%kernel.root_dir%/../exports',
-        'export_batch_limit' => 10000
+        'export_dir'         => '%kernel.root_dir%/../exports',
+        'export_batch_limit' => 10000,
+        'import_dir'         => '%kernel.root_dir%/../imports',
     )
 );

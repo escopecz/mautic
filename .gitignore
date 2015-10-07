@@ -20,6 +20,7 @@
 /composer.phar
 /bundles
 /exports
+/imports
 /media/files/*
 /node_modules
 /build/packaging

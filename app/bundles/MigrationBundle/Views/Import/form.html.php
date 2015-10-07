@@ -10,7 +10,7 @@
 $view->extend('MauticCoreBundle:Default:content.html.php');
 
 $view['slots']->set('mauticContent', 'migrationImport');
-$view['slots']->set('headerTitle', $view['translator']->trans('mautic.migration.import'));
+$view['slots']->set('headerTitle', $view['translator']->trans('mautic.migration.upload'));
 
 ?>
 

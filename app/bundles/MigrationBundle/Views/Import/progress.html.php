@@ -15,15 +15,34 @@ $view['slots']->set('headerTitle', $view['translator']->trans('mautic.migration.
 
 <div class="row ma-lg">
     <div class="col-sm-offset-3 col-sm-6">
-        <div class="panel">
+        <div class="panel">test
             <div class="panel-heading text-center">
                 <h4 class="panel-title"><?php echo $view['translator']->trans('mautic.migration.progress.header'); ?></h4>
             </div>
             <div class="panel-body">
-                <h4><?php echo $view['translator']->trans('mautic.migration.import.inprogress'); ?></h4>
                 <?php if ($blueprint) : ?>
+                    <?php if (!empty($blueprint['entities'])) : ?>
+                        <h4><?php echo $view['translator']->trans('mautic.migration.import.entities'); ?></h4>
+                        <?php foreach ($blueprint['entities'] as $entityKey => $entity) : ?>
+                            <div>
+                                <h5>
+                                    <?php echo $view['translator']->trans('mautic.migration.entity.' . strtolower($entityKey)); ?>
+                                    <span class="badge"><?php echo $entity['processed'] ?></span>
+                                </h5>
+                                <div class="progress">
+                                    <div class="progress-bar" role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" style="width: 60%;">
+                                        60%
+                                    </div>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
                     <pre><?php print_r($blueprint) ?></pre>
-                <?php endif;?>
+                <?php else : ?>
+                    <a class="text-danger mt-md" href="<?php echo $view['router']->generate('mautic_migration_action', array('objectAction' => 'upload')); ?>" data-toggle="ajax">
+                        <?php echo $view['translator']->trans('mautic.migration.import.upload.first'); ?>
+                    </a>
+                <?php endif; ?>
             </div>
 
             <?php if (!empty($stats['failures'])): ?>
