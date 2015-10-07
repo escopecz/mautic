@@ -68,13 +68,15 @@ return array(
             ),
             'mautic.form.type.migration.upload' => array(
                 'class' => 'Mautic\MigrationBundle\Form\Type\UploadType',
-                'arguments' => 'mautic.factory',
                 'alias' => 'migration_upload'
             ),
             'mautic.form.type.migration.import' => array(
                 'class' => 'Mautic\MigrationBundle\Form\Type\ImportType',
-                'arguments' => 'mautic.factory',
                 'alias' => 'migration_import'
+            ),
+            'mautic.form.type.migration.import.entities' => array(
+                'class' => 'Mautic\MigrationBundle\Form\Type\ImportEntitiesType',
+                'alias' => 'migration_import_entities'
             )
         )
     ),

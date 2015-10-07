@@ -14,11 +14,11 @@ use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolverInterface;
 
 /**
- * Class ImportType
+ * Class ImportEntitiesType
  *
  * @package Mautic\MigrationBundle\Form\Type
  */
-class ImportType extends AbstractType
+class ImportEntitiesType extends AbstractType
 {
 
     /**
@@ -27,20 +27,26 @@ class ImportType extends AbstractType
      */
     public function buildForm (FormBuilderInterface $builder, array $options)
     {
-        if (!empty($options['blueprint']['entities'])) {
-            $builder->add('entities', 'migration_import_entities', array(
-                'entities' => $options['blueprint']['entities']
-            ));
-        }
+        if (!empty($options['entities'])) {
+            foreach ($options['entities'] as $key => $entity) {
+                $key = str_replace('.', ':', $key);
 
-        $builder->add('start', 'submit', array(
-            'attr'  => array(
-                'class'   => 'btn btn-primary pull-right',
-                'icon'    => 'fa fa-upload',
-                'onclick' => "mQuery(this).prop('disabled', true); mQuery('form[name=\'migration_import\']').submit();"
-            ),
-            'label' => 'mautic.migration.import.btn'
-        ));
+                if (isset($options['data'][$key])) {
+                    $value = $options['data'][$key];
+                } elseif (isset($entity['allow_import'])) {
+                    $value = $entity['allow_import'];
+                } elseif (!empty($entity['warnings'])) {
+                    $value = false;
+                } else {
+                    $value = true;
+                }
+
+                $builder->add($key, 'yesno_button_group', array(
+                    'label'       => 'mautic.migration.import.this.entity',
+                    'data'        => (bool) $value
+                ));
+            }
+        }
 
         if (!empty($options["action"])) {
             $builder->setAction($options["action"]);
@@ -52,7 +58,7 @@ class ImportType extends AbstractType
      */
     public function setDefaultOptions(OptionsResolverInterface $resolver)
     {
-        $resolver->setRequired(array('blueprint'));
+        $resolver->setRequired(array('entities'));
     }
 
     /**
@@ -60,6 +66,6 @@ class ImportType extends AbstractType
      */
     public function getName ()
     {
-        return "migration_import";
+        return "migration_import_entities";
     }
 }

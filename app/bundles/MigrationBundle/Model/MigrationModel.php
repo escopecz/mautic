@@ -105,7 +105,7 @@ class MigrationModel extends FormModel
         }
 
         $blueprint = $this->getBlueprint($migration);
-        $this->saveBlueprint($migration->getId(), $blueprint);
+        $this->saveExportBlueprint($migration->getId(), $blueprint);
         $count = 0;
 
         $maxCount = ($batchLimit < $blueprint['totalEntities']) ? $batchLimit : $blueprint['totalEntities'];
@@ -195,7 +195,7 @@ class MigrationModel extends FormModel
             }
         }
 
-        $this->saveBlueprint($migration->getId(), $blueprint);
+        $this->saveExportBlueprint($migration->getId(), $blueprint);
 
         // Create a ZIP package of expoted data
         if ($blueprint['totalEntities'] == $blueprint['processedEntities'] && $blueprint['totalFiles'] == $blueprint['processedFiles']) {
@@ -231,6 +231,30 @@ class MigrationModel extends FormModel
         }
 
         return $blueprint;
+    }
+
+    /**
+     * Trigger import of a uploaded migration template
+     *
+     * @param  array $blueprint
+     * @param  array $formData
+     *
+     * @return array of updated blueprint
+     */
+    public function triggerImport($blueprint, $formData)
+    {
+        if (!empty($formData['entities'])) {
+            foreach ($formData['entities'] as $entityKey => $importEntity) {
+                $entityKey = str_replace(':', '.', $entityKey);
+                if (isset($blueprint['entities'][$entityKey])) {
+                    $blueprint['entities'][$entityKey]['allow_import'] = $importEntity;
+                }
+            }
+        }
+
+        $this->saveImportBlueprint($blueprint);
+
+        // @todo trigger import event
     }
 
     /**
@@ -403,18 +427,40 @@ class MigrationModel extends FormModel
     }
 
     /**
-     * Save migration blueprint to a json file
+     * Save migration blueprint to a json file to export folder
      *
      * @param  integer  $id of the migration
      * @param  array    $content of the migration blueprint
      *
      * @return void
      */
-    public function saveBlueprint($id, array $content)
+    public function saveExportBlueprint($id, array $content)
     {
-        $dir     = $this->getMigrationDir($id);
-        $file    = $dir . '/blueprint.json';
+        $this->saveBlueprint($this->getMigrationDir($id), $content);
+    }
 
+    /**
+     * Save migration blueprint to a json file to import folder
+     *
+     * @param  array    $content of the migration blueprint
+     *
+     * @return void
+     */
+    public function saveImportBlueprint($content)
+    {
+        $this->saveBlueprint($this->getImportDir(), $content);
+    }
+
+    /**
+     * Save migration blueprint to a json file
+     *
+     * @param  string   $dir path
+     * @param  array    $content of the migration blueprint
+     *
+     * @return void
+     */
+    public function saveBlueprint($dir, array $content)
+    {
         if (!is_dir($dir)) {
             if (!mkdir($dir, 0775, true)) {
                 throw new \Exception($this->translator->trans('mautic.migration.file.not.created', array('%folder%' => $dir)));
@@ -430,7 +476,9 @@ class MigrationModel extends FormModel
             $content = json_encode($content);
         }
 
-        if (file_put_contents($file, $content) === false) {
+        $file = 'blueprint.json';
+
+        if (file_put_contents($dir . '/' . $file, $content) === false) {
             throw new \Exception($this->translator->trans('mautic.migration.file.not.written', array('%file%' => $file)));
         }
     }

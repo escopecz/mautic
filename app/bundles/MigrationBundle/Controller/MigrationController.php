@@ -751,7 +751,7 @@ class MigrationController extends FormController
                     );
                 }
             } else {
-                return $this->importAction(0, true);
+                return $this->importAction();
             }
         }
 
@@ -796,15 +796,25 @@ class MigrationController extends FormController
         $dispatcher->dispatch(MigrationEvents::MIGRATION_IMPORT_PROGRESS_ON_GENERATE, $event);
         $blueprint  = $event->getBlueprint();
 
+        $action     = $this->generateUrl('mautic_migration_action', array('objectAction' => 'import'));
+        $form       = $this->get('form.factory')->create('migration_import', array(), array('action' => $action, 'blueprint' => $blueprint));
+
         ///Check for a submitted form and process it
         if ($this->request->getMethod() == 'POST') {
-
+            if (isset($form) && !$cancelled = $this->isFormCancelled($form)) {
+                if ($this->isFormValid($form)) {
+                    $model->triggerImport($blueprint, $form->getData());
+                }
+            } else {
+                return $this->importAction();
+            }
         }
 
         return $this->delegateView(
             array(
                 'viewParameters'  => array(
-                    'blueprint' => $blueprint
+                    'blueprint' => $blueprint,
+                    'form'      => $form->createView()
                 ),
                 'contentTemplate' => 'MauticMigrationBundle:Import:progress.html.php',
                 'passthroughVars' => array(
