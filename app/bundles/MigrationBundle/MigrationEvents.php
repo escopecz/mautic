@@ -96,4 +96,14 @@ final class MigrationEvents
      * @var string
      */
     const MIGRATION_ON_EXPORT   = 'mautic.migration_on_export';
+
+    /**
+     * The mautic.migration_import_progress_on_generate event is thrown on import progress
+     *
+     * The event listener receives a
+     * Mautic\MigrationBundle\Event\MauticProgressEvents instance.
+     *
+     * @var string
+     */
+    const MIGRATION_IMPORT_PROGRESS_ON_GENERATE   = 'mautic.migration_import_progress_on_generate';
 }

@@ -31,5 +31,20 @@ class MigrationSubscriber extends MigrationParentSubscriber
     /**
      * @var string
      */
-    protected $entities = array('Campaign', 'Event', 'Lead', 'LeadLog');
+    protected $entities = array('Campaign', 'Event', 'Lead', 'LeadEventLog');
+
+    /**
+     * @param  MigrationTemplateEvent $event
+     *
+     * @return void
+     */
+    public function onExport(MigrationEvent $event)
+    {
+        if ($event->getBundle() == $this->bundleName && $event->getEntity() == 'LeadEventLog') {
+            $entities = $this->getEntities($event, $event->getEntity(), 'event, ta.lead, ta.campaign');
+            $event->setEntities($entities);
+        } else {
+            parent::onExport($event);
+        }
+    }
 }

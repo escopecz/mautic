@@ -10,6 +10,8 @@
 namespace Mautic\MigrationBundle\Controller;
 
 use Mautic\CoreBundle\Controller\FormController;
+use Mautic\MigrationBundle\Event\MigrationImportEvent;
+use Mautic\MigrationBundle\MigrationEvents;
 use Symfony\Component\Form\FormError;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
@@ -749,8 +751,6 @@ class MigrationController extends FormController
                     );
                 }
             } else {
-                $this->resetImport($fullPath);
-
                 return $this->importAction(0, true);
             }
         }
@@ -791,6 +791,11 @@ class MigrationController extends FormController
             return $this->accessDenied();
         }
 
+        $dispatcher = $this->factory->getDispatcher();
+        $event      = new MigrationImportEvent($model->getImportedBlueprint());
+        $dispatcher->dispatch(MigrationEvents::MIGRATION_IMPORT_PROGRESS_ON_GENERATE, $event);
+        $blueprint  = $event->getBlueprint();
+
         ///Check for a submitted form and process it
         if ($this->request->getMethod() == 'POST') {
 
@@ -799,9 +804,7 @@ class MigrationController extends FormController
         return $this->delegateView(
             array(
                 'viewParameters'  => array(
-                    'blueprint' => $model->getImportedBlueprint(),
-                    // 'stats'    => $stats,
-                    // 'complete' => $complete
+                    'blueprint' => $blueprint
                 ),
                 'contentTemplate' => 'MauticMigrationBundle:Import:progress.html.php',
                 'passthroughVars' => array(
@@ -816,24 +819,5 @@ class MigrationController extends FormController
                 )
             )
         );
-    }
-
-    /**
-     * @param $filepath
-     */
-    private function resetImport($filepath)
-    {
-        $session = $this->factory->getSession();
-        $session->set('mautic.migration.import.stats', array('merged' => 0, 'created' => 0, 'ignored' => 0));
-        $session->set('mautic.migration.import.headers', array());
-        $session->set('mautic.migration.import.step', 1);
-        $session->set('mautic.migration.import.progress', array(0, 0));
-        $session->set('mautic.migration.import.fields', array());
-        $session->set('mautic.migration.import.defaultowner', null);
-        $session->set('mautic.migration.import.defaultlist', null);
-        $session->set('mautic.migration.import.inprogress', false);
-        $session->set('mautic.migration.import.importfields', array());
-
-        unlink($filepath);
     }
 }

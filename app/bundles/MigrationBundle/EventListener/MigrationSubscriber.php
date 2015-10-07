@@ -14,6 +14,7 @@ use Mautic\MigrationBundle\MigrationEvents;
 use Mautic\MigrationBundle\Event\MigrationEditEvent;
 use Mautic\MigrationBundle\Event\MigrationCountEvent;
 use Mautic\MigrationBundle\Event\MigrationEvent;
+use Mautic\MigrationBundle\Event\MigrationImportEvent;
 use Doctrine\ORM\Query;
 
 /**
@@ -51,7 +52,8 @@ class MigrationSubscriber extends CommonSubscriber
         return array(
             MigrationEvents::MIGRATION_TEMPLATE_ON_EDIT_DISPLAY => array('onMigrationEditGenerate', 0),
             MigrationEvents::MIGRATION_ON_ENTITY_COUNT => array('onEntityCount', 0),
-            MigrationEvents::MIGRATION_ON_EXPORT => array('onExport', 0)
+            MigrationEvents::MIGRATION_ON_EXPORT => array('onExport', 0),
+            MigrationEvents::MIGRATION_IMPORT_PROGRESS_ON_GENERATE => array('onImportProgressGenerate', 0)
         );
     }
 
@@ -91,20 +93,34 @@ class MigrationSubscriber extends CommonSubscriber
             $factory = $event->getFactory();
             $key = array_search($event->getEntity(), $this->entities);
             if ($key !== false) {
-                $repositoryName = $this->classPrefix . $this->bundleName . ':' . $this->entities[$key];
-                $repository = $factory->getEntityManager()->getRepository($repositoryName);
-
-                if (method_exists($repository, 'count')) {
-                    $count = $repository->count();
-                } else {
-                    $count = $repository->createQueryBuilder('e')
-                        ->select('count(e)')
-                        ->getQuery()
-                        ->getSingleScalarResult();
-                }
+                $count = $this->countRowsForEntity($this->bundleName, $this->entities[$key], $this->classPrefix);
                 $event->setCount($count);
             }
         }
+    }
+
+    /**
+     * Called on entity count
+     *
+     * @param  MigrationTemplateEvent $event
+     *
+     * @return void
+     */
+    public function countRowsForEntity($bundleName, $entityName, $prefix = 'Mautic')
+    {
+        $repositoryName = $prefix . $bundleName . ':' . $entityName;
+        $repository = $this->factory->getEntityManager()->getRepository($repositoryName);
+
+        if (method_exists($repository, 'count')) {
+            $count = $repository->count();
+        } else {
+            $count = $repository->createQueryBuilder('e')
+                ->select('count(e)')
+                ->getQuery()
+                ->getSingleScalarResult();
+        }
+
+        return $count;
     }
 
     /**
@@ -148,5 +164,31 @@ class MigrationSubscriber extends CommonSubscriber
             ->orderBy($tableAlias . '.' . $keyName)
             ->getQuery()
             ->getResult(Query::HYDRATE_SCALAR);
+    }
+
+    /**
+     * Listen to import progress and generate warnings
+     *
+     * @param  MigrationImportEvent $event
+     *
+     * @return array
+     */
+    public function onImportProgressGenerate(MigrationImportEvent $event)
+    {
+        $blueprint = $event->getBlueprint();
+        $translator = $this->factory->getTranslator();
+
+        if (!empty($blueprint['entities'])) {
+            foreach ($blueprint['entities'] as &$entity) {
+                $count = $this->countRowsForEntity($entity['bundle'], $entity['entity']); // @todo add prefix
+
+                if ($count) {
+                    $entity['warning'] = $translator->trans('mautic.migration.import.not.empty.data.waring', array(
+                        '%count%' => $count
+                    ));
+                }
+            }
+        }
+        $event->setBlueprint($blueprint);
     }
 }
