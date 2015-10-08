@@ -15,6 +15,8 @@ use Mautic\MigrationBundle\Event\MigrationEditEvent;
 use Mautic\MigrationBundle\Event\MigrationCountEvent;
 use Mautic\MigrationBundle\Event\MigrationEvent;
 use Mautic\MigrationBundle\Event\MigrationImportEvent;
+use Mautic\MigrationBundle\Event\MigrationImportViewEvent;
+use Symfony\Component\Serializer\Normalizer\GetSetMethodNormalizer;
 use Doctrine\ORM\Query;
 
 /**
@@ -53,6 +55,7 @@ class MigrationSubscriber extends CommonSubscriber
             MigrationEvents::MIGRATION_TEMPLATE_ON_EDIT_DISPLAY => array('onMigrationEditGenerate', 0),
             MigrationEvents::MIGRATION_ON_ENTITY_COUNT => array('onEntityCount', 0),
             MigrationEvents::MIGRATION_ON_EXPORT => array('onExport', 0),
+            MigrationEvents::MIGRATION_ON_IMPORT => array('onImport', 0),
             MigrationEvents::MIGRATION_IMPORT_PROGRESS_ON_GENERATE => array('onImportProgressGenerate', 0)
         );
     }
@@ -126,7 +129,7 @@ class MigrationSubscriber extends CommonSubscriber
     /**
      * Method executed on migration export
      *
-     * @param  MigrationTemplateEvent $event
+     * @param  MigrationEvent $event
      *
      * @return void
      */
@@ -140,6 +143,69 @@ class MigrationSubscriber extends CommonSubscriber
                 }
             }
         }
+    }
+
+    /**
+     * Method executed on migration import
+     *
+     * @param  MigrationImportEvent $event
+     *
+     * @return void
+     */
+    public function onImport(MigrationImportEvent $event)
+    {
+        if ($event->getBundle() == $this->bundleName) {
+            foreach ($this->entities as $entity) {
+                if ($event->getEntity() == $entity) {
+                    $this->importEntity($event->getBundle(), $event->getEntity(), $event->getRow());
+                }
+            }
+        }
+    }
+
+    /**
+     * Save entity row to the database
+     *
+     * @param  string $bundleName
+     * @param  string $entityName
+     * @param  array  $row
+     *
+     * @return void
+     */
+    public function importEntity($bundleName, $entityName, array $row)
+    {
+        $entityClass = '\\' . $this->classPrefix . '\\' . $bundleName . '\\Entity\\' . $entityName;
+        $entity = new $entityClass;
+        $entity = $this->populateEntityFromArray($entity, $row);
+        $em = $this->factory->getEntityManager();
+        $em->persist($entity);
+        $em->flush();
+    }
+
+    /**
+     * @param $className
+     * @param $data
+     *
+     * @return mixed
+     * @throws \Doctrine\ORM\Mapping\MappingException
+     * @throws \Exception
+     */
+    public function populateEntityFromArray($entity, $data)
+    {
+        foreach ($data as $column => $value) {
+            $column = $this->underscoresToCamelCase($column);
+            $setter = 'set' . $column;
+            if (method_exists($entity, $setter)) {
+                $entity->$setter($value);
+            }
+        }
+
+        return $entity;
+    }
+
+    public function underscoresToCamelCase($string)
+    {
+        return str_replace(' ', '', ucwords(str_replace('_', ' ', $string)));
     }
 
     /**
@@ -163,17 +229,17 @@ class MigrationSubscriber extends CommonSubscriber
             ->setFirstResult($event->getStart())
             ->orderBy($tableAlias . '.' . $keyName)
             ->getQuery()
-            ->getResult(Query::HYDRATE_SCALAR);
+            ->getArrayResult(Query::HYDRATE_SCALAR);
     }
 
     /**
      * Listen to import progress and generate warnings
      *
-     * @param  MigrationImportEvent $event
+     * @param  MigrationImportViewEvent $event
      *
      * @return array
      */
-    public function onImportProgressGenerate(MigrationImportEvent $event)
+    public function onImportProgressGenerate(MigrationImportViewEvent $event)
     {
         $blueprint = $event->getBlueprint();
         $translator = $this->factory->getTranslator();

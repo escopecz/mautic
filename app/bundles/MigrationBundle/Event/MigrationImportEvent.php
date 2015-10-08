@@ -19,33 +19,60 @@ use Mautic\MigrationBundle\Entity\Migration;
  */
 class MigrationImportEvent extends CommonEvent
 {
-    protected $blueprint;
+    /**
+     * @var string
+     */
+    protected $entity;
 
     /**
-     * @param array $blueprint
+     * @var string
      */
-    public function __construct(array $blueprint)
+    protected $bundle;
+
+    /**
+     * @var array
+     */
+    protected $row;
+
+    /**
+    * @param string $bundle
+    * @param string $entity
+    * @param array  $blueprint
+     */
+    public function __construct($bundle, $entity, array $row)
     {
-        $this->blueprint = $blueprint;
+        $this->bundle = $bundle;
+        $this->entity = $entity;
+        $this->row = $row;
     }
 
     /**
-     * Returns the blueprint array
+     * Returns the bundle name
+     *
+     * @return string
+     */
+    public function getBundle()
+    {
+        return $this->bundle;
+    }
+
+    /**
+     * Returns the entity name
+     *
+     * @return string
+     */
+    public function getEntity()
+    {
+        return $this->entity;
+    }
+
+    /**
+     * Returns the row (array) of entity data
      *
      * @return array
      */
-    public function getBlueprint()
+    public function getRow()
     {
-        return $this->blueprint;
-    }
-
-    /**
-     * Sets the blueprint array
-     *
-     * @param array $blueprint
-     */
-    public function setBlueprint(array $blueprint)
-    {
-        $this->blueprint = $blueprint;
+        return $this->row;
     }
 }

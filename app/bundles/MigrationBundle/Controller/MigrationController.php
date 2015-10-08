@@ -11,6 +11,7 @@ namespace Mautic\MigrationBundle\Controller;
 
 use Mautic\CoreBundle\Controller\FormController;
 use Mautic\MigrationBundle\Event\MigrationImportEvent;
+use Mautic\MigrationBundle\Event\MigrationImportViewEvent;
 use Mautic\MigrationBundle\MigrationEvents;
 use Symfony\Component\Form\FormError;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -792,7 +793,7 @@ class MigrationController extends FormController
         }
 
         $dispatcher = $this->factory->getDispatcher();
-        $event      = new MigrationImportEvent($model->getImportedBlueprint());
+        $event      = new MigrationImportViewEvent($model->getImportedBlueprint());
         $dispatcher->dispatch(MigrationEvents::MIGRATION_IMPORT_PROGRESS_ON_GENERATE, $event);
         $blueprint  = $event->getBlueprint();
 

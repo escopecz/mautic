@@ -18,6 +18,7 @@ use Mautic\MigrationBundle\Event\MigrationTemplateEvent;
 use Mautic\MigrationBundle\Event\MigrationEditEvent;
 use Mautic\MigrationBundle\Event\MigrationCountEvent;
 use Mautic\MigrationBundle\Event\MigrationEvent;
+use Mautic\MigrationBundle\Event\MigrationImportEvent;
 use Mautic\MigrationBundle\MigrationEvents;
 use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
 use Symfony\Component\EventDispatcher\Event;
@@ -246,25 +247,46 @@ class MigrationModel extends FormModel
         if (!empty($formData['entities'])) {
             ini_set('auto_detect_line_endings', true);
 
+            if (!isset($blueprint['imported'])) {
+                $blueprint['imported'] = 0;
+            }
+
+            $batchLimit = 10;
+
             foreach ($formData['entities'] as $entityKey => $importEntity) {
                 $entityKey = str_replace(':', '.', $entityKey);
                 if (isset($blueprint['entities'][$entityKey])) {
-                    $blueprint['entities'][$entityKey]['allow_import'] = $importEntity;
+                    $blueprintEntity = &$blueprint['entities'][$entityKey];
+                    $blueprintEntity['allow_import'] = $importEntity;
 
-                    if (!isset($blueprint['entities'][$entityKey]['imported'])) {
-                        $blueprint['entities'][$entityKey]['imported'] = 0;
+                    if (!isset($blueprintEntity['imported'])) {
+                        $blueprintEntity['imported'] = 0;
                     }
 
-                    if ($importEntity) {
-                        $event = new MigrationEvent($this->factory);
-                        $event->setBundle($blueprint['entities'][$entityKey]['bundle']);
-                        $event->setEntity($blueprint['entities'][$entityKey]['entity']);
-                        $event->setStart($blueprint['entities'][$entityKey]['imported']);
-                        $event->setLimit(10); // @todo take this from config
+                    $csvFile = $this->getImportDir() . '/' . $entityKey . '.csv';
 
-                        $this->dispatcher->dispatch(MigrationEvents::MIGRATION_ON_EXPORT, $event);
+                    if ($importEntity && file_exists($csvFile) && $blueprintEntity['exported'] > $blueprintEntity['imported']) {
 
-                        // $blueprint['entities'][$entityKey]['imported'] = ;
+                        $fh = fopen($csvFile, 'r');
+                        $header = fgetcsv($fh);
+                        $cursor = 0;
+                        $batchImported = 0;
+
+                        while ($line = fgetcsv($fh)) {
+                            if ($cursor >= $blueprintEntity['imported'] && $batchImported <= $batchLimit) {
+                                $row = array_combine($header, $line);
+                                $event = new MigrationImportEvent($blueprintEntity['bundle'], $blueprintEntity['entity'], $row);
+                                $this->dispatcher->dispatch(MigrationEvents::MIGRATION_ON_IMPORT, $event);
+
+                                $blueprint['imported']++;
+                                $batchImported++;
+                            }
+                            $cursor++;
+                        }
+
+                        $blueprintEntity['imported'] += $batchImported;
+
+                        fclose($fh);
                     }
                 }
             }
