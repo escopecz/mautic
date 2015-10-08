@@ -138,7 +138,12 @@ class MigrationSubscriber extends CommonSubscriber
         if ($event->getBundle() == $this->bundleName) {
             foreach ($this->entities as $entity) {
                 if ($event->getEntity() == $entity) {
-                    $entities = $this->getEntities($event, $entity);
+                    $entities = $this->getEntities(
+                        $event->getBundle(),
+                        $event->getEntity(),
+                        $event->getLimit(),
+                        $event->getStart()
+                    );
                     $event->setEntities($entities);
                 }
             }
@@ -211,25 +216,29 @@ class MigrationSubscriber extends CommonSubscriber
     /**
      * Get rows from a Entity
      *
-     * @param  MigrationEvent $event
-     * @param  string         $entityName
-     * @param  string         $KeyName
+     * @param  string  $bundleName
+     * @param  string  $entityName
+     * @param  integer $limit
+     * @param  integer $offset
+     * @param  array   $orderByKeys
      *
      * @return array
      */
-    public function getEntities($event, $entityName, $keyName = 'id')
+    public function getEntities($bundleName, $entityName, $limit, $offset, $orderByKeys = array('id'))
     {
-        $tableAlias = 'ta';
-        $q = $event->getFactory()->getEntityManager()
-            ->getRepository($this->classPrefix . $this->bundleName . ':' . $entityName)
-            ->createQueryBuilder($tableAlias);
+        $em = $this->factory->getEntityManager();
 
-        return $q
-            ->setMaxResults($event->getLimit())
-            ->setFirstResult($event->getStart())
-            ->orderBy($tableAlias . '.' . $keyName)
-            ->getQuery()
-            ->getArrayResult(Query::HYDRATE_SCALAR);
+        $query = $em->createQuery(
+            'SELECT e
+            FROM ' . $this->classPrefix . $bundleName . ':' . $entityName . ' AS e
+            ORDER BY e.' . implode(', e.', $orderByKeys)
+        );
+
+        $query
+            ->setFirstResult($offset)
+            ->setMaxResults($limit);
+
+        return $query->getArrayResult(Query::HYDRATE_SCALAR);
     }
 
     /**

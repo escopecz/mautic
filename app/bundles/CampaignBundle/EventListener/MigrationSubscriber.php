@@ -41,7 +41,13 @@ class MigrationSubscriber extends MigrationParentSubscriber
     public function onExport(MigrationEvent $event)
     {
         if ($event->getBundle() == $this->bundleName && $event->getEntity() == 'LeadEventLog') {
-            $entities = $this->getEntities($event, $event->getEntity(), 'event, ta.lead, ta.campaign');
+            $entities = $this->getEntities(
+                $event->getBundle(),
+                $event->getEntity(),
+                $event->getLimit(),
+                $event->getStart(),
+                array('event', 'lead', 'campaign')
+            );
             $event->setEntities($entities);
         } else {
             parent::onExport($event);
