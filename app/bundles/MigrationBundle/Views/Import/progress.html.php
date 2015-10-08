@@ -27,7 +27,7 @@ $view['slots']->set('headerTitle', $view['translator']->trans('mautic.migration.
                             <div class="panel panel-default">
                                 <div class="panel-heading pt-md pb-md">
                                     <strong><?php echo str_replace('.', ' - ', $entityKey); ?></strong>
-                                    <span class="badge pull-right"><?php echo $entity['processed'] ?></span>
+                                    <span class="badge pull-right"><?php echo $entity['exported'] ?></span>
                                 </div>
                                 <div class="panel-body pl-sd pr-sd">
                                     <?php echo $view['form']->row($form['entities'][str_replace('.', ':', $entityKey)]); ?>

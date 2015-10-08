@@ -124,7 +124,7 @@ class MigrationModel extends FormModel
                     // Bath amount is completed
                     break;
                 }
-                if ($props['processed'] >= $props['count']) {
+                if ($props['exported'] >= $props['count']) {
                     // Data of this entity is already exported
                     continue;
                 }
@@ -132,7 +132,7 @@ class MigrationModel extends FormModel
                 $event = new MigrationEvent($this->factory);
                 $event->setBundle($props['bundle']);
                 $event->setEntity($props['entity']);
-                $event->setStart($props['processed']);
+                $event->setStart($props['exported']);
                 $event->setLimit($batchLimit);
 
                 $this->dispatcher->dispatch(MigrationEvents::MIGRATION_ON_EXPORT, $event);
@@ -152,7 +152,7 @@ class MigrationModel extends FormModel
                     foreach ($entities as $entity) {
                         $entityAr = $this->entityToArray($entity);
 
-                        if (!$props['processed'] && $headerBuilt === false) {
+                        if (!$props['exported'] && $headerBuilt === false) {
                             $headers = array_keys($entityAr);
                             fputcsv($handle, $headers);
                             $headerBuilt = true;
@@ -164,10 +164,10 @@ class MigrationModel extends FormModel
 
                 fclose($handle);
 
-                $processed = count($entities);
-                $props['processed'] += $processed;
-                $blueprint['processedEntities'] += $processed;
-                $count += $processed;
+                $exported = count($entities);
+                $props['exported'] += $exported;
+                $blueprint['exportedEntities'] += $exported;
+                $count += $exported;
 
                 if ($output && $count <= $maxCount) {
                     $progress->setCurrent($count);
@@ -188,8 +188,8 @@ class MigrationModel extends FormModel
                         } else {
                             copy($item, $destPath);
                         }
-                        $blueprint['folders'][$key]['processed']++;
-                        $blueprint['processedFiles']++;
+                        $blueprint['folders'][$key]['exported']++;
+                        $blueprint['exportedFiles']++;
                     }
                 }
             }
@@ -198,7 +198,7 @@ class MigrationModel extends FormModel
         $this->saveExportBlueprint($migration->getId(), $blueprint);
 
         // Create a ZIP package of expoted data
-        if ($blueprint['totalEntities'] == $blueprint['processedEntities'] && $blueprint['totalFiles'] == $blueprint['processedFiles']) {
+        if ($blueprint['totalEntities'] == $blueprint['exportedEntities'] && $blueprint['totalFiles'] == $blueprint['exportedFiles']) {
             $zip = new \ZipArchive();
             $zipFile = $this->getZipPackagePath($migration->getId());
             if ($zip->open($zipFile, file_exists($zipFile) ? \ZIPARCHIVE::OVERWRITE : \ZIPARCHIVE::CREATE) === true) {
@@ -244,17 +244,33 @@ class MigrationModel extends FormModel
     public function triggerImport($blueprint, $formData)
     {
         if (!empty($formData['entities'])) {
+            ini_set('auto_detect_line_endings', true);
+
             foreach ($formData['entities'] as $entityKey => $importEntity) {
                 $entityKey = str_replace(':', '.', $entityKey);
                 if (isset($blueprint['entities'][$entityKey])) {
                     $blueprint['entities'][$entityKey]['allow_import'] = $importEntity;
+
+                    if (!isset($blueprint['entities'][$entityKey]['imported'])) {
+                        $blueprint['entities'][$entityKey]['imported'] = 0;
+                    }
+
+                    if ($importEntity) {
+                        $event = new MigrationEvent($this->factory);
+                        $event->setBundle($blueprint['entities'][$entityKey]['bundle']);
+                        $event->setEntity($blueprint['entities'][$entityKey]['entity']);
+                        $event->setStart($blueprint['entities'][$entityKey]['imported']);
+                        $event->setLimit(10); // @todo take this from config
+
+                        $this->dispatcher->dispatch(MigrationEvents::MIGRATION_ON_EXPORT, $event);
+
+                        // $blueprint['entities'][$entityKey]['imported'] = ;
+                    }
                 }
             }
         }
 
         $this->saveImportBlueprint($blueprint);
-
-        // @todo trigger import event
     }
 
     /**
@@ -498,9 +514,9 @@ class MigrationModel extends FormModel
             'entities' => array(),
             'folders' => array(),
             'totalEntities' => 0,
-            'processedEntities' => 0,
+            'exportedEntities' => 0,
             'totalFiles' => 0,
-            'processedFiles' => 0
+            'exportedFiles' => 0
         );
 
         if ($this->dispatcher->hasListeners(MigrationEvents::MIGRATION_ON_ENTITY_COUNT)) {
@@ -516,7 +532,7 @@ class MigrationModel extends FormModel
                     'bundle' => $event->getBundle(),
                     'entity' => $event->getEntity(),
                     'count' => $event->getCount(),
-                    'processed' => 0
+                    'exported' => 0
                 );
             }
 
@@ -530,7 +546,7 @@ class MigrationModel extends FormModel
                 $blueprint['folders'][] = array(
                     'path' => $parts[1],
                     'count' => $count,
-                    'processed' => 0,
+                    'exported' => 0,
                     'bundle' => $parts[0]
                 );
             }

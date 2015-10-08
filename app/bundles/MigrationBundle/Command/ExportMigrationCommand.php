@@ -145,7 +145,7 @@ class ExportMigrationCommand extends ContainerAwareCommand
             $output->writeln('<info>'.$translator->trans('mautic.migration.export.starting', array('%id%' => $migration->getId())).'</info>');
             $blueprint = $migrationModel->triggerExport($migration, $batch, $output);
             $output->writeln('<info>'.$translator->trans('mautic.migration.export.progress', array(
-                '%processedEntities%' => $blueprint['processedEntities'],
+                '%exportedEntities%' => $blueprint['exportedEntities'],
                 '%totalEntities%' => $blueprint['totalEntities']
             )).'</info>');
         } else {
