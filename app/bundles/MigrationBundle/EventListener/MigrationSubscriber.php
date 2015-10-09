@@ -227,18 +227,16 @@ class MigrationSubscriber extends CommonSubscriber
     public function getEntities($bundleName, $entityName, $limit, $offset, $orderByKeys = array('id'))
     {
         $em = $this->factory->getEntityManager();
+        $query = $em->getConnection()->createQueryBuilder();
+        $metadata = $em->getClassMetadata($this->classPrefix . '\\' . $bundleName . '\\Entity\\' . $entityName);
 
-        $query = $em->createQuery(
-            'SELECT e
-            FROM ' . $this->classPrefix . $bundleName . ':' . $entityName . ' AS e
-            ORDER BY e.' . implode(', e.', $orderByKeys)
-        );
-
-        $query
+        $query->select('e.*')
+            ->from($metadata->table['name'], 'e')
+            ->orderBy('e.' . implode(', e.', $orderByKeys), 'ASC')
             ->setFirstResult($offset)
             ->setMaxResults($limit);
 
-        return $query->getArrayResult(Query::HYDRATE_SCALAR);
+        return $query->execute()->fetchAll();
     }
 
     /**

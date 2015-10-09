@@ -702,18 +702,27 @@ class MigrationController extends FormController
         $form      = $this->get('form.factory')->create('migration_upload', array(), array('action' => $action));
         $importDir = $model->getImportDir();
         $username  = $this->factory->getUser()->getUsername();
-        $dirName   = $username . '_migration_import';
-        $fileName  = $dirName . '.zip';
-        $fullPath  = $this->factory->getParameter('import_dir') . '/' . $fileName;
+        $fileName  = $username . '_migration_import.zip';
+        $zipPath   = $this->factory->getParameter('import_dir') . '/' . $fileName;
 
         // Check for a submitted form and process it
         if ($this->request->getMethod() == 'POST') {
             if (isset($form) && !$cancelled = $this->isFormCancelled($form)) {
                 if ($this->isFormValid($form)) {
 
-                    // Remove previously uploaded file
-                    if (file_exists($fullPath)) {
-                        unlink($fullPath);
+                    // Remove previously uzipped files
+                    if (file_exists($importDir)) {
+                        $model->deleteFolderRecursivly($importDir);
+                    }
+
+                    // Remove previously uploaded zip file
+                    if (file_exists($zipPath)) {
+                        unlink($zipPath);
+                    }
+
+                    // Make the import dir if doesn't exist
+                    if (!file_exists($importDir)) {
+                        mkdir($importDir, 0755, true);
                     }
 
                     $fileData = $form['file']->getData();
@@ -722,7 +731,7 @@ class MigrationController extends FormController
                             $fileData->move($this->factory->getParameter('import_dir'), $fileName);
 
                             $zip = new \ZipArchive;
-                            $res = $zip->open($fullPath);
+                            $res = $zip->open($zipPath);
                             if ($res === TRUE) {
                                 // extract it to the path we determined above
                                 $zip->extractTo($importDir);
@@ -750,16 +759,19 @@ class MigrationController extends FormController
                             $this->factory->getTranslator()->trans('mautic.migration.upload.filenotfound', array(), 'validators')
                         )
                     );
+
+                    return $this->uploadAction();
                 }
-            } else {
-                return $this->importAction();
             }
         }
 
         return $this->delegateView(
             array(
-                'viewParameters'  => array('form' => $form->createView()),
-                'contentTemplate' => 'MauticMigrationBundle:Import:form.html.php',
+                'viewParameters'  => array(
+                    'form' => $form->createView(),
+                    'blueprint' => $model->getImportedBlueprint()
+                ),
+                'contentTemplate' => 'MauticMigrationBundle:Import:upload.html.php',
                 'passthroughVars' => array(
                     'activeLink'    => '#mautic_migration_index',
                     'mauticContent' => 'migrationImport',
@@ -792,10 +804,14 @@ class MigrationController extends FormController
             return $this->accessDenied();
         }
 
-        $dispatcher = $this->factory->getDispatcher();
-        $event      = new MigrationImportViewEvent($model->getImportedBlueprint());
-        $dispatcher->dispatch(MigrationEvents::MIGRATION_IMPORT_PROGRESS_ON_GENERATE, $event);
-        $blueprint  = $event->getBlueprint();
+        $blueprint  = $model->getImportedBlueprint();
+
+        if (is_array($blueprint)) {
+            $dispatcher = $this->factory->getDispatcher();
+            $event      = new MigrationImportViewEvent($blueprint);
+            $dispatcher->dispatch(MigrationEvents::MIGRATION_IMPORT_PROGRESS_ON_GENERATE, $event);
+            $blueprint  = $event->getBlueprint();
+        }
 
         $action     = $this->generateUrl('mautic_migration_action', array('objectAction' => 'import'));
         $form       = $this->get('form.factory')->create('migration_import', array(), array('action' => $action, 'blueprint' => $blueprint));
@@ -817,7 +833,7 @@ class MigrationController extends FormController
                     'blueprint' => $blueprint,
                     'form'      => $form->createView()
                 ),
-                'contentTemplate' => 'MauticMigrationBundle:Import:progress.html.php',
+                'contentTemplate' => 'MauticMigrationBundle:Import:import.html.php',
                 'passthroughVars' => array(
                     'activeLink'    => '#mautic_migration_index',
                     'mauticContent' => 'migrationImport',

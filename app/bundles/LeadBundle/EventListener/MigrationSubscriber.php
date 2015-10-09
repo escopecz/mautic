@@ -39,23 +39,13 @@ class MigrationSubscriber extends MigrationParentSubscriber
      */
     public function onExport(MigrationEvent $event)
     {
-        if ($event->getBundle() == $this->bundleName && $event->getEntity() == 'Lead') {
-            $leadRepo = $event->getFactory()->getModel('lead.lead')->getRepository();
-            $entities = $leadRepo->getFlatEntitiesWithFields(
-                array(
-                    'start'          => $event->getStart(),
-                    'limit'          => $event->getLimit(),
-                    'orderBy'        => 'l.id'
-                )
-            );
-            $event->setEntities($entities);
-        } elseif ($event->getBundle() == $this->bundleName && $event->getEntity() == 'ListLead') {
+        if ($event->getBundle() == $this->bundleName && $event->getEntity() == 'ListLead') {
             $entities = $this->getEntities(
                 $event->getBundle(),
                 $event->getEntity(),
                 $event->getLimit(),
                 $event->getStart(),
-                array('dateAdded')
+                array('date_added')
             );
             $event->setEntities($entities);
         } else {

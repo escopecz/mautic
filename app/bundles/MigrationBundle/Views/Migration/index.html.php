@@ -15,6 +15,17 @@ $view['slots']->set('actions', $view->render('MauticCoreBundle:Helper:page_actio
     'templateButtons' => array(
         'new'    => $permissions['migration:migrations:create']
     ),
+    'customButtons' => array(
+        array(
+            'attr' => array(
+                'href' => $view['router']->generate('mautic_migration_action', array(
+                    'objectAction' => 'upload'
+                ))
+            ),
+            'btnText'   => $view['translator']->trans('mautic.migration.upload.btn'),
+            'iconClass' => 'fa fa-upload'
+        )
+    ),
     'routeBase' => 'migration',
     'langVar'   => 'migration.migration'
 )));

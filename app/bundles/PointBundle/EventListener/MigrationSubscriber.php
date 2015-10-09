@@ -43,7 +43,7 @@ class MigrationSubscriber extends MigrationParentSubscriber
                 $event->getEntity(),
                 $event->getLimit(),
                 $event->getStart(),
-                array('dateFired')
+                array('date_fired')
             );
             $event->setEntities($entities);
         } else {

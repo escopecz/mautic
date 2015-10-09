@@ -46,7 +46,7 @@ class MigrationSubscriber extends MigrationParentSubscriber
                 $event->getEntity(),
                 $event->getLimit(),
                 $event->getStart(),
-                array('event', 'lead', 'campaign')
+                array('event_id', 'campaign_id')
             );
             $event->setEntities($entities);
         } else {
