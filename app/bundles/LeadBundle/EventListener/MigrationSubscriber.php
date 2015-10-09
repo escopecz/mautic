@@ -50,7 +50,13 @@ class MigrationSubscriber extends MigrationParentSubscriber
             );
             $event->setEntities($entities);
         } elseif ($event->getBundle() == $this->bundleName && $event->getEntity() == 'ListLead') {
-            $entities = $this->getEntities($event, 'ListLead', 'dateAdded');
+            $entities = $this->getEntities(
+                $event->getBundle(),
+                $event->getEntity(),
+                $event->getLimit(),
+                $event->getStart(),
+                array('dateAdded')
+            );
             $event->setEntities($entities);
         } else {
             parent::onExport($event);

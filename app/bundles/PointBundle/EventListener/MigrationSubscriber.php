@@ -36,11 +36,15 @@ class MigrationSubscriber extends MigrationParentSubscriber
      */
     public function onExport(MigrationEvent $event)
     {
-        if ($event->getBundle() == $this->bundleName && $event->getEntity() == 'LeadPointLog') {
-            $entities = $this->getEntities($event, 'LeadPointLog', 'dateFired');
-            $event->setEntities($entities);
-        } elseif ($event->getBundle() == $this->bundleName && $event->getEntity() == 'LeadTriggerLog') {
-            $entities = $this->getEntities($event, 'LeadTriggerLog', 'dateFired');
+        if ($event->getBundle() == $this->bundleName && $event->getEntity() == 'LeadPointLog'
+            || $event->getBundle() == $this->bundleName && $event->getEntity() == 'LeadTriggerLog') {
+            $entities = $this->getEntities(
+                $event->getBundle(),
+                $event->getEntity(),
+                $event->getLimit(),
+                $event->getStart(),
+                array('dateFired')
+            );
             $event->setEntities($entities);
         } else {
             parent::onExport($event);

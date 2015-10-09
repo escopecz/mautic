@@ -44,7 +44,13 @@ class MigrationSubscriber extends MigrationParentSubscriber
     public function onExport(MigrationEvent $event)
     {
         if ($event->getBundle() == $this->bundleName && $event->getEntity() == 'oAuth1\Nonce') {
-            $entities = $this->getEntities($event, 'oAuth1\Nonce', 'timestamp');
+            $entities = $this->getEntities(
+                $event->getBundle(),
+                $event->getEntity(),
+                $event->getLimit(),
+                $event->getStart(),
+                array('timestamp')
+            );
             $event->setEntities($entities);
         } else {
             parent::onExport($event);
