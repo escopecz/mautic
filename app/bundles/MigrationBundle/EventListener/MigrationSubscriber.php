@@ -162,55 +162,82 @@ class MigrationSubscriber extends CommonSubscriber
         if ($event->getBundle() == $this->bundleName) {
             foreach ($this->entities as $entity) {
                 if ($event->getEntity() == $entity) {
-                    $this->importEntity($event->getBundle(), $event->getEntity(), $event->getRow());
+                    $entityClass = $this->classPrefix . '\\' . $event->getBundle() . '\\Entity\\' . $event->getEntity();
+                    $metadata = $this->factory->getEntityManager()->getClassMetadata($entityClass);
+                    $table = $metadata->table['name'];
+                    $row = $event->getRow();
+
+                    if ($event->getTruncated() === false) {
+                        $event->setTruncated($this->truncateTable($table));
+                    }
+
+
+                    $row = $this->prepareForImport($metadata->fieldMappings, $row);
+                    $this->importEntity($table, $row);
                 }
             }
         }
     }
 
     /**
+     * Prepare row value types for import
+     *
+     * @param  array $fieldMappings
+     * @param  array $row
+     *
+     * @return array
+     */
+    public function prepareForImport($fieldMappings, array $row)
+    {
+        foreach ($fieldMappings as $mapping) {
+            if (isset($row[$mapping['columnName']])) {
+                switch ($mapping['type']) {
+                    case 'boolean':
+                        $row[$mapping['columnName']] = (int) $row[$mapping['columnName']];
+                        break;
+                    case 'datetime':
+                        if (empty($row[$mapping['columnName']])) {
+                            $row[$mapping['columnName']] = null;
+                        }
+                        break;
+                }
+            }
+        }
+
+        return $row;
+    }
+
+    /**
      * Save entity row to the database
      *
-     * @param  string $bundleName
-     * @param  string $entityName
+     * @param  string $table
      * @param  array  $row
      *
      * @return void
      */
-    public function importEntity($bundleName, $entityName, array $row)
+    public function importEntity($table, array $row)
     {
-        $entityClass = '\\' . $this->classPrefix . '\\' . $bundleName . '\\Entity\\' . $entityName;
-        $entity = new $entityClass;
-        $entity = $this->populateEntityFromArray($entity, $row);
         $em = $this->factory->getEntityManager();
-        $em->persist($entity);
-        $em->flush();
+        $connection = $em->getConnection();
+        
+        return $connection->insert($table, $row);
     }
 
     /**
-     * @param $className
-     * @param $data
+     * Save entity row to the database
      *
-     * @return mixed
-     * @throws \Doctrine\ORM\Mapping\MappingException
-     * @throws \Exception
+     * @param  string $table
+     *
+     * @return void
      */
-    public function populateEntityFromArray($entity, $data)
+    public function truncateTable($table)
     {
-        foreach ($data as $column => $value) {
-            $column = $this->underscoresToCamelCase($column);
-            $setter = 'set' . $column;
-            if (method_exists($entity, $setter)) {
-                $entity->$setter($value);
-            }
-        }
+        $em = $this->factory->getEntityManager();
+        $connection = $em->getConnection();
 
-        return $entity;
-    }
+        $query = $connection->prepare('TRUNCATE TABLE ' . $table . '');
 
-    public function underscoresToCamelCase($string)
-    {
-        return str_replace(' ', '', ucwords(str_replace('_', ' ', $string)));
+        return $query->execute();
     }
 
     /**

@@ -151,15 +151,13 @@ class MigrationModel extends FormModel
 
                 if (is_array($entities)) {
                     foreach ($entities as $entity) {
-                        $entityAr = $this->entityToArray($entity);
-
                         if (!$props['exported'] && $headerBuilt === false) {
-                            $headers = array_keys($entityAr);
+                            $headers = array_keys($entity);
                             fputcsv($handle, $headers);
                             $headerBuilt = true;
                         }
 
-                        fputcsv($handle, $entityAr);
+                        fputcsv($handle, $entity);
                     }
                 }
 
@@ -263,6 +261,10 @@ class MigrationModel extends FormModel
                         $blueprintEntity['imported'] = 0;
                     }
 
+                    if (!isset($blueprintEntity['truncated'])) {
+                        $blueprintEntity['truncated'] = false;
+                    }
+
                     $csvFile = $this->getImportDir() . '/' . $entityKey . '.csv';
 
                     if ($importEntity && file_exists($csvFile) && $blueprintEntity['exported'] > $blueprintEntity['imported']) {
@@ -275,8 +277,10 @@ class MigrationModel extends FormModel
                         while ($line = fgetcsv($fh)) {
                             if ($cursor >= $blueprintEntity['imported'] && $batchImported <= $batchLimit) {
                                 $row = array_combine($header, $line);
-                                $event = new MigrationImportEvent($blueprintEntity['bundle'], $blueprintEntity['entity'], $row);
+                                $event = new MigrationImportEvent($blueprintEntity['bundle'], $blueprintEntity['entity'], $row, $blueprintEntity['truncated']);
                                 $this->dispatcher->dispatch(MigrationEvents::MIGRATION_ON_IMPORT, $event);
+
+                                $blueprintEntity['truncated'] = $event->getTruncated();
 
                                 $blueprint['imported']++;
                                 $batchImported++;
@@ -575,31 +579,6 @@ class MigrationModel extends FormModel
         }
 
         return $blueprint;
-    }
-
-    /**
-     * Convert an entity to array
-     *
-     * @param  object $entity
-     * @return array
-     */
-    protected function entityToArray($entity)
-    {
-        if (method_exists($entity, 'convertToArray')) {
-            $array = $entity->convertToArray();
-        } else {
-            $serializer = $this->factory->getSerializer();
-            $entityJson = $serializer->serialize($entity, 'json');
-            $array =  json_decode($entityJson, true);
-        }
-
-        foreach ($array as &$item) {
-            if (is_array($item)) {
-                $item = json_encode($item);
-            }
-        }
-
-        return $array;
     }
 
     /**

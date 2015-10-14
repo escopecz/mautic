@@ -35,15 +35,22 @@ class MigrationImportEvent extends CommonEvent
     protected $row;
 
     /**
-    * @param string $bundle
-    * @param string $entity
-    * @param array  $blueprint
+     * @var boolean
      */
-    public function __construct($bundle, $entity, array $row)
+    protected $truncated;
+
+    /**
+    * @param string  $bundle
+    * @param string  $entity
+    * @param array   $blueprint
+    * @param boolean $truncated
+     */
+    public function __construct($bundle, $entity, array $row, $truncated)
     {
-        $this->bundle = $bundle;
-        $this->entity = $entity;
-        $this->row = $row;
+        $this->bundle    = $bundle;
+        $this->entity    = $entity;
+        $this->row       = $row;
+        $this->truncated = $truncated;
     }
 
     /**
@@ -74,5 +81,26 @@ class MigrationImportEvent extends CommonEvent
     public function getRow()
     {
         return $this->row;
+    }
+
+    /**
+     * Returns the flag if the old data has already been truncated or not
+     *
+     * @return boolean
+     */
+    public function getTruncated()
+    {
+        return $this->truncated;
+    }
+
+    /**
+     * Set the flag if the old data has already been truncated or not
+     *
+     * @return $this
+     */
+    public function setTruncated($truncated)
+    {
+        $this->truncated = $truncated;
+        return $this;
     }
 }
