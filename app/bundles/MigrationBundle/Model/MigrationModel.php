@@ -260,7 +260,7 @@ class MigrationModel extends FormModel
                 $schemaManager  = $connection->getSchemaManager();
                 $platform       = $schemaManager->getDatabasePlatform();
                 $tables         = $schemaManager->listTableNames();
-                $blueprint['execute_sql'] = array();
+                $blueprint['executeSql'] = array();
 
                 foreach ($tables as $table) {
                     $indexes = $schemaManager->listTableIndexes($table);
@@ -274,10 +274,10 @@ class MigrationModel extends FormModel
 
                         if (strpos($indexName, '_pkey') !== false) {
                             $sql[] = $platform->getDropConstraintSQL($indexName, $table);
-                            $blueprint['execute_sql'][] = $platform->getCreateConstraintSQL($index, $table);
+                            $blueprint['executeSql'][] = $platform->getCreateConstraintSQL($index, $table);
                         } else {
                             $sql[] = $platform->getDropIndexSQL($index, $table);
-                            $blueprint['execute_sql'][] = $platform->getCreateIndexSQL($index, $table);
+                            $blueprint['executeSql'][] = $platform->getCreateIndexSQL($index, $table);
                         }
                     }
                 }
@@ -341,14 +341,15 @@ class MigrationModel extends FormModel
 
             $connection = $this->factory->getEntityManager()->getConnection();
 
-            if (!empty($blueprint['execute_sql']) && $blueprint['importedEntities'] == $blueprint['exportedEntities']) {
-                foreach ($blueprint['execute_sql'] as $query) {
+            if (empty($blueprint['sqlExecuted']) && !empty($blueprint['executeSql']) && $blueprint['importedEntities'] == $blueprint['exportedEntities']) {
+                foreach ($blueprint['executeSql'] as $query) {
                     try {
                         $connection->query($query);
                     } catch (\Exception $e) {die($e->getMessage());
                         $blueprint['import_errors'][] = $e->getMessage();
                     }
                 }
+                $blueprint['sqlExecuted'] = true;
             }
         }
 
