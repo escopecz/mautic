@@ -245,8 +245,53 @@ class MigrationModel extends FormModel
         if (!empty($formData['entities'])) {
             ini_set('auto_detect_line_endings', true);
 
-            if (!isset($blueprint['imported'])) {
-                $blueprint['imported'] = 0;
+            if (!isset($blueprint['importedEntities'])) {
+                $blueprint['importedEntities'] = 0;
+            }
+
+            if (!isset($blueprint['import_errors'])) {
+                $blueprint['import_errors'] = array();
+            }
+
+            if (!isset($blueprint['indexes_dropped'])) {
+                $sqlDrop        = array();
+                $sqlCreate      = array();
+                $connection     = $this->factory->getEntityManager()->getConnection();
+                $schemaManager  = $connection->getSchemaManager();
+                $platform       = $schemaManager->getDatabasePlatform();
+                $tables         = $schemaManager->listTableNames();
+                $blueprint['execute_sql'] = array();
+
+                foreach ($tables as $table) {
+                    $indexes = $schemaManager->listTableIndexes($table);
+
+                    //drop old indexes
+                    /** @var \Doctrine\DBAL\Schema\Index $oldIndex */
+                    foreach ($indexes as $indexName => $index) {
+                        if ($indexName == 'primary') {
+                            continue;
+                        }
+
+                        if (strpos($indexName, '_pkey') !== false) {
+                            $sql[] = $platform->getDropConstraintSQL($indexName, $table);
+                            $blueprint['execute_sql'][] = $platform->getCreateConstraintSQL($index, $table);
+                        } else {
+                            $sql[] = $platform->getDropIndexSQL($index, $table);
+                            $blueprint['execute_sql'][] = $platform->getCreateIndexSQL($index, $table);
+                        }
+                    }
+                }
+
+                if (!empty($sql)) {
+                    foreach ($sql as $query) {
+                        try {
+                            $connection->query($query);
+                        } catch (\Exception $e) {die($e->getMessage());
+                            $blueprint['import_errors'][] = $e->getMessage();
+                        }
+                    }
+                }
+                $blueprint['indexes_dropped'] = true;
             }
 
             $batchLimit = 10;
@@ -261,10 +306,6 @@ class MigrationModel extends FormModel
                         $blueprintEntity['imported'] = 0;
                     }
 
-                    if (!isset($blueprintEntity['truncated'])) {
-                        $blueprintEntity['truncated'] = false;
-                    }
-
                     $csvFile = $this->getImportDir() . '/' . $entityKey . '.csv';
 
                     if ($importEntity && file_exists($csvFile) && $blueprintEntity['exported'] > $blueprintEntity['imported']) {
@@ -276,13 +317,16 @@ class MigrationModel extends FormModel
 
                         while ($line = fgetcsv($fh)) {
                             if ($cursor >= $blueprintEntity['imported'] && $batchImported <= $batchLimit) {
+                                if (!isset($blueprintEntity['truncated'])) {
+                                    $blueprintEntity['truncated'] = false;
+                                }
                                 $row = array_combine($header, $line);
                                 $event = new MigrationImportEvent($blueprintEntity['bundle'], $blueprintEntity['entity'], $row, $blueprintEntity['truncated']);
                                 $this->dispatcher->dispatch(MigrationEvents::MIGRATION_ON_IMPORT, $event);
 
                                 $blueprintEntity['truncated'] = $event->getTruncated();
 
-                                $blueprint['imported']++;
+                                $blueprint['importedEntities']++;
                                 $batchImported++;
                             }
                             $cursor++;
@@ -291,6 +335,18 @@ class MigrationModel extends FormModel
                         $blueprintEntity['imported'] += $batchImported;
 
                         fclose($fh);
+                    }
+                }
+            }
+
+            $connection = $this->factory->getEntityManager()->getConnection();
+
+            if (!empty($blueprint['execute_sql']) && $blueprint['importedEntities'] == $blueprint['exportedEntities']) {
+                foreach ($blueprint['execute_sql'] as $query) {
+                    try {
+                        $connection->query($query);
+                    } catch (\Exception $e) {die($e->getMessage());
+                        $blueprint['import_errors'][] = $e->getMessage();
                     }
                 }
             }

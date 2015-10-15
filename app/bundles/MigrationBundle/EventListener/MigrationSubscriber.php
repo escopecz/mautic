@@ -171,7 +171,6 @@ class MigrationSubscriber extends CommonSubscriber
                         $event->setTruncated($this->truncateTable($table));
                     }
 
-
                     $row = $this->prepareForImport($metadata->fieldMappings, $row);
                     $this->importEntity($table, $row);
                 }
@@ -219,7 +218,7 @@ class MigrationSubscriber extends CommonSubscriber
     {
         $em = $this->factory->getEntityManager();
         $connection = $em->getConnection();
-        
+
         return $connection->insert($table, $row);
     }
 
