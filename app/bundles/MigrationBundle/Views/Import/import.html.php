@@ -36,10 +36,13 @@ $view['slots']->set('headerTitle', $view['translator']->trans('mautic.migration.
                                             <?php echo $entity['warning']; ?>
                                         </div>
                                     <?php endif;?>
+                                    <?php if (!empty($entity['imported'])) : ?>
+                                    <?php $percent = $entity['imported'] / $entity['exported'] * 100 ?>
                                     <div class="progress">
-                                        <div class="progress-bar" role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" style="width: 60%;">
+                                        <div class="progress-bar" role="progressbar" aria-valuenow="<?php echo $percent ?>" aria-valuemin="0" aria-valuemax="100" style="width: <?php echo $percent ?>%;">
                                         </div>
                                     </div>
+                                    <?php endif;?>
                                 </div>
                         <?php endforeach; ?>
                     <?php endif; ?>
