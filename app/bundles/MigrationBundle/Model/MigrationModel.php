@@ -263,9 +263,9 @@ class MigrationModel extends FormModel
                 $blueprint['executeSql'] = array();
 
                 foreach ($tables as $table) {
+                    //drop old indexes
                     $indexes = $schemaManager->listTableIndexes($table);
 
-                    //drop old indexes
                     /** @var \Doctrine\DBAL\Schema\Index $oldIndex */
                     foreach ($indexes as $indexName => $index) {
                         if ($indexName == 'primary') {
@@ -279,6 +279,14 @@ class MigrationModel extends FormModel
                             $sql[] = $platform->getDropIndexSQL($index, $table);
                             $blueprint['executeSql'][] = $platform->getCreateIndexSQL($index, $table);
                         }
+                    }
+
+                    // drop foreign keys
+                    $restraints = $schemaManager->listTableForeignKeys($table);
+
+                    foreach ($restraints as $restraint) {
+                        $sql[] = $platform->getDropForeignKeySQL($restraint, $table);
+                        $blueprint['executeSql'][] = $platform->getCreateForeignKeySQL($restraint, $table);
                     }
                 }
 
@@ -294,11 +302,12 @@ class MigrationModel extends FormModel
                 $blueprint['indexes_dropped'] = true;
             }
 
-            $batchLimit = 10;
+            $batchLimit = 500;
+            $batchImported = 0;
 
             foreach ($formData['entities'] as $entityKey => $importEntity) {
                 $entityKey = str_replace(':', '.', $entityKey);
-                if (isset($blueprint['entities'][$entityKey])) {
+                if (isset($blueprint['entities'][$entityKey]) && $batchImported <= $batchLimit) {
                     $blueprintEntity = &$blueprint['entities'][$entityKey];
                     $blueprintEntity['allow_import'] = $importEntity;
 
@@ -313,7 +322,6 @@ class MigrationModel extends FormModel
                         $fh = fopen($csvFile, 'r');
                         $header = fgetcsv($fh);
                         $cursor = 0;
-                        $batchImported = 0;
 
                         while ($line = fgetcsv($fh)) {
                             if ($cursor >= $blueprintEntity['imported'] && $batchImported <= $batchLimit) {

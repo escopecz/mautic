@@ -171,7 +171,7 @@ class MigrationSubscriber extends CommonSubscriber
                         $event->setTruncated($this->truncateTable($table));
                     }
 
-                    $row = $this->prepareForImport($metadata->fieldMappings, $row);
+                    $row = $this->prepareForImport($metadata, $row);
                     $this->importEntity($table, $row);
                 }
             }
@@ -186,19 +186,36 @@ class MigrationSubscriber extends CommonSubscriber
      *
      * @return array
      */
-    public function prepareForImport($fieldMappings, array $row)
+    public function prepareForImport($metadata, array $row)
     {
-        foreach ($fieldMappings as $mapping) {
+        foreach ($metadata->fieldMappings as $mapping) {
             if (isset($row[$mapping['columnName']])) {
                 switch ($mapping['type']) {
                     case 'boolean':
-                        $row[$mapping['columnName']] = (int) $row[$mapping['columnName']];
+                    case 'integer':
+                        if ($row[$mapping['columnName']] === '') {
+                            $row[$mapping['columnName']] = null;
+                        } else {
+                            $row[$mapping['columnName']] = (int) $row[$mapping['columnName']];
+                        }
                         break;
                     case 'datetime':
                         if (empty($row[$mapping['columnName']])) {
                             $row[$mapping['columnName']] = null;
                         }
                         break;
+                }
+            }
+        }
+
+        foreach ($metadata->associationMappings as $mapping) {
+            foreach ($row as $key => &$value) {
+                if (isset($mapping['sourceToTargetKeyColumns'][$key])) {
+                    if ($value === '') {
+                        $value = null;
+                    } else {
+                        $value = (int) $value;
+                    }
                 }
             }
         }
