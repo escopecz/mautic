@@ -4,7 +4,8 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "2b004a955f57f195724e10a548f3d48b",
+    "hash": "0fc2d12807f7d94b91d89968547ccba4",
+    "content-hash": "607c6aa015b6c9804ffa0546f036c94e",
     "packages": [
         {
             "name": "aws/aws-sdk-php",
@@ -72,75 +73,6 @@
                 "sdk"
             ],
             "time": "2015-03-26 19:36:25"
-        },
-        {
-            "name": "ddeboer/data-import",
-            "version": "0.18.0",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/ddeboer/data-import.git",
-                "reference": "cbae2f570192b738c5cec835fbf583a75c52d535"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/ddeboer/data-import/zipball/cbae2f570192b738c5cec835fbf583a75c52d535",
-                "reference": "cbae2f570192b738c5cec835fbf583a75c52d535",
-                "shasum": ""
-            },
-            "require": {
-                "php": ">=5.3.0",
-                "psr/log": "~1.0"
-            },
-            "require-dev": {
-                "doctrine/dbal": "*",
-                "doctrine/orm": "*",
-                "ext-iconv": "*",
-                "ext-mbstring": "*",
-                "ext-sqlite3": "*",
-                "phpoffice/phpexcel": "*",
-                "symfony/console": "~2.5.0",
-                "symfony/property-access": "*",
-                "symfony/validator": "~2.3.0"
-            },
-            "suggest": {
-                "doctrine/dbal": "If you want to use the DbalReader",
-                "ext-iconv": "For the CharsetValueConverter",
-                "ext-mbstring": "For the CharsetValueConverter",
-                "phpoffice/phpexcel": "If you want to use the ExcelReader",
-                "symfony/console": "If you want to use the ConsoleProgressWriter",
-                "symfony/property-access": "If you want to use the ObjectConverter",
-                "symfony/validator": "to use the ValidatorFilter"
-            },
-            "type": "library",
-            "autoload": {
-                "psr-0": {
-                    "Ddeboer\\DataImport": "src"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "The community",
-                    "homepage": "https://github.com/ddeboer/data-import/graphs/contributors"
-                },
-                {
-                    "name": "David de Boer",
-                    "email": "david@ddeboer.nl"
-                }
-            ],
-            "description": "Import data from, and export data to, a range of file formats and media",
-            "keywords": [
-                "csv",
-                "data",
-                "doctrine",
-                "excel",
-                "export",
-                "import"
-            ],
-            "time": "2015-04-21 14:06:20"
         },
         {
             "name": "doctrine/annotations",
@@ -950,7 +882,7 @@
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/doctrine/migrations/zipball/f4f5bdf6cc84011513ca6b582f85330a09a5037b",
+                "url": "https://api.github.com/repos/doctrine/migrations/zipball/68cc7bf629a7c1fc0696e583cc8ed46f897d0afb",
                 "reference": "65978aa4e9ffca3bb632225ad8c6320077d80d85",
                 "shasum": ""
             },
@@ -1408,6 +1340,60 @@
                 "password"
             ],
             "time": "2014-11-20 16:49:30"
+        },
+        {
+            "name": "jbroadway/urlify",
+            "version": "1.0.5-stable",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/jbroadway/urlify.git",
+                "reference": "b5f13d860d9da34e4adece6a93e46e0292ab6aa7"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/jbroadway/urlify/zipball/b5f13d860d9da34e4adece6a93e46e0292ab6aa7",
+                "reference": "b5f13d860d9da34e4adece6a93e46e0292ab6aa7",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.3.0"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "1.0-dev"
+                }
+            },
+            "autoload": {
+                "psr-0": {
+                    "URLify": ""
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "BSD"
+            ],
+            "authors": [
+                {
+                    "name": "Johnny Broadway",
+                    "email": "johnny@johnnybroadway.com",
+                    "homepage": "http://www.johnnybroadway.com/"
+                }
+            ],
+            "description": "PHP port of URLify.js from the Django project. Transliterates non-ascii characters for use in URLs.",
+            "homepage": "https://github.com/jbroadway/urlify",
+            "keywords": [
+                "encode",
+                "iconv",
+                "link",
+                "slug",
+                "translit",
+                "transliterate",
+                "transliteration",
+                "url",
+                "urlify"
+            ],
+            "time": "2015-05-29 13:53:37"
         },
         {
             "name": "jdorn/sql-formatter",
@@ -1983,7 +1969,7 @@
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/KnpLabs/KnpMenuBundle/zipball/f8c6b24a846e3713899f02e72604a78d80bb1b37",
+                "url": "https://api.github.com/repos/KnpLabs/KnpMenuBundle/zipball/a07920b10a3b888abe7c47c7aecf56f69553f707",
                 "reference": "2a2e1295c8f39f39875343934af159957bcdcc06",
                 "shasum": ""
             },
@@ -4529,7 +4515,7 @@
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/liip/LiipFunctionalTestBundle/zipball/4d9114d49796b23b599d4b7cb63f8d8a918a6d44",
+                "url": "https://api.github.com/repos/liip/LiipFunctionalTestBundle/zipball/3de5ac111f245b51455dbf748b73450bb2213912",
                 "reference": "933cde549faae84d4e5ad2f59480f6de86deaaf0",
                 "shasum": ""
             },
@@ -5043,7 +5029,6 @@
         "friendsofsymfony/oauth-server-bundle": 20,
         "willdurand/oauth-server-bundle": 20,
         "jms/serializer-bundle": 20,
-        "ddeboer/data-import": 0,
         "liip/functional-test-bundle": 20,
         "webfactory/exceptions-bundle": 0
     },

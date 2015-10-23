@@ -87,20 +87,17 @@ return array(
             'priority' => 20,
             'items'    => array(
                 'mautic.form.forms' => array(
+                    'route'     => 'mautic_form_index',
                     'id'        => 'mautic_form_root',
                     'iconClass' => 'fa-pencil-square-o',
-                    'access'    => array('form:forms:viewown', 'form:forms:viewother'),
-                    'children'  => array(
-                        'mautic.form.form.menu.index' => array(
-                            'route' => 'mautic_form_index'
-                        ),
-                        'mautic.category.menu.index'  => array(
-                            'bundle' => 'form'
-                        )
-                    )
+                    'access'    => array('form:forms:viewown', 'form:forms:viewother')
                 )
             )
         )
+    ),
+
+    'categories' => array(
+        'form' => null
     ),
 
     'services' => array(
@@ -185,6 +182,11 @@ return array(
             'mautic.form.type.campaignevent_formsubmit'  => array(
                 'class' => 'Mautic\FormBundle\Form\Type\CampaignEventFormSubmitType',
                 'alias' => 'campaignevent_formsubmit'
+            ),
+            'mautic.form.type.campaignevent_form_field_value'  => array(
+                'class' => 'Mautic\FormBundle\Form\Type\CampaignEventFormFieldValueType',
+                'arguments' => 'mautic.factory',
+                'alias' => 'campaignevent_form_field_value'
             ),
             'mautic.form.type.form_submitaction_sendemail'  => array(
                 'class'     => 'Mautic\FormBundle\Form\Type\SubmitActionEmailType',
