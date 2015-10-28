@@ -74,13 +74,6 @@ class MigrationSubscriber extends CommonSubscriber
         foreach ($this->folders as $folder) {
             $event->addFolder($this->bundleName, realpath($folder));
         }
-
-        // No need for special form for now, but it can be done like this
-        // $event->addForm(array(
-        //     'name'       => 'Assets',
-        //     'formAlias'  => 'assetmigration',
-        //     'formTheme'  => 'MauticAssetBundle:FormTheme\Migration'
-        // ));
     }
 
     /**

@@ -49,6 +49,15 @@ class MigrationSubscriber extends MigrationParentSubscriber
                 array('event_id', 'campaign_id')
             );
             $event->setEntities($entities);
+        } elseif ($event->getBundle() == $this->bundleName && $event->getEntity() == 'Lead') {
+            $entities = $this->getEntities(
+                $event->getBundle(),
+                $event->getEntity(),
+                $event->getLimit(),
+                $event->getStart(),
+                array('campaign_id', 'lead_id')
+            );
+            $event->setEntities($entities);
         } else {
             parent::onExport($event);
         }

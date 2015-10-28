@@ -30,27 +30,11 @@ use Symfony\Component\Console\Helper\ProgressBar;
 class MigrationModel extends FormModel
 {
     /**
-     * @return \Mautic\AssetBundle\Entity\AssetRepository
-     */
-    public function getRepository()
-    {
-        return $this->em->getRepository('MauticMigrationBundle:Migration');
-    }
-
-    /**
      * @return string
      */
     public function getPermissionBase()
     {
         return 'mauticMigration:migrations';
-    }
-
-    /**
-     * @return string
-     */
-    public function getNameGetter()
-    {
-        return "getName";
     }
 
     /**
@@ -70,32 +54,14 @@ class MigrationModel extends FormModel
     }
 
     /**
-     * Get a specific entity or generate a new one if id is empty
-     *
-     * @param $id
-     * @return null|object
-     */
-    public function getEntity($id = null)
-    {
-        if ($id === null) {
-            $entity = new Migration();
-        } else {
-            $entity = parent::getEntity($id);
-        }
-
-        return $entity;
-    }
-
-    /**
      * Trigger export of a specific migration template
      *
-     * @param  Migration        $migration
      * @param  array            $blueprint
      * @param  integer          $batchLimit limit
      * @param  OutputInterface  $output
      * @return array of updated blueprint
      */
-    public function triggerExport(Migration $migration, $batchLimit = null, $output = null)
+    public function triggerExport($batchLimit = null, $output = null)
     {
         if (!$batchLimit) {
             $batchLimit = (int) $this->factory->getParameter('export_batch_limit');
@@ -105,12 +71,12 @@ class MigrationModel extends FormModel
             $batchLimit = 10000;
         }
 
-        $blueprint = $this->getBlueprint($migration);
-        $this->saveExportBlueprint($migration->getId(), $blueprint);
+        $blueprint = $this->getBlueprint();
+        $this->saveExportBlueprint($blueprint);
         $count = 0;
 
         $maxCount = ($batchLimit < $blueprint['totalEntities']) ? $batchLimit : $blueprint['totalEntities'];
-        $dir = $this->getMigrationDir($migration->getId());
+        $dir = $this->getExportDir() . '/in_progress';
 
         if ($output) {
             $progress = new ProgressBar($output, $maxCount);
@@ -194,12 +160,12 @@ class MigrationModel extends FormModel
             }
         }
 
-        $this->saveExportBlueprint($migration->getId(), $blueprint);
+        $this->saveExportBlueprint($blueprint);
 
         // Create a ZIP package of expoted data
         if ($blueprint['totalEntities'] == $blueprint['exportedEntities'] && $blueprint['totalFiles'] == $blueprint['exportedFiles']) {
             $zip = new \ZipArchive();
-            $zipFile = $this->getZipPackagePath($migration->getId());
+            $zipFile = $this->getZipPackagePath();
             if ($zip->open($zipFile, file_exists($zipFile) ? \ZIPARCHIVE::OVERWRITE : \ZIPARCHIVE::CREATE) === true) {
                 foreach ($iterator = $this->getIterator($dir) as $item) {
                     $file = $dir . '/' . $iterator->getSubPathName();
@@ -217,7 +183,7 @@ class MigrationModel extends FormModel
                 $zip->close();
 
                 if (file_exists($zipFile)) {
-                    $this->deleteFolderRecursivly($dir . '/');
+                    $this->deleteFolderRecursivly($dir);
                 } else {
                     throw new \Exception($this->translator->trans('mautic.migration.file.not.created', array('%file%' => $zipFile)));
                 }
@@ -367,15 +333,13 @@ class MigrationModel extends FormModel
     /**
      * Remove exported files. The folder and the zip package.
      *
-     * @param  integer  $id
-     *
      * @return void
      */
-    public function removeExportedFiles($id) {
-        $dir = $this->getMigrationDir($id);
-        $zipFile = $this->getZipPackagePath($id);
+    public function removeExportedFiles() {
+        $dir = $this->getExportDir();
+        $zipFile = $this->getZipPackagePath();
 
-        $this->deleteFolderRecursivly($dir . '/');
+        $this->deleteFolderRecursivly($dir);
         if (file_exists($zipFile)) {
             unlink($zipFile);
         }
@@ -384,12 +348,10 @@ class MigrationModel extends FormModel
     /**
      * Get path and other info about last exported package
      *
-     * @param  integer  $id
-     *
      * @return array
      */
-    public function getLastPackageInfo($id) {
-        $zipFile = $this->getZipPackagePath($id);
+    public function getLastPackageInfo() {
+        $zipFile = $this->getZipPackagePath();
 
         $fileInfo = array(
             'exists'    => false,
@@ -410,12 +372,10 @@ class MigrationModel extends FormModel
     /**
      * Get absolut path where to store migration files
      *
-     * @param  integer  $id
-     *
      * @return string
      */
-    public function getMigrationDir($id) {
-        return $this->factory->getParameter('export_dir') . '/' . $id;
+    public function getExportDir() {
+        return $this->factory->getParameter('export_dir');
     }
 
     /**
@@ -430,14 +390,12 @@ class MigrationModel extends FormModel
     }
 
     /**
-     * Get absolut path and where to store migration files
-     *
-     * @param  integer  $id
+     * Get absolute path and where to store migration files
      *
      * @return string
      */
-    public function getZipPackagePath($id) {
-        return $this->getMigrationDir($id) . '.zip';
+    public function getZipPackagePath() {
+        return $this->getExportDir() . '/backup_' . (new DateTimeHelper)->getString() . '.zip';
     }
 
     /**
@@ -448,20 +406,17 @@ class MigrationModel extends FormModel
      * @return void
      */
     public function deleteFolderRecursivly($path) {
-        if (is_dir($path)) {
-            $files = glob($path . '*', GLOB_MARK);
+        $iterator = $this->getIterator($path);
 
-            foreach ($files as $file)
-            {
-                $this->deleteFolderRecursivly($file);
+        foreach ($iterator as $fileinfo) {
+            if ($fileinfo->isDir()) {
+                rmdir($fileinfo->getRealPath());
+            } else {
+                unlink($fileinfo->getRealPath());
             }
-
-            if (file_exists($path)) {
-                rmdir($path);
-            }
-        } elseif (is_file($path)) {
-            unlink($path);
         }
+
+        rmdir($path);
     }
 
     /**
@@ -475,20 +430,18 @@ class MigrationModel extends FormModel
     {
         return new \RecursiveIteratorIterator(
             new \RecursiveDirectoryIterator($path, \RecursiveDirectoryIterator::SKIP_DOTS),
-            \RecursiveIteratorIterator::SELF_FIRST
+            \RecursiveIteratorIterator::CHILD_FIRST
         );
     }
 
     /**
      * Get migration blueprint from a existing json file
      *
-     * @param  Migration  $migration
-     *
      * @return array of updated blueprint | null
      */
-    public function getExistingBlueprint($migration)
+    public function getExistingBlueprint()
     {
-        $dir     = $this->getMigrationDir($migration->getId());
+        $dir     = $this->getExportDir();
         $file    = $dir . '/blueprint.json';
 
         if (file_exists($file)) {
@@ -518,16 +471,14 @@ class MigrationModel extends FormModel
     /**
      * Get migration blueprint from a json file or create fresh one
      *
-     * @param  Migration  $migration
-     *
      * @return array of updated blueprint
      */
-    public function getBlueprint($migration)
+    public function getBlueprint()
     {
-        $blueprint = $this->getExistingBlueprint($migration);
+        $blueprint = $this->getExistingBlueprint();
 
         if (!$blueprint) {
-            $blueprint = $this->buildBlueprint($migration);
+            $blueprint = $this->buildBlueprint();
         }
 
         return $blueprint;
@@ -536,14 +487,13 @@ class MigrationModel extends FormModel
     /**
      * Save migration blueprint to a json file to export folder
      *
-     * @param  integer  $id of the migration
      * @param  array    $content of the migration blueprint
      *
      * @return void
      */
-    public function saveExportBlueprint($id, array $content)
+    public function saveExportBlueprint(array $content)
     {
-        $this->saveBlueprint($this->getMigrationDir($id), $content);
+        $this->saveBlueprint($this->getExportDir(), $content);
     }
 
     /**
@@ -593,13 +543,12 @@ class MigrationModel extends FormModel
     /**
      * Trigger export of a specific migration template
      *
-     * @param  Migration        $migration
      * @param  array            $blueprint
      * @param  integer          $batchLimit limit
      * @param  OutputInterface  $output
      * @return array of updated blueprint
      */
-    public function buildBlueprint(Migration $migration)
+    public function buildBlueprint()
     {
         $blueprint = array(
             'entities' => array(),
@@ -610,36 +559,47 @@ class MigrationModel extends FormModel
             'exportedFiles' => 0
         );
 
-        if ($this->dispatcher->hasListeners(MigrationEvents::MIGRATION_ON_ENTITY_COUNT)) {
-            foreach ($migration->getEntities() as $entity) {
-                $parts = explode('.', $entity);
-                $event = new MigrationCountEvent($this->factory);
-                $event->setBundle($parts[0]);
-                $event->setEntity($parts[1]);
+        $event      = new MigrationEditEvent($this->factory);
+        $dispatcher = $this->factory->getDispatcher();
+        $dispatcher->dispatch(MigrationEvents::MIGRATION_TEMPLATE_ON_EDIT_DISPLAY, $event);
+        $bundles    = $event->getEntities();
+        $foldersB   = $event->getFolders();
 
-                $this->dispatcher->dispatch(MigrationEvents::MIGRATION_ON_ENTITY_COUNT, $event);
-                $blueprint['totalEntities'] += $event->getCount();
-                $blueprint['entities'][$entity] = array(
-                    'bundle' => $event->getBundle(),
-                    'entity' => $event->getEntity(),
-                    'count' => $event->getCount(),
-                    'exported' => 0
-                );
+        if ($this->dispatcher->hasListeners(MigrationEvents::MIGRATION_ON_ENTITY_COUNT)) {
+            foreach ($bundles as $bundle => $entities) {
+                foreach ($entities as $entity => $name) {
+                    $parts = explode('.', $entity);
+                    $event = new MigrationCountEvent($this->factory);
+                    $event->setBundle($parts[0]);
+                    $event->setEntity($parts[1]);
+
+                    $this->dispatcher->dispatch(MigrationEvents::MIGRATION_ON_ENTITY_COUNT, $event);
+                    $blueprint['totalEntities'] += $event->getCount();
+                    $blueprint['entities'][$entity] = array(
+                        'bundle' => $event->getBundle(),
+                        'entity' => $event->getEntity(),
+                        'count' => $event->getCount(),
+                        'exported' => 0
+                    );
+                }
             }
 
-            foreach ($migration->getFolders() as $folder) {
-                $parts = explode('.', $folder);
-                $count = 0;
-                foreach ($iterator = $this->getIterator($parts[1]) as $item) {
-                    $count++;
+            foreach ($foldersB as $key => $folders) {
+                $parts = explode('.', $key);
+                $bundle = $parts[0];
+                foreach ($folders as $folder) {
+                    $count = 0;
+                    foreach ($iterator = $this->getIterator($folder) as $item) {
+                        $count++;
+                    }
+                    $blueprint['totalFiles'] += $count;
+                    $blueprint['folders'][] = array(
+                        'path' => $folder,
+                        'count' => $count,
+                        'exported' => 0,
+                        'bundle' => $bundle
+                    );
                 }
-                $blueprint['totalFiles'] += $count;
-                $blueprint['folders'][] = array(
-                    'path' => $parts[1],
-                    'count' => $count,
-                    'exported' => 0,
-                    'bundle' => $parts[0]
-                );
             }
         }
 
