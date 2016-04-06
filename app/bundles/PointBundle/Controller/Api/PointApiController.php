@@ -15,6 +15,9 @@ use FOS\RestBundle\Util\Codes;
 use Mautic\ApiBundle\Controller\CommonApiController;
 use Mautic\CoreBundle\Helper\InputHelper;
 use Symfony\Component\HttpKernel\Event\FilterControllerEvent;
+use Mautic\ApiBundle\ApiEvents;
+use Mautic\ApiBundle\Event\ApiEvent;
+use Symfony\Component\HttpFoundation\JsonResponse;
 
 /**
  * Class PointApiController.
@@ -97,5 +100,27 @@ class PointApiController extends CommonApiController
         $lead->adjustPoints($delta, $operator);
         $lead->addPointsChangeLogEntry('API', $eventName, $actionName, $delta, $ip);
         $this->leadModel->saveEntity($lead, false);
+    }
+    
+    /**
+     * 
+     * @param unknown $id
+     * @param unknown $leadId
+     * 
+     * @return
+     */
+    public function applyRuleAction ($id, $leadId) {	
+    	
+    	if (empty($id) || empty($leadId)) {
+    		return new JsonResponse(array("message" => "Vous devez avoir un id de règle de points et un id de lead", "success" => false));
+    	}
+    	   	
+    	$lead = $this->factory->getModel('lead')->getEntity($leadId);
+ 
+    	$event = new ApiEvent($lead, $id);
+    	
+    	$this->factory->getDispatcher()->dispatch(ApiEvents::API_CALL_APPLYRULE, $event);
+    	
+    	return new JsonResponse(array("success" => true));
     }
 }

@@ -115,6 +115,9 @@ return [
                     'mautic.api.model.client',
                 ],
             ],
+            'mautic.api.pointbundle.subscriber' => [
+                'class' => 'Mautic\ApiBundle\EventListener\PointSubscriber'
+            ],
         ],
         'forms' => [
             'mautic.form.type.apiclients' => [
@@ -125,6 +128,10 @@ return [
             'mautic.form.type.apiconfig' => [
                 'class' => 'Mautic\ApiBundle\Form\Type\ConfigType',
                 'alias' => 'apiconfig',
+            ],
+            'mautic.form.type.pointaction_apicall'    => [
+                'class' => 'Mautic\ApiBundle\Form\Type\PointActionApiCallType',
+                'alias' => 'pointaction_apicall'
             ],
         ],
         'other' => [

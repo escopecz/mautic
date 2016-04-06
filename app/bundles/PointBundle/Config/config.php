@@ -64,6 +64,11 @@ return [
                 'controller' => 'MauticPointBundle:Api\PointApi:adjustPoints',
                 'method'     => 'POST',
             ],
+            'mautic_api_applyrule'    => [
+                'path'       => '/points/{id}/contact/{leadId}',
+                'controller' => 'MauticPointBundle:Api\PointApi:applyRule',
+                'method'     => 'PATCH'
+            ],
         ],
     ],
 
