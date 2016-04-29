@@ -72,7 +72,7 @@ SQL;
 
         $sql = <<<SQL
 CREATE TABLE {$this->prefix}lead_donotcontact (
-  id INT NOT NULL, 
+  id SERIAL NOT NULL, 
   lead_id INT DEFAULT NULL, 
   date_added TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL, 
   reason INT NOT NULL, 
