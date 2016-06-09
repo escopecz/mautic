@@ -28,6 +28,10 @@ return array(
                 'defaults'   => array(
                     'objectModel' => ''
                 )
+            ),
+            'mautic_core_file_action' => array(
+                'path'       => '/file/{objectAction}/{objectId}',
+                'controller' => 'MauticCoreBundle:File:execute'
             )
         ),
         'public' => array(
@@ -147,11 +151,11 @@ return array(
                 'alias'     => 'hidden_entity',
                 'arguments' => 'doctrine.orm.entity_manager'
             ),
-            'mautic.form.type.sortablelist'        => array(
+            'mautic.form.type.sortablelist'       => array(
                 'class' => 'Mautic\CoreBundle\Form\Type\SortableListType',
                 'alias' => 'sortablelist'
             ),
-            'mautic.form.type.dynamiclist'         => array(
+            'mautic.form.type.dynamiclist'        => array(
                 'class' => 'Mautic\CoreBundle\Form\Type\DynamicListType',
                 'alias' => 'dynamiclist'
             ),
@@ -184,6 +188,16 @@ return array(
                 'class'     => 'Mautic\CoreBundle\Form\Type\DateRangeType',
                 'arguments' => 'mautic.factory',
                 'alias'     => 'daterange'
+            ),
+            'mautic.form.type.slot'               => array(
+                'class'     => 'Mautic\CoreBundle\Form\Type\SlotType',
+                'arguments' => 'mautic.factory',
+                'alias'     => 'slot'
+            ),
+            'mautic.form.type.slot.button'               => array(
+                'class'     => 'Mautic\CoreBundle\Form\Type\SlotButtonType',
+                'arguments' => 'mautic.factory',
+                'alias'     => 'slot_button'
             )
         ),
         'helpers' => array(

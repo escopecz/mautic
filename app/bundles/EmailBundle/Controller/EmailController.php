@@ -676,35 +676,34 @@ class EmailController extends FormController
             $valid = false;
             if (!$cancelled = $this->isFormCancelled($form)) {
                 if ($valid = $this->isFormValid($form)) {
-                    $contentName = 'mautic.emailbuilder.'.$entity->getSessionId().'.content';
-                    $template    = $entity->getTemplate();
-                    if (!empty($template)) {
-                        $existingContent = $entity->getContent();
-                        $newContent      = $session->get($contentName, array());
-                        $viewContent     = array_merge($existingContent, $newContent);
+                    // $contentName = 'mautic.emailbuilder.'.$entity->getSessionId().'.content';
+                    // $template    = $entity->getTemplate();
+                    // if (!empty($template)) {
+                    //     $existingContent = $entity->getContent();
+                    //     $newContent      = $session->get($contentName, array());
+                    //     $viewContent     = array_merge($existingContent, $newContent);
 
-                        $entity->setCustomHtml(null);
-                    } else {
-                        $entity->setContent(array());
+                    //     $entity->setCustomHtml(null);
+                    // } else {
+                    //     $entity->setContent(array());
 
-                        $viewContent = $entity->getCustomHtml();
-                    }
+                    //     $viewContent = $entity->getCustomHtml();
+                    // }
 
-                    // Copy model content then parse from visual to tokens
-                    $modelContent = $viewContent;
-                    BuilderTokenHelper::replaceVisualPlaceholdersWithTokens($modelContent);
+                    $content = $entity->getCustomHtml();
+                    BuilderTokenHelper::replaceVisualPlaceholdersWithTokens($content);
 
-                    if (!empty($template)) {
-                        $entity->setContent($modelContent);
-                    } else {
-                        $entity->setCustomHtml($modelContent);
-                    }
-
+                    // if (!empty($template)) {
+                    //     $entity->setContent($modelContent);
+                    // } else {
+                        $entity->setCustomHtml($content);
+                    // }
+                        
                     //form is valid so process the data
                     $model->saveEntity($entity, $form->get('buttons')->get('save')->isClicked());
 
                     //clear the session
-                    $session->remove($contentName);
+                    // $session->remove($contentName);
 
                     $this->addFlash(
                         'mautic.core.notice.updated',
@@ -789,12 +788,22 @@ class EmailController extends FormController
         $assets         = $form['assetAttachments']->getData();
         $attachmentSize = $this->factory->getModel('asset')->getTotalFilesize($assets);
 
+        $slotTypes = $model->getBuilderComponents($entity, 'slotTypes');
+
+        foreach ($slotTypes as &$slotType) {
+            if (isset($slotType['form'])) {
+                $slotForm = $this->get('form.factory')->create($slotType['form']);
+                $slotType['form'] = $slotForm->createView();
+            }
+        }
+
         return $this->delegateView(
             array(
                 'viewParameters'  => array(
                     'form'               => $this->setFormTheme($form, 'MauticEmailBundle:Email:form.html.php', 'MauticEmailBundle:FormTheme\Email'),
                     'isVariant'          => $entity->isVariant(true),
                     'tokens'             => (!empty($tokens)) ? $tokens['tokenSections'] : $model->getBuilderComponents($entity, 'tokenSections'),
+                    'slots'              => $slotTypes,
                     'email'              => $entity,
                     'forceTypeSelection' => $forceTypeSelection,
                     'attachmentSize'     => $attachmentSize
@@ -1421,9 +1430,10 @@ class EmailController extends FormController
         $assetsHelper->addScriptDeclaration("var mauticBasePath    = '" . $this->request->getBasePath() . "';");
         $assetsHelper->addScriptDeclaration("var mauticAjaxUrl     = '" . $routerHelper->generate("mautic_core_ajax") . "';");
         $assetsHelper->addScriptDeclaration("var mauticAssetPrefix = '" . $assetsHelper->getAssetPrefix(true) . "';");
-        $assetsHelper->addCustomDeclaration($assetsHelper->getSystemScripts(true, true));
-        $assetsHelper->addScript('app/bundles/EmailBundle/Assets/builder/builder.js');
-        $assetsHelper->addStylesheet('app/bundles/EmailBundle/Assets/builder/builder.css');
+        // $assetsHelper->addCustomDeclaration($assetsHelper->getSystemScripts(true, true));
+        // $assetsHelper->addStylesheet('app/bundles/EmailBundle/Assets/builder/builder.css');
+        // $assetsHelper->addStylesheet('app/bundles/CoreBundle/Assets/css/libraries/froala/froala_editor.css');
+        $assetsHelper->addStylesheet('app/bundles/CoreBundle/Assets/css/libraries/froala/froala_style.css');
     }
 
 }
