@@ -26,6 +26,8 @@ $view['slots']->set("headerTitle", $header.$subheader);
 $template  = $form['template']->vars['data'];
 $emailType = $form['emailType']->vars['data'];
 
+$view['assets']->addScriptDeclaration('var mauticEntityId = '.$email->getSessionId().';');
+
 if (!isset($attachmentSize)) {
     $attachmentSize = 0;
 }
@@ -41,6 +43,7 @@ if (!isset($attachmentSize)) {
                 <ul class="bg-auto nav nav-tabs pr-md pl-md">
                     <li class="active"><a href="#email-container" role="tab" data-toggle="tab"><?php echo $view['translator']->trans('mautic.email.email'); ?></a></li>
                     <li class=""><a href="#advanced-container" role="tab" data-toggle="tab"><?php echo $view['translator']->trans('mautic.core.advanced'); ?></a></li>
+                    <li class=""><a href="#source-container" role="tab" data-toggle="tab"><?php echo $view['translator']->trans('mautic.core.source'); ?></a></li>
                 </ul>
                 <!--/ tabs controls -->
                 <div class="tab-content pa-md">
@@ -54,34 +57,15 @@ if (!isset($attachmentSize)) {
                                 <?php echo $view['form']->row($form['template']); ?>
                             </div>
                         </div>
-
                         <div class="row">
-                            <div class="col-md-12" id="customHtmlContainer" style="min-height: 325px;">
-                                <div class="custom-html-mask<?php if (!$template) echo ' hide'; ?>">
-                                    <div class="well text-center" style="position: absolute; top: 110px; width: 50%; left:0; right:0; margin-left:auto; margin-right:auto; z-index: 1010;">
-                                        <h3 style="padding: 30px;">
-                                            <a href="javascript: void(0);" onclick="Mautic.launchBuilder('emailform', 'email');">
-                                                <?php echo $view['translator']->trans('mautic.core.builder.launch'); ?> <i class="fa fa-angle-right"></i>
-                                            </a>
-                                        </h3>
-                                    </div>
-                                    <div style="height: 100%; width: 100%; position: absolute; top: 0; left: 0; bottom: 0; right: 0; opacity: 0.8; background-color: #fff; z-index: 1000"></div>
+                            <div class="custom-html-mask<?php if (!$template) echo ' hide'; ?>">
+                                <div class="well text-center col-md-6 col-md-offset-3">
+                                    <h3 style="padding: 30px;">
+                                        <a href="javascript: void(0);" onclick="Mautic.launchBuilder('emailform', 'email');">
+                                            <?php echo $view['translator']->trans('mautic.core.builder.launch'); ?> <i class="fa fa-angle-right"></i>
+                                        </a>
+                                    </h3>
                                 </div>
-                                <?php echo $view['form']->row($form['customHtml']); ?>
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-12">
-                                <div class="pull-left">
-                                    <?php echo $view['form']->label($form['plainText']); ?>
-                                </div>
-                                <div class="text-right pr-10">
-                                    <i class="fa fa-spinner fa-spin ml-2 plaintext-spinner hide"></i>
-                                    <a class="small" onclick="Mautic.autoGeneratePlaintext();"><?php echo $view['translator']->trans('mautic.email.plaintext.generate'); ?></a>
-                                </div>
-                                <div class="clearfix"></div>
-                                <?php echo $view['form']->widget($form['plainText']); ?>
                             </div>
                         </div>
                     </div>
@@ -119,6 +103,28 @@ if (!isset($attachmentSize)) {
                             </div>
                         </div>
                     </div>
+
+                    <div class="tab-pane fade bdr-w-0" id="source-container">
+                        <div class="row">
+                            <div class="col-md-12" id="customHtmlContainer" style="min-height: 325px;">
+                                <?php echo $view['form']->row($form['customHtml']); ?>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="pull-left">
+                                    <?php echo $view['form']->label($form['plainText']); ?>
+                                </div>
+                                <div class="text-right pr-10">
+                                    <i class="fa fa-spinner fa-spin ml-2 plaintext-spinner hide"></i>
+                                    <a class="small" onclick="Mautic.autoGeneratePlaintext();"><?php echo $view['translator']->trans('mautic.email.plaintext.generate'); ?></a>
+                                </div>
+                                <div class="clearfix"></div>
+                                <?php echo $view['form']->widget($form['plainText']); ?>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -126,7 +132,7 @@ if (!isset($attachmentSize)) {
     <div class="col-md-3 bg-white height-auto bdr-l">
         <div class="pr-lg pl-lg pt-md pb-md">
             <?php echo $view['form']->row($form['name']); ?>
-            <?php if (isset($form['variantSettings'])): ?>
+            <?php if ($isVariant): ?>
                 <?php echo $view['form']->row($form['variantSettings']); ?>
                 <?php echo $view['form']->row($form['isPublished']); ?>
                 <?php echo $view['form']->row($form['publishUp']); ?>
@@ -146,7 +152,9 @@ if (!isset($attachmentSize)) {
 
             <?php echo $view['form']->row($form['unsubscribeForm']); ?>
 
-            <?php echo $view['form']->rest($form); ?>
+            <div class="hide">
+                <?php echo $view['form']->rest($form); ?>
+            </div>
         </div>
     </div>
 </div>
@@ -170,6 +178,39 @@ if (!isset($attachmentSize)) {
             </div>
         </div>
         <div class="panel-group builder-tokens" id="emailTokensPanel">
+            <div class="panel-group builder-slots" id="emailSlotsPanel">
+            <ul class="nav nav-tabs">
+                <li class="active"><a href="#slot-type-container" role="tab" data-toggle="tab">Content Slots</a></li>
+                <li class=""><a href="#customize-form-container" role="tab" data-toggle="tab">Customize</a></li>
+            </ul>
+            <div class="bg-auto tab-content pa-md">
+                <div class="tab-pane fade bdr-w-0 active in" id="slot-type-container">
+                    <?php if ($slots): ?>
+                        <?php foreach ($slots as $slotKey => $slot): ?>
+                            <div class="slot-type-handle btn btn-default btn-lg btn-block" data-slot-type="<?php echo $slotKey; ?>">
+                                <i class="fa fa-<?php echo $slot['icon']; ?>" aria-hidden="true"></i>
+                                <?php echo $slot['header']; ?>
+                                <script type="text/html">
+                                    <?php echo $view->render($slot['content']); ?>
+                                </script>
+                            </div>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                    <p class="text-muted pt-md text-center"><i>Drag the slot to the desired position.</i></p>
+                </div>
+                <div class="tab-pane fade bdr-w-0" id="customize-form-container">
+                    <div id="slot-form-container"></div>
+                    <?php if ($slots): ?>
+                        <?php foreach ($slots as $slotKey => $slot): ?>
+                            <script type="text/html" data-slot-type-form="<?php echo $slotKey; ?>">
+                                <?php echo $view['form']->start($slot['form']); ?>
+                                <?php echo $view['form']->end($slot['form']); ?>
+                            </script>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
             <?php foreach ($tokens as $k => $t): ?>
                 <div class="panel panel-default">
                     <div class="panel-heading">
@@ -205,7 +246,7 @@ if (empty($type) || !empty($forceTypeSelection)):
             'typeOneDescription' => 'mautic.email.type.template.description',
             'typeOneOnClick'     => "Mautic.selectEmailType('template');",
             'typeTwoHeader'      => 'mautic.email.type.list.header',
-            'typeTwoIconClass'   => 'fa-list',
+            'typeTwoIconClass'   => 'fa-pie-chart',
             'typeTwoDescription' => 'mautic.email.type.list.description',
             'typeTwoOnClick'     => "Mautic.selectEmailType('list');",
         ));

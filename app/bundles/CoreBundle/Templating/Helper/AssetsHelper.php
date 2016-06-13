@@ -118,23 +118,24 @@ class AssetsHelper extends CoreAssetsHelper
      *
      * @param string $script
      * @param string $location
+     * @param boolean $async
      *
      * @return void
      */
-    public function addScript($script, $location = 'head')
+    public function addScript($script, $location = 'head', $async = false)
     {
         $assets     =& $this->assets;
-        $addScripts = function ($s) use ($location, &$assets) {
+        $addScripts = function ($s) use ($location, &$assets, $async) {
             if ($location == 'head') {
                 //special place for these so that declarations and scripts can be mingled
-                $assets['headDeclarations'][] = array('script' => $s);
+                $assets['headDeclarations'][] = array('script' => array($s, $async));
             } else {
                 if (!isset($assets['scripts'][$location])) {
                     $assets['scripts'][$location] = array();
                 }
 
                 if (!in_array($s, $assets['scripts'][$location])) {
-                    $assets['scripts'][$location][] = $s;
+                    $assets['scripts'][$location][] = array($s, $async);
                 }
             }
         };
@@ -198,24 +199,6 @@ class AssetsHelper extends CoreAssetsHelper
             }
         } else {
             $addSheet($stylesheet);
-        }
-    }
-
-    /**
-     * Load ckeditor source files
-     *
-     * @return void
-     */
-    public function loadEditor()
-    {
-        static $editorLoaded;
-
-        if (empty($editorLoaded)) {
-            $editorLoaded = true;
-            $this->addScript(array(
-                'app/bundles/CoreBundle/Assets/js/libraries/ckeditor/ckeditor.js?v' . $this->version,
-                'app/bundles/CoreBundle/Assets/js/libraries/ckeditor/adapters/jquery.js?v' . $this->version
-            ));
         }
     }
 
@@ -316,7 +299,8 @@ class AssetsHelper extends CoreAssetsHelper
     {
         if (isset($this->assets['scripts'][$location])) {
             foreach (array_reverse($this->assets['scripts'][$location]) as $s) {
-                echo '<script src="'.$this->getUrl($s).'"></script>'."\n";
+                list($script, $async) = $s;
+                echo '<script src="'.$this->getUrl($script).'"' . ($async ? ' async' : '') . '></script>'."\n";
             }
         }
 
@@ -356,7 +340,9 @@ class AssetsHelper extends CoreAssetsHelper
                             $headOutput .= "\n</script>";
                             $scriptOpen = false;
                         }
-                        $headOutput .= "\n".'<script src="' . $this->getUrl($output) . '"></script>';
+                        list($script, $async) = $output;
+
+                        $headOutput .= "\n".'<script src="' . $this->getUrl($script) . '"' . ($async ? ' async' : '') . '></script>';
                         break;
                     case 'custom':
                     case 'declaration':
@@ -405,8 +391,7 @@ class AssetsHelper extends CoreAssetsHelper
         $assets = $this->assetHelper->getAssets();
 
         if ($includeEditor) {
-            $assets['js'][] = 'app/bundles/CoreBundle/Assets/js/libraries/ckeditor/ckeditor.js?v' . $this->version;
-            $assets['js'][] = 'app/bundles/CoreBundle/Assets/js/libraries/ckeditor/adapters/jquery.js?v' . $this->version;
+            $assets['js'] = array_merge($assets['js'], $this->getFroalaScripts());
         }
 
         if (isset($assets['js'])) {
@@ -429,8 +414,7 @@ class AssetsHelper extends CoreAssetsHelper
         $assets = $this->assetHelper->getAssets();
 
         if ($includeEditor) {
-            $assets['js'][] = 'app/bundles/CoreBundle/Assets/js/libraries/ckeditor/ckeditor.js?v' . $this->version;
-            $assets['js'][] = 'app/bundles/CoreBundle/Assets/js/libraries/ckeditor/adapters/jquery.js?v' . $this->version;
+            $assets['js'] = array_merge($assets['js'], $this->getFroalaScripts());
         }
 
         if ($render) {
@@ -444,6 +428,41 @@ class AssetsHelper extends CoreAssetsHelper
         }
 
         return $assets['js'];
+    }
+
+    /**
+     * Load Froala JS source files
+     *
+     * @return array
+     */
+    public function getFroalaScripts()
+    {
+        $base = 'app/bundles/CoreBundle/Assets/js/libraries/froala/';
+        $plugins = $base . 'plugins/';
+        return array(
+            $base . 'froala_editor.js?v' . $this->version,
+            $plugins . 'align.js?v' . $this->version,
+            $plugins . 'code_beautifier.js?v' . $this->version,
+            $plugins . 'code_view.js?v' . $this->version,
+            $plugins . 'colors.js?v' . $this->version,
+            // $plugins . 'file.js?v' . $this->version,  // @todo
+            $plugins . 'font_family.js?v' . $this->version,
+            $plugins . 'font_size.js?v' . $this->version,
+            $plugins . 'fullscreen.js?v' . $this->version,
+            $plugins . 'image.js?v' . $this->version,
+            $plugins . 'image_manager.js?v' . $this->version,
+            $plugins . 'inline_style.js?v' . $this->version,
+            $plugins . 'line_breaker.js?v' . $this->version,
+            $plugins . 'link.js?v' . $this->version,
+            $plugins . 'lists.js?v' . $this->version,
+            $plugins . 'paragraph_format.js?v' . $this->version,
+            $plugins . 'paragraph_style.js?v' . $this->version,
+            $plugins . 'quick_insert.js?v' . $this->version,
+            $plugins . 'quote.js?v' . $this->version,
+            $plugins . 'table.js?v' . $this->version,
+            $plugins . 'url.js?v' . $this->version,
+            $plugins . 'video.js?v' . $this->version
+        );
     }
 
     /**

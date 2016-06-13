@@ -10,8 +10,24 @@ Mautic.emailOnLoad = function (container, response) {
             var el = '#' + response.updateSelect;
             var optgroup = el + " optgroup[label=" + response.emailLang + "]";
             if (opener.mQuery(optgroup).length) {
-                //the optgroup exist so append to it
-                opener.mQuery(optgroup + " option:last").prev().before(newOption);
+                // update option when new option equal with option item in group.
+                var firstOptionGroups = opener.mQuery(el + ' optgroup');
+                var isUpdateOption = false;
+                firstOptionGroups.each(function() {
+                    var firstOptions = mQuery(this).children();
+                    for (var i = 0; i < firstOptions.length; i++) {
+                        if (firstOptions[i].value === response.emailId.toString()) {
+                            firstOptions[i].text = response.emailName;
+                            isUpdateOption = true;
+                            break;
+                        }
+                    }
+                });
+
+                if (!isUpdateOption) {
+                    //the optgroup exist so append to it
+                    opener.mQuery(optgroup + " option:last").prev().before(newOption);
+                }
             } else {
                 //create the optgroup
                 var newOptgroup = mQuery('<optgroup label="' + response.emailLang + '" />');
@@ -31,7 +47,7 @@ Mautic.emailOnLoad = function (container, response) {
                 } else if (aLabel < bLabel) {
                     return -1;
                 } else {
-                    return 0
+                    return 0;
                 }
             });
 
@@ -43,7 +59,7 @@ Mautic.emailOnLoad = function (container, response) {
                     } else if (a.text < b.text) {
                         return -1;
                     } else {
-                        return 0
+                        return 0;
                     }
                 });
                 mQuery(this).html(options);
@@ -60,45 +76,18 @@ Mautic.emailOnLoad = function (container, response) {
             newOption.prop('selected', true);
 
             opener.mQuery(el).trigger("chosen:updated");
+
+            Mautic.disabledEmailAction(opener);
         }
 
         window.close();
     } else if (mQuery('#emailform_plainText').length) {
-        // Activate the plain text editor to support token inserts
-
-        // Get the plain text first
-        var plainText = mQuery('#emailform_plainText').val();
-
-        // Now empty it so that ckeditor doesn't load it as html
-        mQuery('#emailform_plainText').val('');
-
-        var events = Mautic.getGlobalEditorEvents();
-        events.instanceReady = function( event ) {
-            event.editor.insertText(plainText);
-        };
-
-        mQuery('#emailform_plainText').ckeditor({
-            removePlugins: 'elementspath,toolbar',
-            extraPlugins: 'tokens',
-            autoParagraph: false,
-            height: "235px",
-            on: events
-        });
-
-        if (mQuery('#emailform_emailType').val() == '') {
-            mQuery('body').addClass('noscroll');
-        }
-
-        Mautic.toggleBuilderButton(mQuery('#emailform_template').val() == '');
+        // @todo initiate the token dropdown
     } else if (mQuery(container + ' #list-search').length) {
         Mautic.activateSearchAutocomplete('list-search', 'email');
     } else {
         if (typeof Mautic.listCompareChart === 'undefined') {
             Mautic.renderListCompareChart();
-        }
-
-        if (typeof Mautic.emailStatsLineGraph === 'undefined') {
-            Mautic.renderEmailStatsChart();
         }
 
         Mautic.variantChartData = 'variant';
@@ -131,17 +120,23 @@ Mautic.emailOnLoad = function (container, response) {
         };
         mQuery('a[data-chart]').on('click', switchChartData);
     }
+
+    Mautic.initDateRangePicker();
+
+    mQuery(document).on('shown.bs.tab', 'a[href="#source-container"]', function (e) {
+        Mautic.refreshCodeEditors();
+        Mautic.initCodeEditors();
+    });
 };
 
 Mautic.emailOnUnload = function(id) {
     if (id === '#app-content') {
         delete Mautic.listCompareChart;
-        delete Mautic.emailStatsLineGraph;
     }
 
     if (mQuery('#emailform_plainText').length) {
         // Activate the plain text editor to support token inserts
-        CKEDITOR.instances['emailform_plainText'].destroy(true);
+        // CKEDITOR.instances['emailform_plainText'].destroy(true);
     }
 };
 
@@ -175,39 +170,6 @@ Mautic.updateListCompareChart = function() {
     Mautic.ajaxActionRequest('email:updateStatsChart', query, function(response) {
         Mautic.renderListCompareChart(response);
     }, true);
-};
-
-Mautic.renderEmailStatsChart = function (chartData) {
-    if (!mQuery("#stat-chart").length) {
-        return;
-    }
-
-    var canvas = document.getElementById("stat-chart");
-
-    if (!chartData) {
-        var chartData = mQuery.parseJSON(mQuery('#stat-chart-data').text());
-    } else if (chartData.stats) {
-        chartData = chartData.stats;
-    }
-
-    if (typeof Mautic.emailStatsLineGraph !== 'undefined') {
-        Mautic.emailStatsLineGraph.destroy();
-    }
-
-    Mautic.emailStatsLineGraph = new Chart(canvas.getContext("2d")).Line(chartData);
-
-    var legendHolder = document.createElement('div');
-    legendHolder.innerHTML = Mautic.emailStatsLineGraph.generateLegend();
-    mQuery('#legend').html(legendHolder.firstChild);
-    Mautic.emailStatsLineGraph.update();
-};
-
-Mautic.updateEmailStatsChart = function(element, amount, unit) {
-    var emailId         = Mautic.getEntityId();
-    var includeVariants = (Mautic.variantChartData == 'all');
-    var query           = "emailType=template&amount=" + amount + "&unit=" + unit + "&emailId=" + emailId + "&includeVariants=" + includeVariants;
-
-    Mautic.getChartData(element, 'email:updateStatsChart', query, 'renderEmailStatsChart');
 };
 
 Mautic.insertEmailBuilderToken = function(editorId, token) {
@@ -338,21 +300,14 @@ Mautic.sendEmailBatch = function () {
 Mautic.autoGeneratePlaintext = function() {
     mQuery('.plaintext-spinner').removeClass('hide');
 
-    var mode = (mQuery('#emailform_template').val() == '') ? 'custom' : 'template';
-    var custom = mQuery('#emailform_customHtml').val();
-    var id = mQuery('#emailform_sessionId').val();
-
-    var data = {
-        mode: mode,
-        id: id,
-        custom: custom
-    };
-
     Mautic.ajaxActionRequest(
         'email:generatePlaintText',
-        data,
+        {
+            id: mQuery('#emailform_sessionId').val(),
+            custom: mQuery('#emailform_customHtml').val()
+        },
         function (response) {
-            CKEDITOR.instances['emailform_plainText'].insertText(response.text);
+            mQuery('#emailform_plainText').val(response.text);
             mQuery('.plaintext-spinner').addClass('hide');
         }
     );
@@ -389,4 +344,34 @@ Mautic.getTotalAttachmentSize = function() {
     } else {
         mQuery('#attachment-size').text('0');
     }
+};
+
+Mautic.standardEmailUrl = function(options) {
+    if (!options) {
+        return;
+    }
+
+    var url = options.windowUrl;
+    if (url) {
+        var editEmailKey = '/emails/edit/emailId';
+        var previewEmailKey = '/email/preview/emailId';
+        if (url.indexOf(editEmailKey) > -1 ||
+            url.indexOf(previewEmailKey) > -1) {
+            options.windowUrl = url.replace('emailId', mQuery('#campaignevent_properties_email').val());
+        }
+    }
+
+    return options;
+};
+
+Mautic.disabledEmailAction = function(opener) {
+    if (typeof opener == 'undefined') {
+        opener = window;
+    }
+    var email = opener.mQuery('#campaignevent_properties_email').val();
+
+    var disabled = email === '' || email === null;
+
+    opener.mQuery('#campaignevent_properties_editEmailButton').prop('disabled', disabled);
+    opener.mQuery('#campaignevent_properties_previewEmailButton').prop('disabled', disabled);
 };
