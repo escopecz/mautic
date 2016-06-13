@@ -536,17 +536,19 @@ var Mautic = {
                     //     settings.extraPlugins = "sourcedialog,docprops,filemanager";
                     // }
 
-                     if (editorClass == 'editor') {
-                    //     settings.removePlugins = 'resize';
-                         mQuery(function() {
-                             textarea.froalaEditor({
-                                 // Set custom buttons with separator between them.
-                                 toolbarButtons: ['undo', 'redo' , '|', 'bold', 'italic', 'underline', 'strikethrough', 'outdent', 'indent', 'clearFormatting', 'insertTable', 'html'],
-                                 toolbarButtonsXS: ['undo', 'redo' , '-', 'bold', 'italic', 'underline']
-                             })
-                         });
-                     }
 
+                    if (editorClass == 'editor') {
+                        //     settings.removePlugins = 'resize';
+
+                        textarea.froalaEditor({
+                            // Set custom buttons with separator between them.
+                            toolbarButtons: ['undo', 'redo' , '|', 'bold', 'italic', 'underline', 'strikethrough', 'outdent', 'indent', 'clearFormatting','insertLink','insertTable', 'html'],
+                            toolbarButtonsMD: ['undo', 'redo' , '|', 'bold', 'italic', 'underline', 'strikethrough', 'outdent', 'indent', 'clearFormatting','insertLink', 'insertTable', 'html'],
+                            toolbarButtonsSM: ['undo', 'redo' , '-', 'bold', 'italic', 'underline'],
+                            toolbarButtonsXS: ['undo', 'redo' , '-', 'bold', 'italic', 'underline']
+                        });
+
+                    }
 
 
                     if (textarea.hasClass('editor-builder-tokens')) {
@@ -555,6 +557,8 @@ var Mautic = {
                             Mautic.initAtWho(editor.$el, textarea.attr('data-token-callback'));
                         });
                     }
+
+
 
                     textarea.froalaEditor({
                         enter: mQuery.FroalaEditor.ENTER_BR,
