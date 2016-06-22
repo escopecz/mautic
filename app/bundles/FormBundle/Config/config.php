@@ -139,6 +139,9 @@ return [
             'mautic.form.dashboard.subscriber'      => [
                 'class' => 'Mautic\FormBundle\EventListener\DashboardSubscriber'
             ],
+            'mautic.form.stagebundle.subscriber'    => [
+                'class' => 'Mautic\FormBundle\EventListener\StageSubscriber'
+            ]
         ],
         'forms'  => [
             'mautic.form.type.form'                      => [
@@ -177,6 +180,10 @@ return [
             'mautic.form.type.pointaction_formsubmit'    => [
                 'class' => 'Mautic\FormBundle\Form\Type\PointActionFormSubmitType',
                 'alias' => 'pointaction_formsubmit'
+            ],
+            'mautic.form.type.stageaction_formsubmit'    => [
+                'class' => 'Mautic\FormBundle\Form\Type\StageActionFormSubmitType',
+                'alias' => 'stageaction_formsubmit'
             ],
             'mautic.form.type.form_list'                 => [
                 'class'     => 'Mautic\FormBundle\Form\Type\FormListType',
