@@ -1,5 +1,5 @@
 /*!
- * froala_editor v2.3.4 (https://www.froala.com/wysiwyg-editor)
+ * froala_editor v2.4.0-rc.1 (https://www.froala.com/wysiwyg-editor)
  * License https://froala.com/wysiwyg-editor/terms/
  * Copyright 2014-2016 Froala Labs
  */
@@ -32,7 +32,7 @@
     }
 }(function ($) {
 
-  'use strict';
+  
 
   $.extend($.FE.POPUP_TEMPLATES, {
     'video.insert': '[_BUTTONS_][_BY_URL_LAYER_][_EMBED_LAYER_]',
@@ -132,14 +132,16 @@
       var $popup = editor.popups.get('video.edit');
       if (!$popup) $popup = _initEditPopup();
 
-      editor.popups.setContainer('video.edit', $(editor.opts.scrollableContainer));
-      editor.popups.refresh('video.edit');
+      if ($popup) {
+        editor.popups.setContainer('video.edit', $(editor.opts.scrollableContainer));
+        editor.popups.refresh('video.edit');
 
-      var $video_obj = $current_video.find('iframe, embed, video');
-      var left = $video_obj.offset().left + $video_obj.outerWidth() / 2;
-      var top = $video_obj.offset().top + $video_obj.outerHeight();
+        var $video_obj = $current_video.find('iframe, embed, video');
+        var left = $video_obj.offset().left + $video_obj.outerWidth() / 2;
+        var top = $video_obj.offset().top + $video_obj.outerHeight();
 
-      editor.popups.show('video.edit', left, top, $video_obj.outerHeight());
+        editor.popups.show('video.edit', left, top, $video_obj.outerHeight());
+      }
     }
 
     function _initInsertPopup (delayed) {
@@ -208,6 +210,7 @@
       $popup.find('.fr-' + name + '-layer').addClass('fr-active');
 
       editor.popups.show('video.insert', left, top, 0);
+      editor.accessibility.focusPopup($popup);
     }
 
     /**
@@ -396,6 +399,18 @@
       return '<div class="fr-handler fr-h' + pos + '"></div>';
     }
 
+    function _resizeVideo (e, initPageX, direction, step) {
+      e.pageX = initPageX;
+      e.pageY = initPageX;
+      _handlerMousedown.call(this, e);
+      e.pageX = e.pageX + direction * Math.floor(Math.pow(1.1, step));
+      e.pageY = e.pageY + direction * Math.floor(Math.pow(1.1, step));
+      _handlerMousemove.call(this, e);
+      _handlerMouseup.call(this, e);
+
+      return step++;
+    }
+
     /**
      * Init video resizer.
      */
@@ -459,6 +474,46 @@
         editor.events.$on($(doc.defaultView || doc.parentWindow), editor._mouseup, _handlerMouseup);
 
         editor.events.$on($overlay, 'mouseleave', _handlerMouseup);
+
+
+        // Accessibility.
+
+        // Used for keys holing.
+        var step = 1;
+        var prevKey = null;
+        var prevTimestamp = 0;
+
+        // Keydown event.
+        editor.events.on('keydown', function (e) {
+          if ($current_video) {
+            var ctrlKey = navigator.userAgent.indexOf('Mac OS X') != -1 ? e.metaKey : e.ctrlKey;
+            var keycode = e.which;
+
+            if (keycode !== prevKey || e.timeStamp - prevTimestamp > 200) {
+              step = 1; // Reset step. Known browser issue: Keyup does not trigger when ctrl is pressed.
+            }
+
+            // Increase video size.
+            if ((keycode == $.FE.KEYCODE.EQUALS || (editor.browser.mozilla && keycode == $.FE.KEYCODE.FF_EQUALS)) && ctrlKey && !e.altKey) {
+              step = _resizeVideo.call(this, e, 1, 1);
+            }
+            // Decrease video size.
+            else if ((keycode == $.FE.KEYCODE.HYPHEN || (editor.browser.mozilla && keycode == $.FE.KEYCODE.FF_HYPHEN)) && ctrlKey && !e.altKey) {
+              step = _resizeVideo.call(this, e, 2, -1);
+            }
+
+            // Save key code.
+            prevKey = keycode;
+
+            // Save timestamp.
+            prevTimestamp = e.timeStamp;
+          }
+        });
+
+        // Reset the step on key up event.
+        editor.events.on('keyup', function () {
+          step = 1;
+        });
       }
     }
 
@@ -478,7 +533,7 @@
         .css('left', (editor.opts.iframe ? $video_obj.offset().left - 1 : $video_obj.offset().left - editor.$wp.offset().left - 1) + editor.$wp.scrollLeft())
         .css('width', $video_obj.outerWidth())
         .css('height', $video_obj.height())
-        .addClass('fr-active')
+        .addClass('fr-active');
     }
 
     /**
@@ -583,25 +638,27 @@
     function _initEditPopup () {
       // Image buttons.
       var video_buttons = '';
-      if (editor.opts.videoEditButtons.length >= 1) {
+      if (editor.opts.videoEditButtons.length > 0) {
         video_buttons += '<div class="fr-buttons">';
         video_buttons += editor.button.buildList(editor.opts.videoEditButtons);
         video_buttons += '</div>';
-      }
 
-      var template = {
-        buttons: video_buttons
-      }
-
-      var $popup = editor.popups.create('video.edit', template);
-
-      editor.events.$on(editor.$wp, 'scroll.video-edit', function () {
-        if ($current_video && editor.popups.isVisible('video.edit')) {
-          _showEditPopup();
+        var template = {
+          buttons: video_buttons
         }
-      });
 
-      return $popup;
+        var $popup = editor.popups.create('video.edit', template);
+
+        editor.events.$on(editor.$wp, 'scroll.video-edit', function () {
+          if ($current_video && editor.popups.isVisible('video.edit')) {
+            _showEditPopup();
+          }
+        });
+
+        return $popup;
+      }
+
+      return false;
     }
 
     /**
@@ -879,8 +936,17 @@
           return false;
         }
 
-        if ($current_video && !editor.keys.ctrlKey(e)) {
+        if ($current_video && !editor.keys.ctrlKey(e) && key_code != $.FE.KEYCODE.F10) {
           e.preventDefault();
+          return false;
+        }
+      }, true);
+
+      // ESC from accessibility.
+      editor.events.on('toolbar.esc', function () {
+        if ($current_video) {
+          editor.events.disableBlur();
+          editor.events.focus();
           return false;
         }
       }, true);
@@ -899,6 +965,7 @@
      */
     function back () {
       if ($current_video) {
+        editor.events.disableBlur();
         $current_video.trigger('click');
       }
       else {
@@ -969,7 +1036,7 @@
         this.video.showInsertPopup();
       }
       else {
-        if (this.$el.find('.fr-marker')) {
+        if (this.$el.find('.fr-marker').length) {
           this.events.disableBlur();
           this.selection.restore();
         }
@@ -1063,7 +1130,7 @@
       var options =  $.FE.COMMANDS.videoAlign.options;
       for (var val in options) {
         if (options.hasOwnProperty(val)) {
-          c += '<li><a class="fr-command fr-title" data-cmd="videoAlign" data-param1="' + val + '" title="' + this.language.translate(options[val]) + '">' + this.icon.create('align-' + val) + '</a></li>';
+          c += '<li><a class="fr-command fr-title" tabIndex="-1" data-cmd="videoAlign" data-param1="' + val + '" title="' + this.language.translate(options[val]) + '">' + this.icon.create('align-' + val) + '</a></li>';
         }
       }
       c += '</ul>';
@@ -1095,6 +1162,7 @@
   $.FE.RegisterCommand('videoSize', {
     undo: false,
     focus: false,
+    popup: true,
     title: 'Change Size',
     callback: function () {
       this.video.showSizePopup();

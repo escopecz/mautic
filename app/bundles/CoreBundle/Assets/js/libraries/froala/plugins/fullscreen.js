@@ -1,5 +1,5 @@
 /*!
- * froala_editor v2.3.4 (https://www.froala.com/wysiwyg-editor)
+ * froala_editor v2.4.0-rc.1 (https://www.froala.com/wysiwyg-editor)
  * License https://froala.com/wysiwyg-editor/terms/
  * Copyright 2014-2016 Froala Labs
  */
@@ -32,7 +32,7 @@
     }
 }(function ($) {
 
-  'use strict';
+  
 
   $.FE.PLUGINS.fullscreen = function (editor) {
     var old_scroll;
@@ -50,6 +50,7 @@
     var $placeholder;
     var height;
     var max_height;
+    var z_index;
     function _on () {
       old_scroll = $(editor.o_win).scrollTop();
       editor.$box.toggleClass('fr-fullscreen');
@@ -67,8 +68,10 @@
 
       height = editor.opts.height;
       max_height = editor.opts.heightMax;
+      z_index = editor.opts.zIndex;
 
       editor.opts.height = editor.o_win.innerHeight - (editor.opts.toolbarInline ? 0 : editor.$tb.outerHeight());
+      editor.opts.zIndex = 9990;
       editor.opts.heightMax = null;
       editor.size.refresh();
 
@@ -100,6 +103,7 @@
 
       editor.opts.height = height;
       editor.opts.heightMax = max_height;
+      editor.opts.zIndex = z_index;
       editor.size.refresh();
 
       $(editor.o_win).scrollTop(old_scroll)
@@ -188,6 +192,7 @@
     title: 'Fullscreen',
     undo: false,
     focus: false,
+    accessibilityFocus: true,
     forcedRefresh: true,
     callback: function () {
       this.fullscreen.toggle();

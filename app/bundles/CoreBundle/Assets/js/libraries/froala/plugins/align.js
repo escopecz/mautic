@@ -1,5 +1,5 @@
 /*!
- * froala_editor v2.3.4 (https://www.froala.com/wysiwyg-editor)
+ * froala_editor v2.4.0-rc.1 (https://www.froala.com/wysiwyg-editor)
  * License https://froala.com/wysiwyg-editor/terms/
  * Copyright 2014-2016 Froala Labs
  */
@@ -32,7 +32,7 @@
     }
 }(function ($) {
 
-  'use strict';
+  
 
   $.FE.PLUGINS.align = function (editor) {
     function apply (val) {
@@ -44,8 +44,16 @@
       var blocks = editor.selection.blocks();
 
       for (var i = 0; i < blocks.length; i++) {
-        $(blocks[i]).css('text-align', val).removeClass('fr-temp-div');
+        // Check if we should reset to default value.
+        if (editor.helpers.getAlignment($(blocks[i].parentNode)) == val) {
+          $(blocks[i]).css('text-align', '').removeClass('fr-temp-div');
+        }
+        else {
+          $(blocks[i]).css('text-align', val).removeClass('fr-temp-div');
+        }
+
         if ($(blocks[i]).attr('class') === '') $(blocks[i]).removeAttr('class');
+        if ($(blocks[i]).attr('style') === '') $(blocks[i]).removeAttr('style');
       }
 
       editor.selection.save();
@@ -97,7 +105,7 @@
       var options =  $.FE.COMMANDS.align.options;
       for (var val in options) {
         if (options.hasOwnProperty(val)) {
-          c += '<li><a class="fr-command fr-title" data-cmd="align" data-param1="' + val + '" title="' + this.language.translate(options[val]) + '">' + this.icon.create('align-' + val) + '</a></li>';
+          c += '<li><a class="fr-command fr-title" tabIndex="-1" data-cmd="align" data-param1="' + val + '" title="' + this.language.translate(options[val]) + '">' + this.icon.create('align-' + val) + '</a></li>';
         }
       }
       c += '</ul>';

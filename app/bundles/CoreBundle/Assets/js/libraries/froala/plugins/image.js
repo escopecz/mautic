@@ -1,5 +1,5 @@
 /*!
- * froala_editor v2.3.4 (https://www.froala.com/wysiwyg-editor)
+ * froala_editor v2.4.0-rc.1 (https://www.froala.com/wysiwyg-editor)
  * License https://froala.com/wysiwyg-editor/terms/
  * Copyright 2014-2016 Froala Labs
  */
@@ -32,7 +32,7 @@
     }
 }(function ($) {
 
-  'use strict';
+  
 
   $.extend($.FE.POPUP_TEMPLATES, {
     'image.insert': '[_BUTTONS_][_UPLOAD_LAYER_][_BY_URL_LAYER_][_PROGRESS_BAR_]',
@@ -148,12 +148,14 @@
       var $popup = editor.popups.get('image.edit');
       if (!$popup) $popup = _initEditPopup();
 
-      editor.popups.setContainer('image.edit', $(editor.opts.scrollableContainer));
-      editor.popups.refresh('image.edit');
-      var left = $current_image.offset().left + $current_image.outerWidth() / 2;
-      var top = $current_image.offset().top + $current_image.outerHeight();
+      if ($popup) {
+        editor.popups.setContainer('image.edit', $(editor.opts.scrollableContainer));
+        editor.popups.refresh('image.edit');
+        var left = $current_image.offset().left + $current_image.outerWidth() / 2;
+        var top = $current_image.offset().top + $current_image.outerHeight();
 
-      editor.popups.show('image.edit', left, top, $current_image.outerHeight());
+        editor.popups.show('image.edit', left, top, $current_image.outerHeight());
+      }
     }
 
     /**
@@ -232,19 +234,13 @@
      */
 
     function _refreshImageList () {
-      var images = editor.$el.get(0).tagName == 'IMG' ? [editor.$el.get(0)] : editor.$el.get(0).querySelectorAll('img');
+      var images = editor.el.tagName == 'IMG' ? [editor.el] : editor.el.querySelectorAll('img');
 
       for (var i = 0; i < images.length; i++) {
         var $img = $(images[i]);
 
         if (editor.opts.imageEditButtons.indexOf('imageAlign') >= 0 || editor.opts.imageEditButtons.indexOf('imageDisplay') >= 0) {
           _convertStyleToClasses($img);
-        }
-
-        // Set width if it has width.
-        if ($img.attr('width')) {
-          $img.css('width', $img.width());
-          $img.removeAttr('width');
         }
 
         // Do not allow text near image.
@@ -265,7 +261,7 @@
 
     function _syncImages () {
       // Get current images.
-      var c_images = Array.prototype.slice.call(editor.$el.get(0).querySelectorAll('img'));
+      var c_images = Array.prototype.slice.call(editor.el.querySelectorAll('img'));
 
       // Current images src.
       var image_srcs = [];
@@ -274,7 +270,7 @@
         image_srcs.push(c_images[i].getAttribute('src'));
 
         $(c_images[i]).toggleClass('fr-draggable', editor.opts.imageMove);
-        if (c_images[i].className === '') c_images[i].removeAttribute('class');
+        if (c_images[i].getAttribute('class') === '') c_images[i].removeAttribute('class');
         if (c_images[i].getAttribute('style') === '') c_images[i].removeAttribute('style');
       }
 
@@ -309,12 +305,17 @@
       wrap_correction_left -= editor.helpers.getPX($container.css('border-left-width'));
       wrap_correction_top -= editor.helpers.getPX($container.css('border-top-width'));
 
+      if (editor.$el.is('img')) {
+        wrap_correction_top = 0;
+        wrap_correction_left = 0;
+      }
+
       $image_resizer
         .css('top', (editor.opts.iframe ? $current_image.offset().top : $current_image.offset().top + wrap_correction_top) - 1)
         .css('left', (editor.opts.iframe ? $current_image.offset().left : $current_image.offset().left + wrap_correction_left) - 1)
         .css('width', $current_image.get(0).getBoundingClientRect().width)
         .css('height', $current_image.get(0).getBoundingClientRect().height)
-        .addClass('fr-active')
+        .addClass('fr-active');
     }
 
     /**
@@ -347,7 +348,7 @@
       // Set current width.
       var width = $current_image.width();
       if (editor.opts.imageResizeWithPercent) {
-        var p_node = $current_image.parentsUntil(editor.$el, editor.html.blockTagsQuery()).get(0) || editor.$el.get(0);
+        var p_node = $current_image.parentsUntil(editor.$el, editor.html.blockTagsQuery()).get(0) || editor.el;
 
         $current_image.css('width', (width / $(p_node).outerWidth() * 100).toFixed(2) + '%');
       } else {
@@ -390,7 +391,7 @@
         }
 
         if (editor.opts.imageResizeWithPercent) {
-          var p_node = $current_image.parentsUntil(editor.$el, editor.html.blockTagsQuery()).get(0) || editor.$el.get(0);
+          var p_node = $current_image.parentsUntil(editor.$el, editor.html.blockTagsQuery()).get(0) || editor.el;
 
           width = ((width + diff_x) / $(p_node).outerWidth() * 100).toFixed(2);
           if (editor.opts.imageRoundPercent) width = Math.round(width);
@@ -475,15 +476,17 @@
         image_buttons += '<div class="fr-buttons">';
         image_buttons += editor.button.buildList(editor.opts.imageEditButtons);
         image_buttons += '</div>';
+
+        var template = {
+          buttons: image_buttons
+        };
+
+        var $popup = editor.popups.create('image.edit', template);
+
+        return $popup;
       }
 
-      var template = {
-        buttons: image_buttons
-      };
-
-      var $popup = editor.popups.create('image.edit', template);
-
-      return $popup;
+      return false;
     }
 
     /**
@@ -525,10 +528,14 @@
         // Dismiss error message.
         if (dismiss || editor.$el.find('img.fr-error').length) {
           editor.events.focus();
-          editor.$el.find('img.fr-error').remove();
-          editor.undo.saveStep();
-          editor.undo.run();
-          editor.undo.dropRedo();
+
+          if (editor.$el.find('img.fr-error').length) {
+            editor.$el.find('img.fr-error').remove();
+            editor.undo.saveStep();
+            editor.undo.run();
+            editor.undo.dropRedo();
+          }
+          editor.popups.hide('image.insert');
         }
       }
     }
@@ -563,8 +570,11 @@
       showProgressBar();
       var $popup = editor.popups.get('image.insert');
       var $layer = $popup.find('.fr-image-progress-bar-layer');
-      $layer.addClass('fr-error')
-      $layer.find('h3').text(message);
+      $layer.addClass('fr-error');
+      var $message_header = $layer.find('h3');
+      $message_header.text(message);
+      editor.events.disableBlur();
+      $message_header.focus();
     }
 
     /**
@@ -621,6 +631,8 @@
         var attr;
 
         if ($existing_img) {
+          if (!editor.undo.canDo() && !$existing_img.hasClass('fr-uploading')) editor.undo.saveStep();
+
           var old_src = $existing_img.data('fr-old-src');
 
           if (editor.$wp) {
@@ -664,6 +676,10 @@
           editor.edit.on();
           _syncImages();
           editor.undo.saveStep();
+
+          // Cursor will not appear if we don't make blur.
+          editor.$el.blur();
+
           editor.events.trigger(old_src ? 'image.replaced' : 'image.inserted', [$img, response]);
         } else {
           $img = _addImage(link, data, _loadedCallback);
@@ -676,6 +692,8 @@
       image.onerror = function () {
         _throwError(BAD_LINK);
       }
+
+      showProgressBar('Loading image');
 
       image.src = link;
     }
@@ -924,13 +942,13 @@
      */
 
     function upload (images) {
-      // Check if we should cancel the image upload.
-      if (editor.events.trigger('image.beforeUpload', [images]) === false) {
-        return false;
-      }
-
       // Make sure we have what to upload.
       if (typeof images != 'undefined' && images.length > 0) {
+        // Check if we should cancel the image upload.
+        if (editor.events.trigger('image.beforeUpload', [images]) === false) {
+          return false;
+        }
+
         var image = images[0];
 
         // Check image max size.
@@ -982,7 +1000,12 @@
           // Create XHR request.
           var url = editor.opts.imageUploadURL;
           if (editor.opts.imageUploadToS3) {
-            url = 'https://' + editor.opts.imageUploadToS3.region + '.amazonaws.com/' + editor.opts.imageUploadToS3.bucket;
+            if (editor.opts.imageUploadToS3.uploadURL) {
+              url = editor.opts.imageUploadToS3.uploadURL;
+            }
+            else {
+              url = 'https://' + editor.opts.imageUploadToS3.region + '.amazonaws.com/' + editor.opts.imageUploadToS3.bucket;
+            }
           }
           var xhr = editor.core.getXHR(url, editor.opts.imageUploadMethod);
 
@@ -1130,12 +1153,14 @@
 
     function _initEvents () {
       // Mouse down on image. It might start move.
-      editor.events.$on(editor.$el, editor._mousedown, editor.$el.get(0).tagName == 'IMG' ? null : 'img:not([contenteditable="false"])', function (e) {
-        if ($(this).parents('[contenteditable="false"]:not(.fr-element):not(body)').length) return true;
+      editor.events.$on(editor.$el, editor._mousedown, editor.el.tagName == 'IMG' ? null : 'img:not([contenteditable="false"])', function (e) {
+        if ($(this).parents('[contenteditable]:not(.fr-element):not(body):first').attr('contenteditable') == 'false') return true;
 
-        editor.selection.clear();
+        if (!editor.helpers.isMobile()) editor.selection.clear();
 
         mousedown = true;
+
+        if (editor.popups.areVisible()) editor.events.disableBlur();
 
         // Prevent the image resizing.
         if (editor.browser.msie) {
@@ -1149,8 +1174,8 @@
       });
 
       // Mouse up on an image prevent move.
-      editor.events.$on(editor.$el, editor._mouseup, editor.$el.get(0).tagName == 'IMG' ? null : 'img:not([contenteditable="false"])', function (e) {
-        if ($(this).parents('[contenteditable="false"]:not(.fr-element):not(body)').length) return true;
+      editor.events.$on(editor.$el, editor._mouseup, editor.el.tagName == 'IMG' ? null : 'img:not([contenteditable="false"])', function (e) {
+        if ($(this).parents('[contenteditable]:not(.fr-element):not(body):first').attr('contenteditable') == 'false') return true;
 
         if (mousedown) {
           mousedown = false;
@@ -1251,7 +1276,7 @@
       }
 
       // Progress bar.
-      var progress_bar_layer = '<div class="fr-image-progress-bar-layer fr-layer"><h3 class="fr-message">Uploading</h3><div class="fr-loader"><span class="fr-progress"></span></div><div class="fr-action-buttons"><button type="button" class="fr-command fr-back" data-cmd="imageDismissError" tabIndex="2">OK</button></div></div>';
+      var progress_bar_layer = '<div class="fr-image-progress-bar-layer fr-layer"><h3 tabIndex="-1" class="fr-message">Uploading</h3><div class="fr-loader"><span class="fr-progress"></span></div><div class="fr-action-buttons"><button type="button" class="fr-command fr-dismiss" data-cmd="imageDismissError" tabIndex="2">OK</button></div></div>';
 
       var template = {
         buttons: image_buttons,
@@ -1475,6 +1500,7 @@
       $popup.find('.fr-' + name + '-layer').addClass('fr-active');
 
       editor.popups.show('image.insert', left, top, ($current_image ? $current_image.outerHeight() : 0));
+      editor.accessibility.focusPopup($popup);
     }
 
     /**
@@ -1499,10 +1525,19 @@
       }
     }
 
+    function _resizeImage (e, initPageX, direction, step) {
+      e.pageX = initPageX;
+      _handlerMousedown.call(this, e);
+      e.pageX = e.pageX + direction * Math.floor(Math.pow(1.1, step));
+      _handlerMousemove.call(this, e);
+      _handlerMouseup.call(this, e);
+
+      return step++;
+    }
+
     /**
      * Init image resizer.
      */
-
     function _initImageResizer () {
       var doc;
 
@@ -1570,21 +1605,62 @@
         editor.events.$on($(doc.defaultView || doc.parentWindow), editor._mouseup, _handlerMouseup);
 
         editor.events.$on($overlay, 'mouseleave', _handlerMouseup);
+
+        // Accessibility.
+
+        // Used for keys holing.
+        var step = 1;
+        var prevKey = null;
+        var prevTimestamp = 0;
+
+        // Keydown event.
+        editor.events.on('keydown', function (e) {
+          if ($current_image) {
+            var ctrlKey = navigator.userAgent.indexOf('Mac OS X') != -1 ? e.metaKey : e.ctrlKey;
+            var keycode = e.which;
+
+            if (keycode !== prevKey || e.timeStamp - prevTimestamp > 200) {
+              step = 1; // Reset step. Known browser issue: Keyup does not trigger when ctrl is pressed.
+            }
+
+            // Increase image size.
+            if ((keycode == $.FE.KEYCODE.EQUALS || (editor.browser.mozilla && keycode == $.FE.KEYCODE.FF_EQUALS)) && ctrlKey && !e.altKey) {
+              step = _resizeImage.call(this, e, 1, 1, step);
+            }
+            // Decrease image size.
+            else if ((keycode == $.FE.KEYCODE.HYPHEN || (editor.browser.mozilla && keycode == $.FE.KEYCODE.FF_HYPHEN)) && ctrlKey && !e.altKey) {
+              step = _resizeImage.call(this, e, 2, -1, step);
+            }
+
+            // Save key code.
+            prevKey = keycode;
+
+            // Save timestamp.
+            prevTimestamp = e.timeStamp;
+          }
+        }, true);
+
+        // Reset the step on key up event.
+        editor.events.on('keyup', function () {
+          step = 1;
+        });
       }
     }
 
     /**
      * Remove the current image.
      */
-
     function remove ($img) {
       $img = $img || $current_image;
       if ($img) {
         if (editor.events.trigger('image.beforeRemove', [$img]) !== false) {
           editor.popups.hideAll();
+          _selectImage();
           _exitEdit(true);
 
-          if ($img.get(0) == editor.$el.get(0)) {
+          if (!editor.undo.canDo()) editor.undo.saveStep();
+
+          if ($img.get(0) == editor.el) {
             $img.removeAttr('src');
           } else {
             if ($img.get(0).parentNode.tagName == 'A') {
@@ -1607,19 +1683,18 @@
     /**
      * Initialization.
      */
-
     function _init () {
       _initEvents();
 
       // Init on image.
-      if (editor.$el.get(0).tagName == 'IMG') {
+      if (editor.el.tagName == 'IMG') {
         editor.$el.addClass('fr-view');
       }
 
-      editor.events.$on(editor.$el, editor.helpers.isMobile() && !editor.helpers.isWindowsPhone() ? 'touchend' : 'click', editor.$el.get(0).tagName == 'IMG' ? null : 'img:not([contenteditable="false"])', _edit);
+      editor.events.$on(editor.$el, editor.helpers.isMobile() && !editor.helpers.isWindowsPhone() ? 'touchend' : 'click', editor.el.tagName == 'IMG' ? null : 'img:not([contenteditable="false"])', _edit);
 
       if (editor.helpers.isMobile()) {
-        editor.events.$on(editor.$el, 'touchstart', editor.$el.get(0).tagName == 'IMG' ? null : 'img:not([contenteditable="false"])', function () {
+        editor.events.$on(editor.$el, 'touchstart', editor.el.tagName == 'IMG' ? null : 'img:not([contenteditable="false"])', function () {
           touchScroll = false;
         })
 
@@ -1646,8 +1721,32 @@
           return false;
         }
 
-        if ($current_image && !editor.keys.ctrlKey(e)) {
+        // Move cursor if left and right arrows are used.
+        if ($current_image && (key_code == $.FE.KEYCODE.ARROW_LEFT || key_code == $.FE.KEYCODE.ARROW_RIGHT)) {
+          var img = $current_image.get(0);
+          _exitEdit(true);
+          if (key_code == $.FE.KEYCODE.ARROW_LEFT) {
+            editor.selection.setBefore(img);
+          }
+          else {
+            editor.selection.setAfter(img);
+          }
+          editor.selection.restore();
           e.preventDefault();
+          return false;
+        }
+
+        if ($current_image && !editor.keys.ctrlKey(e) && key_code != $.FE.KEYCODE.F10) {
+          e.preventDefault();
+          return false;
+        }
+      }, true);
+
+      // ESC from accessibility.
+      editor.events.on('toolbar.esc', function () {
+        if ($current_image) {
+          editor.events.disableBlur();
+          editor.events.focus();
           return false;
         }
       }, true);
@@ -1718,10 +1817,13 @@
         var imgs;
 
         editor.events.on('html.beforeGet', function () {
-          imgs = editor.$el.get(0).querySelectorAll('img')
+          imgs = editor.el.querySelectorAll('img')
           for (var i = 0; i < imgs.length; i++) {
-            imgs[i].setAttribute('width', $(imgs[i]).width());
-            imgs[i].setAttribute('height', $(imgs[i]).height());
+            var width = imgs[i].style.width || $(imgs[i]).width();
+            var height = imgs[i].style.height || $(imgs[i]).height();
+
+            if (width) imgs[i].setAttribute('width', ('' + width).replace(/px/, ''));
+            if (height) imgs[i].setAttribute('height', ('' + height).replace(/px/, ''));
           }
         });
 
@@ -1864,7 +1966,7 @@
     var touchScroll;
 
     function _edit (e) {
-      if ($(this).parents('[contenteditable="false"]:not(.fr-element):not(body)').length) return true;
+      if ($(this).parents('[contenteditable]:not(.fr-element):not(body):first').attr('contenteditable') == 'false') return true;
 
       if (e && e.type == 'touchend' && touchScroll) {
         return true;
@@ -2061,6 +2163,7 @@
      */
     function back () {
       if ($current_image) {
+        editor.events.disableBlur();
         $('.fr-popup input:focus').blur();
         _editImg($current_image);
       } else {
@@ -2148,7 +2251,7 @@
       if (!this.popups.isVisible('image.insert')) {
         this.image.showInsertPopup();
       } else {
-        if (this.$el.find('.fr-marker')) {
+        if (this.$el.find('.fr-marker').length) {
           this.events.disableBlur();
           this.selection.restore();
         }
@@ -2255,7 +2358,7 @@
       var options = $.FE.COMMANDS.imageAlign.options;
       for (var val in options) {
         if (options.hasOwnProperty(val)) {
-          c += '<li><a class="fr-command fr-title" data-cmd="imageAlign" data-param1="' + val + '" title="' + this.language.translate(options[val]) + '">' + this.icon.create('align-' + val) + '</a></li>';
+          c += '<li><a class="fr-command fr-title" tabIndex="-1" data-cmd="imageAlign" data-param1="' + val + '" title="' + this.language.translate(options[val]) + '">' + this.icon.create('align-' + val) + '</a></li>';
         }
       }
       c += '</ul>';
@@ -2281,6 +2384,7 @@
     title: 'Replace',
     undo: false,
     focus: false,
+    popup: true,
     refreshAfterCallback: false,
     callback: function () {
       this.image.replace();
@@ -2342,7 +2446,7 @@
       var options = this.opts.imageStyles;
       for (var cls in options) {
         if (options.hasOwnProperty(cls)) {
-          c += '<li><a class="fr-command" data-cmd="imageStyle" data-param1="' + cls + '">' + this.language.translate(options[cls]) + '</a></li>';
+          c += '<li><a class="fr-command" tabIndex="-1" data-cmd="imageStyle" data-param1="' + cls + '">' + this.language.translate(options[cls]) + '</a></li>';
         }
       }
       c += '</ul>';
@@ -2371,6 +2475,7 @@
   $.FE.RegisterCommand('imageAlt', {
     undo: false,
     focus: false,
+    popup: true,
     title: 'Alternate Text',
     callback: function () {
       this.image.showAltPopup();
@@ -2394,6 +2499,7 @@
   $.FE.RegisterCommand('imageSize', {
     undo: false,
     focus: false,
+    popup: true,
     title: 'Change Size',
     callback: function () {
       this.image.showSizePopup();
