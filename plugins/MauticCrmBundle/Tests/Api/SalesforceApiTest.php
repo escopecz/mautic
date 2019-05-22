@@ -336,6 +336,11 @@ class SalesforceApiTest extends \PHPUnit\Framework\TestCase
             );
 
         $integration->expects($this->exactly(1))
+            ->method('getFieldsForQuery')
+            ->with('Contact')
+            ->willReturn([]);
+
+        $integration->expects($this->exactly(1))
             ->method('makeRequest')
             ->willReturnCallback(
                 function ($url, $parameters = [], $method = 'GET', $settings = []) {
@@ -378,6 +383,11 @@ class SalesforceApiTest extends \PHPUnit\Framework\TestCase
                     ],
                 ]
             );
+
+        $integration->expects($this->exactly(1))
+            ->method('getFieldsForQuery')
+            ->with('Lead')
+            ->willReturn([]);
 
         $integration->expects($this->exactly(1))
             ->method('makeRequest')
