@@ -136,7 +136,7 @@ class ConfigController extends AbstractFormController
         // Show the form if there are errors and the plugin is published or the authorized button was clicked
         $integrationDetailsPost = $request->request->get('integration_details') ?? [];
         $authorize              = !empty($integrationDetailsPost['in_auth']);
-        if ($form->isSubmitted() && !$form->isValid() && ($this->integrationConfiguration->getIsPublished() || $authorize)) {
+        if ($form->isSubmitted() && !$form->isValid() && ($this->integrationConfiguration->getIsPublished() || $authorize) && $this->integrationObject->isAuthorized()) {
             return $this->showForm($request, $form, $formExtension);
         }
 
