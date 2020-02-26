@@ -1,6 +1,6 @@
 <?php
 
-namespace Mautic\IntegrationsBundle\Tests\Unit\Controller;
+namespace Mautic\IntegrationsBundle\Tests\Functional\Controller;
 
 use Mautic\CoreBundle\Test\MauticMysqlTestCase;
 use Mautic\PluginBundle\Entity\Integration;
