@@ -11,13 +11,21 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        php: ['7.2', '7.3', '7.4']
 
+    name: PHP ${{ matrix.php }} tests
     steps:
       - uses: actions/checkout@v2
+      - uses: shivammathur/setup-php@v1
+          with:
+            php-version: ${{ matrix.php }}
+            coverage: none # none, xdebug or pcov
 
-# Skip this for now as it fails. But fix it later and enable it.      
-#       - name: Validate composer.json and composer.lock
-#         run: composer validate
+      # Skip this for now as it fails. But fix it later and enable it.      
+      #- name: Validate composer.json and composer.lock
+      #  run: composer validate
       
       - name: Cache Composer packages
         id: composer-cache
