@@ -4,9 +4,9 @@ name: CI
 # events but only for the default branch
 on:
   push:
-    branches: [ $default-branch ]
+    branches: [ $default-branch, github-actions ]
   pull_request:
-    branches: [ $default-branch ]
+    branches: [ $default-branch, github-actions ]
 
 jobs:
   build:
