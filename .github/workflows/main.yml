@@ -35,9 +35,6 @@ jobs:
           key: ${{ runner.os }}-php-${{ hashFiles('**/composer.lock') }}
           restore-keys: |
             ${{ runner.os }}-php-
-            
-      - name: Install Composer dependencies in parallel
-        run: composer global require hirak/prestissimo
       
       - name: Install Composer dependencies
         if: steps.composer-cache.outputs.cache-hit != 'true'
