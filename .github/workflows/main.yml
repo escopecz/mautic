@@ -50,4 +50,6 @@ jobs:
           mysql -uroot -h127.0.0.1 -proot -e 'CREATE DATABASE IF NOT EXISTS mautictest;'
 
       - name: Run PHPUNIT
-        run: composer test
+        run: |
+          export COMPOSER_PROCESS_TIMEOUT=3600
+          composer test
