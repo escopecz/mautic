@@ -37,6 +37,7 @@ jobs:
 
       - name: Setup Runner Database
         run: |
+          sudo systemctl start mysql
           mysql --version
           mysql -uroot -h127.0.0.1 -proot -e 'CREATE DATABASE IF NOT EXISTS mautictest;'
 
