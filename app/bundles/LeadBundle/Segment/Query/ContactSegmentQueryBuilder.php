@@ -47,8 +47,6 @@ class ContactSegmentQueryBuilder
      * @param $segmentId
      * @param $segmentFilters
      *
-     * @return QueryBuilder
-     *
      * @throws SegmentQueryException
      */
     public function assembleContactsSegmentQueryBuilder($segmentId, $segmentFilters, bool $changeAlias = false): QueryBuilder
@@ -142,11 +140,9 @@ class ContactSegmentQueryBuilder
      *
      * @param $segmentId
      *
-     * @return QueryBuilder
-     *
      * @throws QueryException
      */
-    public function addNewContactsRestrictions(QueryBuilder $queryBuilder, $segmentId)
+    public function addNewContactsRestrictions(QueryBuilder $queryBuilder, $segmentId): QueryBuilder
     {
         $leadsTableAlias = $queryBuilder->getTableAlias(MAUTIC_TABLE_PREFIX.'.leads');
         $expr               = $queryBuilder->expr();
@@ -170,7 +166,7 @@ class ContactSegmentQueryBuilder
     public function addManuallySubscribedQuery(QueryBuilder $queryBuilder, $leadListId): QueryBuilder
     {
         $leadsTableAlias = $queryBuilder->getTableAlias(MAUTIC_TABLE_PREFIX.'.leads');
-        $tableAlias = $this->generateRandomParameterName();
+        $tableAlias      = $this->generateRandomParameterName();
 
         $existsQueryBuilder = $queryBuilder->getConnection()->createQueryBuilder();
 
@@ -204,7 +200,7 @@ class ContactSegmentQueryBuilder
     public function addManuallyUnsubscribedQuery(QueryBuilder $queryBuilder, $leadListId): QueryBuilder
     {
         $leadsTableAlias = $queryBuilder->getTableAlias(MAUTIC_TABLE_PREFIX.'.leads');
-        $tableAlias = $this->generateRandomParameterName();
+        $tableAlias      = $this->generateRandomParameterName();
         $queryBuilder->leftJoin(
             $leadsTableAlias,
             MAUTIC_TABLE_PREFIX.'lead_lists_leads',
