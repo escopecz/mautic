@@ -532,7 +532,7 @@ Mautic.toggleMailerIsOwnerWarningMessage = function(radioSelector) {
     let checkedRadio = mQuery(radioSelector+':checked');
     let globalMailerIsOwnerValue = checkedRadio.attr('data-global-mailer-is-onwer') ? '1' : '0';
     let warningMessageId = 'mailer-is-owner-waring';
-    
+
     mQuery('#'+warningMessageId).remove();
 
     if (checkedRadio.val() !== globalMailerIsOwnerValue) {
@@ -630,7 +630,7 @@ Mautic.addDynamicContentFilter = function (selectedFilter, jQueryVariant) {
 
     if (isSpecial) {
         var templateField = fieldType;
-        if (fieldType == 'boolean' || fieldType == 'multiselect') {
+        if (fieldType == 'boolean' || fieldType == 'multiselect' || fieldType == 'leadlist') {
             templateField = 'select';
         }
         var template = mQuery('#templates .' + templateField + '-template').clone();
@@ -668,7 +668,7 @@ Mautic.addDynamicContentFilter = function (selectedFilter, jQueryVariant) {
     var fieldOptions = fieldCallback = '';
     //activate fields
     if (isSpecial) {
-        if (fieldType == 'select' || fieldType == 'boolean' || fieldType == 'multiselect') {
+        if (fieldType == 'select' || fieldType == 'boolean' || fieldType == 'multiselect' || fieldType == 'leadlist') {
             // Generate the options
             fieldOptions = selectedOption.data("field-list");
 
