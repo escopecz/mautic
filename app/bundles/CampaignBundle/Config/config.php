@@ -111,8 +111,6 @@ return [
                     'mautic.core.model.auditlog',
                     'mautic.campaign.service.campaign',
                     'mautic.core.service.flashbag',
-                    'mautic.helper.campaign_config',
-                    'mautic.campaign.repository.lead_event_log',
                 ],
             ],
             'mautic.campaign.subscriber.campaign_event_delete'                    => [
