@@ -111,6 +111,15 @@ return [
                     'mautic.core.model.auditlog',
                     'mautic.campaign.service.campaign',
                     'mautic.core.service.flashbag',
+                    'mautic.helper.campaign_config',
+                    'mautic.campaign.repository.lead_event_log',
+                ],
+            ],
+            'mautic.campaign.subscriber.campaign_event_delete'                    => [
+                'class'       => \Mautic\CampaignBundle\EventListener\CampaignEventDeleteSubscriber::class,
+                'arguments'   => [
+                    'mautic.campaign.repository.lead_event_log',
+                    'mautic.helper.campaign_config',
                 ],
             ],
             'mautic.campaign.leadbundle.subscriber'     => [
@@ -627,10 +636,19 @@ return [
                 'optional' => true,
             ],
         ],
+        'helpers' => [
+            'mautic.helper.campaign_config' => [
+                'class'     => \Mautic\CampaignBundle\Helper\CampaignConfig::class,
+                'arguments' => [
+                    'mautic.helper.core_parameters',
+                ],
+            ],
+        ],
     ],
     'parameters' => [
-        'campaign_time_wait_on_event_false' => 'PT1H',
-        'campaign_use_summary'              => 0,
-        'campaign_by_range'                 => 0,
+        'campaign_time_wait_on_event_false'       => 'PT1H',
+        'campaign_use_summary'                    => 0,
+        'campaign_by_range'                       => 0,
+        'delete_campaign_event_log_in_background' => false,
     ],
 ];
