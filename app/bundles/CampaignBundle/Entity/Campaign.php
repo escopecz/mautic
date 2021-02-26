@@ -20,6 +20,7 @@ use Symfony\Component\Validator\Mapping\ClassMetadata;
  */
 class Campaign extends FormEntity implements PublishStatusIconAttributesInterface
 {
+    public const TABLE_NAME = 'campaigns';
     /**
      * @var int
      */
@@ -106,7 +107,7 @@ class Campaign extends FormEntity implements PublishStatusIconAttributesInterfac
     {
         $builder = new ClassMetadataBuilder($metadata);
 
-        $builder->setTable('campaigns')
+        $builder->setTable(self::TABLE_NAME)
             ->setCustomRepositoryClass('Mautic\CampaignBundle\Entity\CampaignRepository');
 
         $builder->addIdColumns();
