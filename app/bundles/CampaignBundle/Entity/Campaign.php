@@ -656,4 +656,18 @@ class Campaign extends FormEntity implements PublishStatusIconAttributesInterfac
             'data-cancel-text'  => 'mautic.campaign.form.confirmation.cancel_text',
         ];
     }
+
+    public function getCampaignEventIds(): array
+    {
+        $eventIds       = [];
+        if (empty($this->events)) {
+            return $eventIds;
+        }
+
+        foreach ($this->events as $event) {
+            $eventIds[] = $event->getId();
+        }
+
+        return $eventIds;
+    }
 }
