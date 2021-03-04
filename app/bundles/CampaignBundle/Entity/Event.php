@@ -295,7 +295,6 @@ class Event implements ChannelInterface
         $builder->createField('failedCount', 'integer')
             ->columnName('failed_count')
             ->build();
-
     }
 
     /**
