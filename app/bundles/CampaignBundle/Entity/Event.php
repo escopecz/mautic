@@ -291,10 +291,6 @@ class Event implements ChannelInterface
             ->columnName('channel_id')
             ->nullable()
             ->build();
-
-        $builder->createField('failedCount', 'integer')
-            ->columnName('failed_count')
-            ->build();
     }
 
     /**
@@ -1079,14 +1075,6 @@ class Event implements ChannelInterface
         $this->isChanged('triggerRestrictedDaysOfWeek', $triggerRestrictedDaysOfWeek);
 
         return $this;
-    }
-
-    /**
-     * @return ?int
-     */
-    public function getFailedCount()
-    {
-        return $this->failedCount;
     }
 
     public function setDeleted(?\DateTime $deleted): Event

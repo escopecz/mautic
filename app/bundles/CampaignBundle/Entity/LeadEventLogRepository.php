@@ -6,6 +6,7 @@ use DateTimeInterface;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\DBAL\Cache\QueryCacheProfile;
 use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\ParameterType;
 use Doctrine\DBAL\Types\Type;
 use Mautic\CampaignBundle\Executioner\ContactFinder\Limiter\ContactLimiter;
 use Mautic\CoreBundle\Entity\CommonRepository;
@@ -636,17 +637,39 @@ SQL;
             ->execute();
     }
 
-    public function removeEventLogs(array $eventIds, ?int $campaignId = null): void
+    public function removeEventLogs(?array $eventIds = null, ?int $campaignId = null): void
+    {
+        if (empty($eventIds) && empty($campaignId)) {
+            return;
+        }
+
+        if (!empty($campaignId)) {
+            $this->removeEventLogByCampaignId($campaignId);
+        } else {
+            $this->removeEventLogByEventIds($eventIds);
+        }
+
+        $this->getEntityManager()->getRepository(Event::class)->deleteEvents($eventIds, $campaignId);
+        if ($campaignId) {
+            $this->getEntityManager()->getRepository(Campaign::class)->deleteCampaign($campaignId);
+        }
+    }
+
+    private function removeEventLogByCampaignId(int $campaignId): void
+    {
+        $table_name    = $this->getTableName();
+        $sql           = "DELETE FROM {$table_name} WHERE campaign_id = (?) LIMIT ".self::LOG_DELETE_BATCH_SIZE;
+        $conn          = $this->getEntityManager()->getConnection();
+        while ($conn->executeQuery($sql, [$campaignId], [ParameterType::INTEGER])->rowCount()) {
+        }
+    }
+
+    private function removeEventLogByEventIds(array $eventIds): void
     {
         $table_name    = $this->getTableName();
         $sql           = "DELETE FROM {$table_name} WHERE event_id IN (?) ORDER BY event_id ASC LIMIT ".self::LOG_DELETE_BATCH_SIZE;
         $conn          = $this->getEntityManager()->getConnection();
         while ($conn->executeQuery($sql, [$eventIds], [Connection::PARAM_INT_ARRAY])->rowCount()) {
-        }
-
-        $this->getEntityManager()->getRepository(Event::class)->deleteEvents($eventIds);
-        if ($campaignId) {
-            $this->getEntityManager()->getRepository(Campaign::class)->deleteCampaign($campaignId);
         }
     }
 }
