@@ -250,7 +250,7 @@ class EventRepository extends CommonRepository
             ->execute();
     }
 
-    public function deleteEventsByEventsIds(array $eventIds): void
+    public function deleteEventsByEventIds(array $eventIds): void
     {
         $qb = $this->getEntityManager()->createQueryBuilder();
         $qb->delete(Event::class, 'e')
