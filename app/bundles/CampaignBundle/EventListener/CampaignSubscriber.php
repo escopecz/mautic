@@ -93,7 +93,7 @@ class CampaignSubscriber implements EventSubscriberInterface
         $log      = [
             'bundle'    => 'campaign',
             'object'    => 'campaign',
-            'objectId'  => $campaign->getId(),
+            'objectId'  => $campaign->deletedId,
             'action'    => 'delete',
             'details'   => ['name' => $campaign->getName()],
             'ipAddress' => $this->ipLookupHelper->getIpAddressFromRequest(),

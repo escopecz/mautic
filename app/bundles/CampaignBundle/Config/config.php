@@ -118,7 +118,7 @@ return [
                 'arguments'   => [
                     'mautic.campaign.repository.lead_event_log',
                     'mautic.helper.campaign_config',
-                    'mautic.campaign.repository.campaign',
+                    'mautic.campaign.model.campaign',
                     'mautic.campaign.repository.event',
                 ],
             ],
