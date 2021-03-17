@@ -630,6 +630,11 @@ class Campaign extends FormEntity implements PublishStatusIconAttributesInterfac
         return $this;
     }
 
+    public function isDeleted(): bool
+    {
+        return !is_null($this->deleted);
+    }
+
     /**
      * Get contact membership.
      *

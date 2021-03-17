@@ -680,7 +680,9 @@ class Event implements ChannelInterface
      */
     public function getChildren()
     {
-        return $this->children;
+        $criteria = Criteria::create()->where(Criteria::expr()->isNull('deleted'));
+
+        return $this->children->matching($criteria);
     }
 
     /**
@@ -1088,5 +1090,10 @@ class Event implements ChannelInterface
     public function getDeleted(): ?\DateTimeInterface
     {
         return $this->deleted;
+    }
+
+    public function isDeleted(): bool
+    {
+        return !is_null($this->deleted);
     }
 }
