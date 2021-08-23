@@ -24,11 +24,6 @@ class SegmentContactsLineChartQuery extends ChartQuery
     private $segmentId;
 
     /**
-     * @var bool|string
-     */
-    private $firstEventLog;
-
-    /**
      * @var array
      */
     private $addedEventLogStats;
@@ -37,16 +32,6 @@ class SegmentContactsLineChartQuery extends ChartQuery
      * @var array
      */
     private $removedEventLogStats;
-
-    /**
-     * @var array
-     */
-    private $addedLeadListStats;
-
-    /**
-     * @var bool
-     */
-    private $statsFromEventLog;
 
     /**
      * @param string|null $unit
@@ -134,57 +119,11 @@ class SegmentContactsLineChartQuery extends ChartQuery
     }
 
     /**
-     * Get data about add from segment based on LeadListLead before upgrade to 2.15.
-     *
-     * @return array
-     */
-    public function getDataFromLeadListLeads()
-    {
-        $q = $this->prepareTimeDataQuery('lead_lists_leads', 'date_added', $this->filters);
-        if ($this->firstEventLog) {
-            $q->andWhere($q->expr()->lt('t.date_added', $q->expr()->literal($this->firstEventLog)));
-        }
-        $q = $this->optimizeListLeadQuery($q);
-
-        return $this->loadAndBuildTimeData($q);
-    }
-
-    /**
-     * @return bool|string
-     */
-    private function getFirstDateAddedSegmentEventLog()
-    {
-        $subQuery = $this->connection->createQueryBuilder();
-        $subQuery->select('el.date_added - INTERVAL 10 SECOND')
-            ->from(MAUTIC_TABLE_PREFIX.'lead_event_log', 'el')
-            ->where(
-                $subQuery->expr()->andX(
-                    $subQuery->expr()->eq('el.object', $subQuery->expr()->literal('segment')),
-                    $subQuery->expr()->eq('el.bundle', $subQuery->expr()->literal('lead')),
-                    $subQuery->expr()->eq('el.object_id', $this->segmentId)
-                )
-            )
-            ->orderBy('el.date_added')
-            ->setFirstResult(0)
-            ->setMaxResults(1);
-
-        return $subQuery->execute()->fetchColumn();
-    }
-
-    /**
      * @return int
      */
     public function getSegmentId()
     {
         return $this->segmentId;
-    }
-
-    /**
-     * @return bool
-     */
-    public function isStatsFromEventLog()
-    {
-        return $this->statsFromEventLog;
     }
 
     /**
@@ -208,15 +147,18 @@ class SegmentContactsLineChartQuery extends ChartQuery
      */
     private function init(): void
     {
-        $this->firstEventLog        = $this->getFirstDateAddedSegmentEventLog();
-        $this->addedLeadListStats   = $this->getDataFromLeadListLeads();
         $this->addedEventLogStats   = $this->getDataFromLeadEventLog('added');
         $this->removedEventLogStats = $this->getDataFromLeadEventLog('removed');
-        $this->statsFromEventLog    = (
-            empty(array_filter($this->addedLeadListStats))
-            && (!empty(array_filter($this->addedEventLogStats))
-            || !empty(array_filter($this->removedEventLogStats)))
-        );
+    }
+
+    private function optimizeSearchInLeadEventLog(QueryBuilder $qb): QueryBuilder
+    {
+        $fromPart             = $qb->getQueryPart('from');
+        $fromPart[0]['alias'] = sprintf('%s USE INDEX (%s)', $fromPart[0]['alias'], MAUTIC_TABLE_PREFIX.LeadEventLog::INDEX_SEARCH);
+        $qb->resetQueryPart('from');
+        $qb->from($fromPart[0]['table'], $fromPart[0]['alias']);
+
+        return $qb;
     }
 
     private function optimizeListLeadQuery(QueryBuilder $qb): QueryBuilder
