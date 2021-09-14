@@ -160,45 +160,4 @@ class SegmentContactsLineChartQuery extends ChartQuery
 
         return $qb;
     }
-
-    private function optimizeListLeadQuery(QueryBuilder $qb): QueryBuilder
-    {
-        if (
-            // Remove unwanted self join with lead_lists_leads table
-            false !== ($key = array_search(MAUTIC_TABLE_PREFIX.ListLead::TABLE_NAME, array_column($qb->getQueryPart('from'), 'table'))) &&
-            false !== ($joinKey = array_search(MAUTIC_TABLE_PREFIX.ListLead::TABLE_NAME, array_column($qb->getQueryPart('join')[$tableAlias = $qb->getQueryPart('from')[$key]['alias']], 'joinTable')))
-        ) {
-            $joinAlias = $qb->getQueryPart('join')[$tableAlias][$joinKey]['joinAlias'];
-            $qb->resetQueryPart('join');
-            $compositeExpression = $qb->getQueryPart('where');
-            $this->removeUnwantedWhereClause($compositeExpression, $joinAlias);
-        }
-
-        return $qb;
-    }
-
-    private function removeUnwantedWhereClause(CompositeExpression $compositeExpression, string $joinAlias): void
-    {
-        // CompositeExpression class has no way to remove members of it's 'parts' property, and we have
-        // to resort on Reflection here.
-        $compositeExpressionReflection      = new \ReflectionClass(CompositeExpression::class);
-        $compositeExpressionReflectionParts = $compositeExpressionReflection->getProperty('parts');
-        $compositeExpressionReflectionParts->setAccessible(true);
-        $parts    = $compositeExpressionReflectionParts->getValue($compositeExpression);
-        $newParts = array_filter($parts, function ($val) use ($joinAlias) {
-            return 0 !== strpos($val, "$joinAlias.");
-        });
-        $compositeExpressionReflectionParts->setValue($compositeExpression, $newParts);
-        $compositeExpressionReflectionParts->setAccessible(false);
-    }
-
-    private function optimizeSearchInLeadEventLog(QueryBuilder $qb): QueryBuilder
-    {
-        $fromPart             = $qb->getQueryPart('from');
-        $fromPart[0]['alias'] = sprintf('%s USE INDEX (%s)', $fromPart[0]['alias'], MAUTIC_TABLE_PREFIX.LeadEventLog::INDEX_SEARCH);
-        $qb->resetQueryPart('from');
-        $qb->from($fromPart[0]['table'], $fromPart[0]['alias']);
-
-        return $qb;
-    }
 }
