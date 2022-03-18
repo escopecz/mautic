@@ -22,7 +22,8 @@
     },
   "require": {
     "composer/installers": "^1.11",
-    "mautic/core-lib": "^4.0"
+    "mautic/core-lib": "^4.0",
+    "mautic/custom-objects-bundle": "4.x-dev"
   },
   "require-dev": {
     "friendsofphp/php-cs-fixer": "^2.19.2",
@@ -94,6 +95,10 @@
     {
       "type": "git",
       "url": "https://github.com/dennisameling/FOSOAuthServerBundle.git"
+    },
+    {
+      "type": "git",
+      "url": "https://github.com/acquia/mc-cs-plugin-custom-objects.git"
     }
   ],
   "conflict": {
