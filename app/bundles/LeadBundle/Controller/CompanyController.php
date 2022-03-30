@@ -1,5 +1,14 @@
 <?php
 
+/*
+ * @copyright   2014 Mautic Contributors. All rights reserved
+ * @author      Mautic
+ *
+ * @link        http://mautic.org
+ *
+ * @license     GNU/GPLv3 http://www.gnu.org/licenses/gpl-3.0.html
+ */
+
 namespace Mautic\LeadBundle\Controller;
 
 use Mautic\CoreBundle\Controller\FormController;
@@ -414,7 +423,7 @@ class CompanyController extends FormController
                             '%url%'       => $this->generateUrl(
                                 'mautic_company_action',
                                 [
-                                    'objectAction' => 'view',
+                                    'objectAction' => 'edit',
                                     'objectId'     => $entity->getId(),
                                 ]
                             ),
@@ -791,6 +800,7 @@ class CompanyController extends FormController
                 $this->addFlash(
                     'mautic.company.notice.batch_deleted',
                     [
+                        'pluralCount' => $deleted,
                         '%count%'     => $deleted,
                     ]
                 );

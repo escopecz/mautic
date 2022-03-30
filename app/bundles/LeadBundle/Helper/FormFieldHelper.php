@@ -1,9 +1,18 @@
 <?php
 
+/*
+ * @copyright   2014 Mautic Contributors. All rights reserved
+ * @author      Mautic
+ *
+ * @link        http://mautic.org
+ *
+ * @license     GNU/GPLv3 http://www.gnu.org/licenses/gpl-3.0.html
+ */
+
 namespace Mautic\LeadBundle\Helper;
 
 use Mautic\CoreBundle\Helper\AbstractFormFieldHelper;
-use Symfony\Component\Intl\Locales;
+use Symfony\Component\Intl\Intl;
 
 class FormFieldHelper extends AbstractFormFieldHelper
 {
@@ -210,11 +219,11 @@ class FormFieldHelper extends AbstractFormFieldHelper
     /**
      * Get locale choices.
      *
-     * @return array<string,string>
+     * @return array
      */
     public static function getLocaleChoices()
     {
-        return array_flip(Locales::getNames());
+        return array_flip(Intl::getLocaleBundle()->getLocaleNames());
     }
 
     /**

@@ -1,5 +1,14 @@
 <?php
 
+/*
+ * @copyright   2014 Mautic Contributors. All rights reserved
+ * @author      Mautic
+ *
+ * @link        http://mautic.org
+ *
+ * @license     GNU/GPLv3 http://www.gnu.org/licenses/gpl-3.0.html
+ */
+
 return [
     'routes' => [
         'main' => [
@@ -227,6 +236,7 @@ return [
             'mautic.asset.fixture.asset' => [
                 'class'     => \Mautic\AssetBundle\DataFixtures\ORM\LoadAssetData::class,
                 'tag'       => \Doctrine\Bundle\FixturesBundle\DependencyInjection\CompilerPass\FixturesCompilerPass::FIXTURE_TAG,
+                'arguments' => ['mautic.asset.model.asset'],
             ],
         ],
         'repositories' => [

@@ -15,8 +15,6 @@ use Mautic\LeadBundle\Field\FieldList;
 use Mautic\LeadBundle\Model\CompanyModel;
 use PHPUnit\Framework\Assert;
 use Symfony\Component\Security\Core\Exception\AccessDeniedException;
-use Symfony\Component\Translation\Translator;
-use Symfony\Component\Translation\TranslatorInterface;
 
 final class ImportCompanySubscriberTest extends \PHPUnit\Framework\TestCase
 {
@@ -25,8 +23,7 @@ final class ImportCompanySubscriberTest extends \PHPUnit\Framework\TestCase
         $subscriber = new ImportCompanySubscriber(
             $this->getFieldListFake(),
             $this->getCorePermissionsFake(),
-            $this->getCompanyModelFake(),
-            $this->getTranslatorFake()
+            $this->getCompanyModelFake()
         );
         $event = new ImportInitEvent('unicorn');
         $subscriber->onImportInit($event);
@@ -49,8 +46,7 @@ final class ImportCompanySubscriberTest extends \PHPUnit\Framework\TestCase
                     return false;
                 }
             },
-            $this->getCompanyModelFake(),
-            $this->getTranslatorFake()
+            $this->getCompanyModelFake()
         );
         $event = new ImportInitEvent('companies');
         $this->expectException(AccessDeniedException::class);
@@ -73,8 +69,7 @@ final class ImportCompanySubscriberTest extends \PHPUnit\Framework\TestCase
                     return true;
                 }
             },
-            $this->getCompanyModelFake(),
-            $this->getTranslatorFake()
+            $this->getCompanyModelFake()
         );
         $event = new ImportInitEvent('companies');
         $subscriber->onImportInit($event);
@@ -90,8 +85,7 @@ final class ImportCompanySubscriberTest extends \PHPUnit\Framework\TestCase
         $subscriber = new ImportCompanySubscriber(
             $this->getFieldListFake(),
             $this->getCorePermissionsFake(),
-            $this->getCompanyModelFake(),
-            $this->getTranslatorFake()
+            $this->getCompanyModelFake()
         );
         $event = new ImportMappingEvent('unicorn');
         $subscriber->onFieldMapping($event);
@@ -112,8 +106,7 @@ final class ImportCompanySubscriberTest extends \PHPUnit\Framework\TestCase
                 }
             },
             $this->getCorePermissionsFake(),
-            $this->getCompanyModelFake(),
-            $this->getTranslatorFake()
+            $this->getCompanyModelFake()
         );
         $event = new ImportMappingEvent('companies');
         $subscriber->onFieldMapping($event);
@@ -139,8 +132,7 @@ final class ImportCompanySubscriberTest extends \PHPUnit\Framework\TestCase
         $subscriber = new ImportCompanySubscriber(
             $this->getFieldListFake(),
             $this->getCorePermissionsFake(),
-            $this->getCompanyModelFake(),
-            $this->getTranslatorFake()
+            $this->getCompanyModelFake()
         );
         $import = new Import();
         $import->setObject('unicorn');
@@ -164,8 +156,7 @@ final class ImportCompanySubscriberTest extends \PHPUnit\Framework\TestCase
                 {
                     return true;
                 }
-            },
-            $this->getTranslatorFake()
+            }
         );
         $import = new Import();
         $import->setObject('company');
@@ -195,15 +186,6 @@ final class ImportCompanySubscriberTest extends \PHPUnit\Framework\TestCase
     private function getCompanyModelFake(): CompanyModel
     {
         return new class() extends CompanyModel {
-            public function __construct()
-            {
-            }
-        };
-    }
-
-    private function getTranslatorFake(): TranslatorInterface
-    {
-        return new class() extends Translator {
             public function __construct()
             {
             }

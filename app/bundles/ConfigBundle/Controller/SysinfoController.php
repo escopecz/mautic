@@ -1,32 +1,48 @@
 <?php
 
+/*
+ * @copyright   2014 Mautic Contributors. All rights reserved
+ * @author      Mautic
+ *
+ * @link        http://mautic.org
+ *
+ * @license     GNU/GPLv3 http://www.gnu.org/licenses/gpl-3.0.html
+ */
+
 namespace Mautic\ConfigBundle\Controller;
 
 use Mautic\CoreBundle\Controller\FormController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 
+/**
+ * Class SysinfoController.
+ */
 class SysinfoController extends FormController
 {
     /**
+     * @param int $page
+     *
      * @return JsonResponse|\Symfony\Component\HttpFoundation\Response
      */
-    public function indexAction()
+    public function indexAction($page = 1)
     {
         if (!$this->user->isAdmin() || $this->coreParametersHelper->get('sysinfo_disabled')) {
             return $this->accessDenied();
         }
 
         /** @var \Mautic\ConfigBundle\Model\SysinfoModel $model */
-        $model = $this->getModel('config.sysinfo');
+        $model   = $this->getModel('config.sysinfo');
+        $phpInfo = $model->getPhpInfo();
+        $folders = $model->getFolders();
+        $log     = $model->getLogTail(40);
+        $dbInfo  = $model->getDbInfo();
 
         return $this->delegateView([
             'viewParameters' => [
-                'phpInfo'         => $model->getPhpInfo(),
-                'requirements'    => $model->getRequirements(),
-                'recommendations' => $model->getRecommendations(),
-                'folders'         => $model->getFolders(),
-                'log'             => $model->getLogTail(200),
-                'dbInfo'          => $model->getDbInfo(),
+                'phpInfo' => $phpInfo,
+                'folders' => $folders,
+                'log'     => $log,
+                'dbInfo'  => $dbInfo,
             ],
             'contentTemplate' => 'MauticConfigBundle:Sysinfo:index.html.php',
             'passthroughVars' => [

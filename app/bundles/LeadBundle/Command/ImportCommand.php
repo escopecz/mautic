@@ -1,5 +1,14 @@
 <?php
 
+/*
+ * @copyright   2014 Mautic Contributors. All rights reserved
+ * @author      Mautic
+ *
+ * @link        http://mautic.org
+ *
+ * @license     GNU/GPLv3 http://www.gnu.org/licenses/gpl-3.0.html
+ */
+
 namespace Mautic\LeadBundle\Command;
 
 use Mautic\LeadBundle\Exception\ImportDelayedException;
@@ -15,11 +24,12 @@ use Symfony\Component\Console\Output\OutputInterface;
  */
 class ImportCommand extends ContainerAwareCommand
 {
-    public const COMMAND_NAME = 'mautic:import';
-
+    /**
+     * {@inheritdoc}
+     */
     protected function configure()
     {
-        $this->setName(self::COMMAND_NAME)
+        $this->setName('mautic:import')
             ->setDescription('Imports data to Mautic')
             ->addOption('--id', '-i', InputOption::VALUE_OPTIONAL, 'Specific ID to import. Defaults to next in the queue.', false)
             ->addOption('--limit', '-l', InputOption::VALUE_OPTIONAL, 'Maximum number of records to import for this script execution.', 0)
@@ -32,6 +42,9 @@ EOT
             );
     }
 
+    /**
+     * {@inheritdoc}
+     */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $start = microtime(true);

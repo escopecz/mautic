@@ -1,5 +1,14 @@
 <?php
 
+/*
+ * @copyright   2014 Mautic Contributors. All rights reserved
+ * @author      Mautic
+ *
+ * @link        http://mautic.org
+ *
+ * @license     GNU/GPLv3 http://www.gnu.org/licenses/gpl-3.0.html
+ */
+
 namespace Mautic\LeadBundle\Entity;
 
 use Doctrine\Common\Collections\ArrayCollection;
@@ -23,7 +32,6 @@ class Lead extends FormEntity implements CustomFieldEntityInterface
     const POINTS_SUBTRACT = 'minus';
     const POINTS_MULTIPLY = 'times';
     const POINTS_DIVIDE   = 'divide';
-    const DEFAULT_ALIAS   = 'l';
 
     /**
      * Used to determine social identity.

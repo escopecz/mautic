@@ -1,5 +1,14 @@
 <?php
 
+/*
+ * @copyright   2018 Mautic Contributors. All rights reserved
+ * @author      Mautic
+ *
+ * @link        http://mautic.org
+ *
+ * @license     GNU/GPLv3 http://www.gnu.org/licenses/gpl-3.0.html
+ */
+
 namespace Mautic\ChannelBundle\Controller;
 
 use Mautic\ChannelBundle\Model\ChannelActionModel;
@@ -56,6 +65,7 @@ class BatchContactController extends AbstractFormController
             $this->frequencyActionModel->update($ids, $params, $preferredChannel);
 
             $this->addFlash('mautic.lead.batch_leads_affected', [
+                'pluralCount' => count($ids),
                 '%count%'     => count($ids),
             ]);
         } else {

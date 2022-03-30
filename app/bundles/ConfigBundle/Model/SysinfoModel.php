@@ -1,47 +1,59 @@
 <?php
 
+/*
+ * @copyright   2014 Mautic Contributors. All rights reserved
+ * @author      Mautic
+ *
+ * @link        http://mautic.org
+ *
+ * @license     GNU/GPLv3 http://www.gnu.org/licenses/gpl-3.0.html
+ */
+
 namespace Mautic\ConfigBundle\Model;
 
 use Doctrine\DBAL\Connection;
 use Mautic\CoreBundle\Helper\CoreParametersHelper;
 use Mautic\CoreBundle\Helper\PathsHelper;
-use Mautic\InstallBundle\Configurator\Step\CheckStep;
-use Mautic\InstallBundle\Install\InstallService;
 use Symfony\Component\Translation\TranslatorInterface;
 
+/**
+ * Class SysinfoModel.
+ */
 class SysinfoModel
 {
-    /**
-     * @var string|null
-     */
     protected $phpInfo;
-
-    /**
-     * @var array<string,bool>|null
-     */
     protected $folders;
 
-    protected PathsHelper $pathsHelper;
-    protected CoreParametersHelper $coreParametersHelper;
-    protected Connection $connection;
-    private TranslatorInterface $translator;
-    private InstallService $installService;
-    private CheckStep $checkStep;
+    /**
+     * @var PathsHelper
+     */
+    protected $pathsHelper;
 
+    /**
+     * @var CoreParametersHelper
+     */
+    protected $coreParametersHelper;
+
+    /**
+     * @var TranslatorInterface
+     */
+    private $translator;
+
+    protected Connection $connection;
+
+    /**
+     * SysinfoModel constructor.
+     */
     public function __construct(
         PathsHelper $pathsHelper,
         CoreParametersHelper $coreParametersHelper,
         TranslatorInterface $translator,
-        Connection $connection,
-        InstallService $installService,
-        CheckStep $checkStep
+        Connection $connection
     ) {
         $this->pathsHelper          = $pathsHelper;
         $this->coreParametersHelper = $coreParametersHelper;
         $this->translator           = $translator;
         $this->connection           = $connection;
-        $this->installService       = $installService;
-        $this->checkStep            = $checkStep;
     }
 
     /**
@@ -80,22 +92,6 @@ class SysinfoModel
         }
 
         return $this->phpInfo;
-    }
-
-    /**
-     * @return string[]
-     */
-    public function getRecommendations(): array
-    {
-        return $this->installService->checkOptionalSettings($this->checkStep);
-    }
-
-    /**
-     * @return string[]
-     */
-    public function getRequirements(): array
-    {
-        return $this->installService->checkRequirements($this->checkStep);
     }
 
     /**

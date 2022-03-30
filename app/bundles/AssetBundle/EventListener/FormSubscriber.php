@@ -1,5 +1,14 @@
 <?php
 
+/*
+ * @copyright   2014 Mautic Contributors. All rights reserved
+ * @author      Mautic
+ *
+ * @link        http://mautic.org
+ *
+ * @license     GNU/GPLv3 http://www.gnu.org/licenses/gpl-3.0.html
+ */
+
 namespace Mautic\AssetBundle\EventListener;
 
 use Doctrine\ORM\NonUniqueResultException;
@@ -9,7 +18,7 @@ use Mautic\AssetBundle\Form\Type\FormSubmitActionDownloadFileType;
 use Mautic\AssetBundle\Model\AssetModel;
 use Mautic\CoreBundle\Helper\CoreParametersHelper;
 use Mautic\CoreBundle\Helper\TemplatingHelper;
-use Mautic\CoreBundle\Helper\ThemeHelperInterface;
+use Mautic\CoreBundle\Helper\ThemeHelper;
 use Mautic\CoreBundle\Templating\Helper\AnalyticsHelper;
 use Mautic\CoreBundle\Templating\Helper\AssetsHelper;
 use Mautic\FormBundle\Entity\Form;
@@ -43,7 +52,7 @@ class FormSubscriber implements EventSubscriberInterface
     private $assetsHelper;
 
     /**
-     * @var ThemeHelperInterface
+     * @var ThemeHelper
      */
     private $themeHelper;
 
@@ -62,7 +71,7 @@ class FormSubscriber implements EventSubscriberInterface
         TranslatorInterface $translator,
         AnalyticsHelper $analyticsHelper,
         AssetsHelper $assetsHelper,
-        ThemeHelperInterface $themeHelper,
+        ThemeHelper $themeHelper,
         TemplatingHelper $templatingHelper,
         CoreParametersHelper $coreParametersHelper
     ) {

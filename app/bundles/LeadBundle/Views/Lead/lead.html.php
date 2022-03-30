@@ -215,34 +215,32 @@ $view['slots']->set(
                                     <table class="table table-bordered table-striped mb-0">
                                         <tbody>
                                         <?php foreach ($fields[$group] as $field): ?>
-                                            <?php if (isset($field['value'])): ?>
-                                                <tr>
-                                                    <td width="20%"><span class="fw-b textTitle"><?php echo $view->escape($field['label']); ?></span>
-                                                    </td>
-                                                    <td>
-                                                        <?php if ('core' == $group && 'country' == $field['alias'] && !empty($flag)): ?>
-                                                        <img class="mr-sm" src="<?php echo $flag; ?>" alt="" style="max-height: 24px;"/>
-                                                        <span class="mt-1"><?php echo $view->escape($field['value']); ?>
+                                            <tr>
+                                                <td width="20%"><span class="fw-b textTitle"><?php echo $view->escape($field['label']); ?></span>
+                                                </td>
+                                                <td>
+                                                    <?php if ('core' == $group && 'country' == $field['alias'] && !empty($flag)): ?>
+                                                    <img class="mr-sm" src="<?php echo $flag; ?>" alt="" style="max-height: 24px;"/>
+                                                    <span class="mt-1"><?php echo $view->escape($field['value']); ?>
+                                                    <?php else: ?>
+                                                        <?php if ('multiselect' === $field['type']): ?>
+                                                            <?php if (is_array($field['value'])): ?>
+                                                                <?php echo implode(', ', $field['value']); ?>
                                                             <?php else: ?>
-                                                                <?php if ('multiselect' === $field['type']): ?>
-                                                                    <?php if (is_array($field['value'])): ?>
-                                                                        <?php echo implode(', ', $field['value']); ?>
-                                                                    <?php else: ?>
-                                                                        <?php echo str_replace('|', ', ', $view->escape($field['normalizedValue'])); ?>
-                                                                    <?php endif; ?>
-                                                                <?php elseif (is_string($field['value']) && 'url' === $field['type']): ?>
-                                                                    <a href="<?php echo $view->escape($field['value']); ?>" target="_blank">
+                                                                <?php echo str_replace('|', ', ', $view->escape($field['normalizedValue'])); ?>
+                                                            <?php endif; ?>
+                                                        <?php elseif (is_string($field['value']) && 'url' === $field['type']): ?>
+                                                            <a href="<?php echo $view->escape($field['value']); ?>" target="_blank">
                                                                 <?php echo $field['value']; ?>
                                                             </a>
-                                                                <?php elseif (is_string($field['value']) && 'datetime' === $field['type']): ?>
-                                                                    <?php echo $view['date']->toFullConcat($field['value'], 'UTC'); ?>
-                                                                <?php else: ?>
-                                                                    <?php echo $view->escape($field['normalizedValue']); ?>
-                                                                <?php endif; ?>
-                                                            <?php endif; ?>
-                                                    </td>
-                                                </tr>
-                                            <?php endif; ?>
+                                                        <?php elseif (is_string($field['value']) && 'datetime' === $field['type']): ?>
+                                                            <?php echo $view['date']->toFullConcat($field['value'], 'UTC'); ?>
+                                                        <?php else: ?>
+                                                            <?php echo $view->escape($field['normalizedValue']); ?>
+                                                        <?php endif; ?>
+                                                    <?php endif; ?>
+                                                </td>
+                                            </tr>
                                         <?php endforeach; ?>
                                         </tbody>
                                     </table>
@@ -460,9 +458,10 @@ $view['slots']->set(
                 $style = !empty($color) ? ' style="font-color: '.$color.' !important;"' : '';
                 ?>
                 <h1 <?php echo $style; ?>>
-                    <?php echo $view['translator']->trans(
+                    <?php echo $view['translator']->transChoice(
                         'mautic.lead.points.count',
-                        ['%count%' => $lead->getPoints()]
+                        $lead->getPoints(),
+                        ['%points%' => $lead->getPoints()]
                     ); ?>
                 </h1>
                 <hr/>

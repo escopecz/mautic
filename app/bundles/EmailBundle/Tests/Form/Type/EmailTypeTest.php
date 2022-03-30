@@ -2,11 +2,19 @@
 
 declare(strict_types=1);
 
+/*
+ * @copyright   2020 Mautic Contributors. All rights reserved
+ * @author      Mautic
+ *
+ * @link        https://mautic.org
+ *
+ * @license     GNU/GPLv3 http://www.gnu.org/licenses/gpl-3.0.html
+ */
+
 namespace Mautic\EmailBundle\Tests\Form\Type;
 
 use Doctrine\ORM\EntityManager;
 use Mautic\CoreBundle\Helper\CoreParametersHelper;
-use Mautic\CoreBundle\Helper\ThemeHelperInterface;
 use Mautic\EmailBundle\Entity\Email;
 use Mautic\EmailBundle\Form\Type\EmailType;
 use Mautic\StageBundle\Model\StageModel;
@@ -47,11 +55,6 @@ class EmailTypeTest extends \PHPUnit\Framework\TestCase
      */
     private $coreParametersHelper;
 
-    /**
-     * @var ThemeHelperInterface|MockObject
-     */
-    private $themeHelper;
-
     protected function setUp(): void
     {
         parent::setUp();
@@ -61,13 +64,11 @@ class EmailTypeTest extends \PHPUnit\Framework\TestCase
         $this->stageModel           = $this->createMock(StageModel::class);
         $this->formBuilder          = $this->createMock(FormBuilderInterface::class);
         $this->coreParametersHelper = $this->createMock(CoreParametersHelper::class);
-        $this->themeHelper          = $this->createMock(ThemeHelperInterface::class);
         $this->form                 = new EmailType(
             $this->translator,
             $this->entityManager,
             $this->stageModel,
-            $this->coreParametersHelper,
-            $this->themeHelper
+            $this->coreParametersHelper
         );
 
         $this->formBuilder->method('create')->willReturnSelf();
@@ -77,11 +78,6 @@ class EmailTypeTest extends \PHPUnit\Framework\TestCase
     {
         $options = ['data' => new Email()];
         $names   = [];
-        $this->themeHelper
-            ->expects($this->once())
-            ->method('getCurrentTheme')
-            ->with('blank', 'email')
-            ->willReturn('blank');
 
         $this->formBuilder->method('add')
             ->with(

@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Mautic\LeadBundle\Tests\EventListener;
 
 use Mautic\CoreBundle\Security\Permissions\CorePermissions;
-use Mautic\CoreBundle\Translation\Translator;
 use Mautic\LeadBundle\Entity\Import;
 use Mautic\LeadBundle\Entity\LeadEventLog;
 use Mautic\LeadBundle\Event\ImportInitEvent;
@@ -16,7 +15,6 @@ use Mautic\LeadBundle\Field\FieldList;
 use Mautic\LeadBundle\Model\LeadModel;
 use PHPUnit\Framework\Assert;
 use Symfony\Component\Security\Core\Exception\AccessDeniedException;
-use Symfony\Component\Translation\TranslatorInterface;
 
 final class ImportContactSubscriberTest extends \PHPUnit\Framework\TestCase
 {
@@ -25,8 +23,7 @@ final class ImportContactSubscriberTest extends \PHPUnit\Framework\TestCase
         $subscriber = new ImportContactSubscriber(
             $this->getFieldListFake(),
             $this->getCorePermissionsFake(),
-            $this->getLeadModelFake(),
-            $this->getTranslatorFake()
+            $this->getLeadModelFake()
         );
         $event = new ImportInitEvent('unicorn');
         $subscriber->onImportInit($event);
@@ -52,8 +49,7 @@ final class ImportContactSubscriberTest extends \PHPUnit\Framework\TestCase
                     return false;
                 }
             },
-            $this->getLeadModelFake(),
-            $this->getTranslatorFake()
+            $this->getLeadModelFake()
         );
         $event = new ImportInitEvent('contacts');
         $this->expectException(AccessDeniedException::class);
@@ -79,8 +75,7 @@ final class ImportContactSubscriberTest extends \PHPUnit\Framework\TestCase
                     return true;
                 }
             },
-            $this->getLeadModelFake(),
-            $this->getTranslatorFake()
+            $this->getLeadModelFake()
         );
         $event = new ImportInitEvent('contacts');
         $subscriber->onImportInit($event);
@@ -96,8 +91,7 @@ final class ImportContactSubscriberTest extends \PHPUnit\Framework\TestCase
         $subscriber = new ImportContactSubscriber(
             $this->getFieldListFake(),
             $this->getCorePermissionsFake(),
-            $this->getLeadModelFake(),
-            $this->getTranslatorFake()
+            $this->getLeadModelFake()
         );
         $event = new ImportMappingEvent('unicorn');
         $subscriber->onFieldMapping($event);
@@ -123,8 +117,7 @@ final class ImportContactSubscriberTest extends \PHPUnit\Framework\TestCase
                 }
             },
             $this->getCorePermissionsFake(),
-            $this->getLeadModelFake(),
-            $this->getTranslatorFake()
+            $this->getLeadModelFake()
         );
         $event = new ImportMappingEvent('contacts');
         $subscriber->onFieldMapping($event);
@@ -160,8 +153,7 @@ final class ImportContactSubscriberTest extends \PHPUnit\Framework\TestCase
         $subscriber = new ImportContactSubscriber(
             $this->getFieldListFake(),
             $this->getCorePermissionsFake(),
-            $this->getLeadModelFake(),
-            $this->getTranslatorFake()
+            $this->getLeadModelFake()
         );
         $import = new Import();
         $import->setObject('unicorn');
@@ -189,8 +181,7 @@ final class ImportContactSubscriberTest extends \PHPUnit\Framework\TestCase
                 {
                     return true;
                 }
-            },
-            $this->getTranslatorFake()
+            }
         );
         $import = new Import();
         $import->setObject('lead');
@@ -220,15 +211,6 @@ final class ImportContactSubscriberTest extends \PHPUnit\Framework\TestCase
     private function getLeadModelFake(): LeadModel
     {
         return new class() extends LeadModel {
-            public function __construct()
-            {
-            }
-        };
-    }
-
-    private function getTranslatorFake(): TranslatorInterface
-    {
-        return new class() extends Translator {
             public function __construct()
             {
             }

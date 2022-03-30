@@ -1,5 +1,14 @@
 <?php
 
+/*
+ * @copyright   2017 Mautic Contributors. All rights reserved
+ * @author      Mautic, Inc.
+ *
+ * @link        https://mautic.org
+ *
+ * @license     GNU/GPLv3 http://www.gnu.org/licenses/gpl-3.0.html
+ */
+
 namespace Mautic\CampaignBundle\Command;
 
 use Mautic\CampaignBundle\Executioner\Result\Counter;
@@ -12,16 +21,18 @@ trait WriteCountTrait
     {
         $output->writeln('');
         $output->writeln(
-            '<comment>'.$translator->trans(
+            '<comment>'.$translator->transChoice(
                 'mautic.campaign.trigger.events_executed',
-                ['%count%' => $counter->getTotalExecuted()]
+                $counter->getTotalExecuted(),
+                ['%events%' => $counter->getTotalExecuted()]
             )
             .'</comment>'
         );
         $output->writeln(
-            '<comment>'.$translator->trans(
+            '<comment>'.$translator->transChoice(
                 'mautic.campaign.trigger.events_scheduled',
-                ['%count%' => $counter->getTotalScheduled()]
+                $counter->getTotalScheduled(),
+                ['%events%' => $counter->getTotalScheduled()]
             )
             .'</comment>'
         );

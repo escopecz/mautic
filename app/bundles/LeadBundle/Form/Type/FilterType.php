@@ -1,5 +1,14 @@
 <?php
 
+/*
+ * @copyright   2014 Mautic Contributors. All rights reserved
+ * @author      Mautic
+ *
+ * @link        http://mautic.org
+ *
+ * @license     GNU/GPLv3 http://www.gnu.org/licenses/gpl-3.0.html
+ */
+
 namespace Mautic\LeadBundle\Form\Type;
 
 use Mautic\LeadBundle\Model\ListModel;
@@ -61,8 +70,7 @@ class FilterType extends AbstractType
             $form        = $event->getForm();
             $fieldAlias  = $data['field'] ?? null;
             $fieldObject = $data['object'] ?? 'behaviors';
-            // Looking for behaviors for BC reasons as some filters were moved from 'lead' to 'behaviors'.
-            $field       = $fieldChoices[$fieldObject][$fieldAlias] ?? $fieldChoices['behaviors'][$fieldAlias] ?? null;
+            $field       = $fieldChoices[$fieldObject][$fieldAlias] ?? null;
             $operators   = $field['operators'] ?? [];
             $operator    = $data['operator'] ?? null;
 

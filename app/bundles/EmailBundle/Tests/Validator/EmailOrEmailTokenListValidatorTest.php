@@ -2,6 +2,15 @@
 
 declare(strict_types=1);
 
+/*
+ * @copyright   2020 Mautic Contributors. All rights reserved
+ * @author      Mautic
+ *
+ * @link        https://mautic.org
+ *
+ * @license     GNU/GPLv3 http://www.gnu.org/licenses/gpl-3.0.html
+ */
+
 namespace Mautic\EmailBundle\Tests\Validator;
 
 use Mautic\CoreBundle\Translation\Translator;
@@ -24,15 +33,15 @@ final class EmailOrEmailTokenListValidatorTest extends TestCase
      *
      * @param mixed $value
      */
-    public function testNoEmailsProvided($value, int $expectedViolationCount, callable $getFieldMocker, callable $violationResult): void
+    public function testNoEmailsProvided($value, callable $getFieldMocker, callable $violationResult): void
     {
-        $context = new class() extends ExecutionContext {
+        $context = new class($violationResult) extends ExecutionContext {
             /** @var callable */
-            public $violationResult;
-            public int $violationCount = 0;
+            private $violationResult;
 
-            public function __construct()
+            public function __construct(callable $violationResult)
             {
+                $this->violationResult = $violationResult;
             }
 
             /**
@@ -42,12 +51,9 @@ final class EmailOrEmailTokenListValidatorTest extends TestCase
              */
             public function addViolation($message, array $parameters = [])
             {
-                ++$this->violationCount;
                 ($this->violationResult)($message, $parameters);
             }
         };
-
-        $context->violationResult = $violationResult;
 
         $translator = new class() extends Translator {
             public function __construct()
@@ -74,21 +80,25 @@ final class EmailOrEmailTokenListValidatorTest extends TestCase
             }
         };
 
-        $fieldModel = new class() extends FieldModel {
+        $fieldModel = new class($getFieldMocker) extends FieldModel {
             /** @var callable */
-            public $getFieldMocker;
+            private $getFieldMocker;
 
-            public function __construct()
+            public function __construct(callable $getFieldMocker)
             {
+                $this->getFieldMocker = $getFieldMocker;
             }
 
+            /**
+             * @param string      $alias
+             * @param string|null $categoryAlias
+             * @param string|null $lang
+             */
             public function getEntityByAlias($alias, $categoryAlias = null, $lang = null)
             {
                 return ($this->getFieldMocker)($alias);
             }
         };
-
-        $fieldModel->getFieldMocker = $getFieldMocker;
 
         $emaiOrEmailTokenListValidator = new EmailOrEmailTokenListValidator(
             new EmailValidator($translator, $dispatcher),
@@ -96,9 +106,8 @@ final class EmailOrEmailTokenListValidatorTest extends TestCase
         );
 
         $emaiOrEmailTokenListValidator->initialize($context);
-        $emaiOrEmailTokenListValidator->validate($value, new EmailOrEmailTokenList());
 
-        Assert::assertSame($expectedViolationCount, $context->violationCount);
+        $emaiOrEmailTokenListValidator->validate($value, new EmailOrEmailTokenList());
     }
 
     /**
@@ -109,7 +118,6 @@ final class EmailOrEmailTokenListValidatorTest extends TestCase
         // Test null value.
         yield [
             null,
-            0,
             function () {
                 $this->fail('Field should not be fetched');
             },
@@ -121,7 +129,6 @@ final class EmailOrEmailTokenListValidatorTest extends TestCase
         // Test empty value.
         yield [
             '',
-            0,
             function () {
                 $this->fail('Field should not be fetched');
             },
@@ -133,7 +140,6 @@ final class EmailOrEmailTokenListValidatorTest extends TestCase
         // Test invalid email and invalid token.
         yield [
             'somestring',
-            1,
             function () {
                 $this->fail('Field should not be fetched');
             },
@@ -152,7 +158,6 @@ final class EmailOrEmailTokenListValidatorTest extends TestCase
         // Test that valid email address do not add any violation.
         yield [
             'john@doe.com',
-            0,
             function () {
                 $this->fail('Field should not be fetched');
             },
@@ -164,7 +169,6 @@ final class EmailOrEmailTokenListValidatorTest extends TestCase
         // Test valid email address with invalid token.
         yield [
             'john@doe.com, somestring',
-            1,
             function () {
                 $this->fail('Field should not be fetched');
             },
@@ -182,7 +186,6 @@ final class EmailOrEmailTokenListValidatorTest extends TestCase
 
         yield [
             'john@doe.com, {contactfield=somefield | invalid-default-email-address}',
-            1,
             function () {
                 $this->fail('Field should not be fetched');
             },
@@ -201,7 +204,6 @@ final class EmailOrEmailTokenListValidatorTest extends TestCase
         // Test error when the field is not found in the database.
         yield [
             'john@doe.com, {contactfield=somefield|jane@doe.com}',
-            1,
             function (string $alias) {
                 Assert::assertSame('somefield', $alias);
 
@@ -222,7 +224,6 @@ final class EmailOrEmailTokenListValidatorTest extends TestCase
         // Test error when the field is found but is not type of email.
         yield [
             'john@doe.com, {contactfield=somefield}',
-            1,
             function (string $alias) {
                 Assert::assertSame('somefield', $alias);
 
@@ -247,7 +248,6 @@ final class EmailOrEmailTokenListValidatorTest extends TestCase
         // Test valid email addresses and valid tokens.
         yield [
             'john@doe.com, {contactfield=somefield|jane@doe.com}, jone@doe.email, {contactfield=somefield}',
-            0,
             function (string $alias) {
                 Assert::assertSame('somefield', $alias);
 
@@ -265,7 +265,6 @@ final class EmailOrEmailTokenListValidatorTest extends TestCase
         // Test valid email addresses and valid token but without a comma between.
         yield [
             'jone@doe.email {contactfield=somefield}',
-            1,
             function (string $alias) {
                 Assert::assertSame('somefield', $alias);
 

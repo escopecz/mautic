@@ -1,4 +1,10 @@
 <?php
+/**
+ * Created by PhpStorm.
+ * User: Werner
+ * Date: 6/20/2017
+ * Time: 8:10 AM.
+ */
 
 namespace MauticPlugin\MauticCrmBundle\Tests;
 

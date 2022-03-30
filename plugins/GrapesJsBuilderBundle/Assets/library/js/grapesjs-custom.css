@@ -252,14 +252,3 @@ html {
     transform: rotate(360deg);
   }
 }
-
-.is-not-allowed {
-  cursor: not-allowed;
-}
-
-.link-is-disabled {
-  pointer-events: none;
-  text-decoration: none;
-  display: inline-block;
-  opacity: 0.5;
-}

@@ -1,5 +1,14 @@
 <?php
 
+/*
+ * @copyright   2014 Mautic Contributors. All rights reserved
+ * @author      Mautic
+ *
+ * @link        http://mautic.org
+ *
+ * @license     GNU/GPLv3 http://www.gnu.org/licenses/gpl-3.0.html
+ */
+
 namespace Mautic\ReportBundle\Builder;
 
 use Doctrine\DBAL\Connection;
@@ -414,17 +423,6 @@ final class MauticReportBuilder implements ReportBuilderInterface
                             $expression
                         );
                         break;
-                    case 'neq':
-                        $columnValue = ":$paramName";
-                        $expression  = $queryBuilder->expr()->orX(
-                            $queryBuilder->expr()->isNull($filter['column']),
-                            $queryBuilder->expr()->$exprFunction($filter['column'], $columnValue)
-                        );
-                        $queryBuilder->setParameter($paramName, $filter['value']);
-                        $groupExpr->add(
-                            $expression
-                        );
-                        break;
                     default:
                         if ('' == trim($filter['value'])) {
                             // Ignore empty
@@ -481,6 +479,7 @@ final class MauticReportBuilder implements ReportBuilderInterface
                             default:
                                 $queryBuilder->setParameter($paramName, $filter['value']);
                         }
+
                         $groupExpr->add(
                             $expr->{$exprFunction}($filter['column'], $columnValue)
                         );

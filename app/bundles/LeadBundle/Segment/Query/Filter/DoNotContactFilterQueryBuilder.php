@@ -1,46 +1,62 @@
 <?php
+/*
+ * @copyright   2018 Mautic Contributors. All rights reserved
+ * @author      Mautic, Inc.
+ *
+ * @link        https://mautic.org
+ *
+ * @license     GNU/GPLv3 http://www.gnu.org/licenses/gpl-3.0.html
+ */
 
 namespace Mautic\LeadBundle\Segment\Query\Filter;
 
 use Mautic\LeadBundle\Segment\ContactSegmentFilter;
 use Mautic\LeadBundle\Segment\Query\QueryBuilder;
-use Mautic\LeadBundle\Segment\Query\QueryException;
 
+/**
+ * Class DoNotContactFilterQueryBuilder.
+ */
 class DoNotContactFilterQueryBuilder extends BaseFilterQueryBuilder
 {
-    public static function getServiceId(): string
+    /**
+     * {@inheritdoc}
+     */
+    public static function getServiceId()
     {
         return 'mautic.lead.query.builder.special.dnc';
     }
 
     /**
-     * @throws QueryException
+     * {@inheritdoc}
      */
-    public function applyQuery(QueryBuilder $queryBuilder, ContactSegmentFilter $filter): QueryBuilder
+    public function applyQuery(QueryBuilder $queryBuilder, ContactSegmentFilter $filter)
     {
-        $leadsTableAlias   = $queryBuilder->getTableAlias(MAUTIC_TABLE_PREFIX.'leads');
         $doNotContactParts = $filter->getDoNotContactParts();
-        $expr              = $queryBuilder->expr();
-        $queryAlias        = $this->generateRandomParameterName();
-        $reasonParameter   = ":{$queryAlias}reason";
-        $channelParameter  = ":{$queryAlias}channel";
 
-        $queryBuilder->setParameter($reasonParameter, $doNotContactParts->getParameterType());
-        $queryBuilder->setParameter($channelParameter, $doNotContactParts->getChannel());
+        $tableAlias = $this->generateRandomParameterName();
+        $queryBuilder->leftJoin('l', MAUTIC_TABLE_PREFIX.'lead_donotcontact', $tableAlias, $tableAlias.'.lead_id = l.id');
 
-        $filterQueryBuilder = $queryBuilder->createQueryBuilder()
-            ->select($queryAlias.'.lead_id')
-            ->from(MAUTIC_TABLE_PREFIX.'lead_donotcontact', $queryAlias)
-            ->andWhere($expr->eq($queryAlias.'.reason', $reasonParameter))
-            ->andWhere($expr->eq($queryAlias.'.channel', $channelParameter));
+        $exprParameter    = $this->generateRandomParameterName();
+        $channelParameter = $this->generateRandomParameterName();
 
-        if ('eq' === $filter->getOperator() xor !$filter->getParameterValue()) {
-            $expression = $expr->in($leadsTableAlias.'.id', $filterQueryBuilder->getSQL());
+        $expression = $queryBuilder->expr()->andX(
+            $queryBuilder->expr()->eq($tableAlias.'.reason', ":$exprParameter"),
+            $queryBuilder->expr()
+              ->eq($tableAlias.'.channel', ":$channelParameter")
+        );
+
+        $queryBuilder->addJoinCondition($tableAlias, $expression);
+
+        if ('eq' === $filter->getOperator()) {
+            $queryType = $filter->getParameterValue() ? 'isNotNull' : 'isNull';
         } else {
-            $expression = $expr->notIn($leadsTableAlias.'.id', $filterQueryBuilder->getSQL());
+            $queryType = $filter->getParameterValue() ? 'isNull' : 'isNotNull';
         }
 
-        $queryBuilder->addLogic($expression, $filter->getGlue());
+        $queryBuilder->addLogic($queryBuilder->expr()->$queryType($tableAlias.'.id'), $filter->getGlue());
+
+        $queryBuilder->setParameter($exprParameter, $doNotContactParts->getParameterType());
+        $queryBuilder->setParameter($channelParameter, $doNotContactParts->getChannel());
 
         return $queryBuilder;
     }

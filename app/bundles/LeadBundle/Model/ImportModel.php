@@ -1,5 +1,14 @@
 <?php
 
+/*
+ * @copyright   2014 Mautic Contributors. All rights reserved
+ * @author      Mautic
+ *
+ * @link        http://mautic.org
+ *
+ * @license     GNU/GPLv3 http://www.gnu.org/licenses/gpl-3.0.html
+ */
+
 namespace Mautic\LeadBundle\Model;
 
 use Doctrine\ORM\ORMException;
@@ -274,7 +283,7 @@ class ImportModel extends FormModel
     public function process(Import $import, Progress $progress, $limit = 0)
     {
         //Auto detect line endings for the file to work around MS DOS vs Unix new line characters
-        ini_set('auto_detect_line_endings', '1');
+        ini_set('auto_detect_line_endings', true);
 
         try {
             $file = new \SplFileObject($import->getFilePath());
@@ -292,7 +301,10 @@ class ImportModel extends FormModel
         $config           = $import->getParserConfig();
         $counter          = 0;
 
-        $file->seek($lastImportedLine);
+        if ($lastImportedLine > 0) {
+            // Seek is zero-based line numbering and
+            $file->seek($lastImportedLine - 1);
+        }
 
         $lineNumber = $lastImportedLine + 1;
         $this->logDebug('The import is starting on line '.$lineNumber, $import);
@@ -305,9 +317,7 @@ class ImportModel extends FormModel
         });
 
         while ($batchSize && !$file->eof()) {
-            $string = $file->current();
-            $file->next();
-            $data = str_getcsv($string, $config['delimiter'], $config['enclosure'], $config['escape']);
+            $data = $file->fgetcsv($config['delimiter'], $config['enclosure'], $config['escape']);
             $import->setLastLineImported($lineNumber);
 
             // Ignore the header row

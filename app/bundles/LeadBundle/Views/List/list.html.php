@@ -171,10 +171,7 @@ $now         = (new DateTimeHelper())->getUtcDateTime();
                             <?php if ($lastBuiltDateDifference >= $segmentRebuildWarningThreshold): ?>
                                 <label class="control-label" data-toggle="tooltip"
                                        data-container="body" data-placement="top" title=""
-                                       data-original-title="<?php echo $view['translator']->trans(
-                                               'mautic.lead.list.form.config.segment_rebuild_time.message',
-                                               ['%count%' => $lastBuiltDateDifference]
-                                       ); ?>">
+                                       data-original-title="<?php echo $view['translator']->transChoice('mautic.lead.list.form.config.segment_rebuild_time.message', $lastBuiltDateDifference, ['%hours%' => $lastBuiltDateDifference]); ?>">
                                     <i class="fa text-danger fa-exclamation-circle"></i></label>
                             <?php endif; ?>
                             <?php echo $view['content']->getCustomContent('segment.name', $mauticTemplateVars); ?>
@@ -190,8 +187,9 @@ $now         = (new DateTimeHelper())->getUtcDateTime();
                             'mautic_contact_index',
                             ['search' => $view['translator']->trans('mautic.lead.lead.searchcommand.list').':'.$item->getAlias()]
                         ); ?>" data-toggle="ajax"<?php echo (0 == $leadCounts[$item->getId()]) ? 'disabled=disabled' : ''; ?>>
-                            <?php echo $view['translator']->trans(
+                            <?php echo $view['translator']->transChoice(
                                 'mautic.lead.list.viewleads_count',
+                                $leadCounts[$item->getId()],
                                 ['%count%' => $leadCounts[$item->getId()]]
                             ); ?>
                         </a>

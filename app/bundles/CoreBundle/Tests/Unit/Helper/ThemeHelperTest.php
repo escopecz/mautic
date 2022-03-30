@@ -2,6 +2,15 @@
 
 declare(strict_types=1);
 
+/*
+ * @copyright   2018 Mautic Inc. All rights reserved
+ * @author      Mautic, Inc.
+ *
+ * @link        https://www.mautic.com
+ *
+ * @license     GNU/GPLv3 http://www.gnu.org/licenses/gpl-3.0.html
+ */
+
 namespace Mautic\CoreBundle\Tests\Unit\Helper;
 
 use Mautic\CoreBundle\Exception\FileNotFoundException;
@@ -10,7 +19,6 @@ use Mautic\CoreBundle\Helper\Filesystem;
 use Mautic\CoreBundle\Helper\PathsHelper;
 use Mautic\CoreBundle\Helper\TemplatingHelper;
 use Mautic\CoreBundle\Helper\ThemeHelper;
-use Mautic\CoreBundle\Helper\ThemeHelperInterface;
 use Mautic\CoreBundle\Templating\TemplateNameParser;
 use Mautic\CoreBundle\Templating\TemplateReference;
 use Mautic\IntegrationsBundle\Exception\IntegrationNotFoundException;
@@ -53,7 +61,7 @@ class ThemeHelperTest extends TestCase
     private $builderIntegrationsHelper;
 
     /**
-     * @var ThemeHelperInterface
+     * @var ThemeHelper
      */
     private $themeHelper;
 
@@ -287,10 +295,7 @@ class ThemeHelperTest extends TestCase
                 {
                 }
 
-                /**
-                 * @param string $files
-                 */
-                public function exists($files): bool
+                public function exists($files)
                 {
                     if ('/path/to/themes/new-theme-name' === $files) {
                         return false;
@@ -299,13 +304,7 @@ class ThemeHelperTest extends TestCase
                     return true;
                 }
 
-                /**
-                 * @param string               $originDir
-                 * @param string               $targetDir
-                 * @param ?\Traversable<mixed> $iterator
-                 * @param mixed[]              $options
-                 */
-                public function mirror($originDir, $targetDir, ?\Traversable $iterator = null, $options = []): void
+                public function mirror($originDir, $targetDir, ?\Traversable $iterator = null, $options = [])
                 {
                     Assert::assertSame('/path/to/themes/origin-template-dir', $originDir);
                     Assert::assertSame('/path/to/themes/new-theme-name', $targetDir);
@@ -318,15 +317,14 @@ class ThemeHelperTest extends TestCase
                     return '{"name":"Origin Theme"}';
                 }
 
-                public function dumpFile($filename, $content): void
+                public function dumpFile($filename, $content)
                 {
                     Assert::assertSame('/path/to/themes/new-theme-name/config.json', $filename);
                     Assert::assertSame('{"name":"New Theme Name"}', $content);
                 }
             },
             new class() extends Finder {
-                /** @var \SplFileInfo[] */
-                private array $dirs = [];
+                private $dirs = [];
 
                 public function __construct()
                 {
@@ -341,9 +339,6 @@ class ThemeHelperTest extends TestCase
                     return $this;
                 }
 
-                /**
-                 * @return \ArrayIterator<int,\SplFileInfo>
-                 */
                 public function getIterator()
                 {
                     return new \ArrayIterator($this->dirs);
@@ -390,9 +385,6 @@ class ThemeHelperTest extends TestCase
                 {
                 }
 
-                /**
-                 * @param string $files
-                 */
                 public function exists($files)
                 {
                     if ('/path/to/themes/requested-theme-dir' === $files) {
@@ -402,12 +394,6 @@ class ThemeHelperTest extends TestCase
                     return true;
                 }
 
-                /**
-                 * @param ?\Traversable<mixed> $iterator
-                 * @param array<mixed>         $options
-                 *
-                 * @return void
-                 */
                 public function mirror($originDir, $targetDir, ?\Traversable $iterator = null, $options = [])
                 {
                     Assert::assertSame('/path/to/themes/origin-template-dir', $originDir);
@@ -421,9 +407,6 @@ class ThemeHelperTest extends TestCase
                     return '{"name":"Origin Theme"}';
                 }
 
-                /**
-                 * @return void
-                 */
                 public function dumpFile($filename, $content)
                 {
                     Assert::assertSame('/path/to/themes/requested-theme-dir/config.json', $filename);
@@ -431,10 +414,7 @@ class ThemeHelperTest extends TestCase
                 }
             },
             new class() extends Finder {
-                /**
-                 * @var \SplFileInfo[]
-                 */
-                private array $dirs = [];
+                private $dirs = [];
 
                 public function __construct()
                 {
@@ -449,10 +429,7 @@ class ThemeHelperTest extends TestCase
                     return $this;
                 }
 
-                /**
-                 * @return \ArrayIterator<int,\SplFileInfo>
-                 */
-                public function getIterator(): \ArrayIterator
+                public function getIterator()
                 {
                     return new \ArrayIterator($this->dirs);
                 }

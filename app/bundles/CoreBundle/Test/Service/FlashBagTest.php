@@ -1,5 +1,14 @@
 <?php
 
+/*
+ * @copyright   2018 Mautic Contributors. All rights reserved
+ * @author      Mautic
+ *
+ * @link        http://mautic.org
+ *
+ * @license     GNU/GPLv3 http://www.gnu.org/licenses/gpl-3.0.html
+ */
+
 namespace Mautic\CoreBundle\Test\Service;
 
 use Mautic\CoreBundle\Model\NotificationModel;
@@ -79,12 +88,12 @@ class FlashBagTest extends TestCase
 
     public function testAddWithChoices(): void
     {
-        $message                      = 'message';
-        $messageVars['%count%']       = 2;
-        $translatedMessage            = 'translatedMessage';
-        $level                        = FlashBag::LEVEL_NOTICE;
-        $domain                       = 'flashes';
-        $addNotification              = false;
+        $message                    = 'message';
+        $messageVars['pluralCount'] = 2;
+        $translatedMessage          = 'translatedMessage';
+        $level                      = FlashBag::LEVEL_NOTICE;
+        $domain                     = 'flashes';
+        $addNotification            = false;
 
         $this->symfonyFlashBag
             ->expects($this->once())
@@ -98,8 +107,8 @@ class FlashBagTest extends TestCase
 
         $this->translator
             ->expects($this->once())
-            ->method('trans')
-            ->with($message, $messageVars, $domain)
+            ->method('transChoice')
+            ->with($message, $messageVars['pluralCount'], $messageVars, $domain)
             ->willReturn($translatedMessage);
 
         $this->flashBag->add($message, $messageVars, $level, $domain, $addNotification);

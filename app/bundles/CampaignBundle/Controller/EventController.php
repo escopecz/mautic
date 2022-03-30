@@ -1,5 +1,14 @@
 <?php
 
+/*
+ * @copyright   2014 Mautic Contributors. All rights reserved
+ * @author      Mautic
+ *
+ * @link        http://mautic.org
+ *
+ * @license     GNU/GPLv3 http://www.gnu.org/licenses/gpl-3.0.html
+ */
+
 namespace Mautic\CampaignBundle\Controller;
 
 use Mautic\CampaignBundle\Entity\Event;
@@ -166,9 +175,9 @@ class EventController extends CommonFormController
                     $label,
                     [
                         '%number%' => $event['triggerInterval'],
-                        '%unit%'   => $translator->trans(
+                        '%unit%'   => $translator->transChoice(
                             'mautic.campaign.event.intervalunit.'.$event['triggerIntervalUnit'],
-                            ['%count%' => $event['triggerInterval']]
+                            $event['triggerInterval']
                         ),
                     ]
                 );
@@ -376,9 +385,9 @@ class EventController extends CommonFormController
                     $label,
                     [
                         '%number%' => $event['triggerInterval'],
-                        '%unit%'   => $this->translator->trans(
+                        '%unit%'   => $this->translator->transChoice(
                             'mautic.campaign.event.intervalunit.'.$event['triggerIntervalUnit'],
-                            ['%count%' => $event['triggerInterval']]
+                            $event['triggerInterval']
                         ),
                     ]
                 );

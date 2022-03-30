@@ -210,8 +210,9 @@ if ('index' == $tmpl) {
                             ['objectAction' => 'results', 'objectId' => $item->getId()]
                         ); ?>" data-toggle="ajax" data-menu-link="mautic_form_index" class="btn btn-primary btn-xs" <?php echo (0
                             == $i['submission_count']) ? 'disabled=disabled' : ''; ?>>
-                            <?php echo $view['translator']->trans(
+                            <?php echo $view['translator']->transChoice(
                                 'mautic.form.form.viewresults',
+                                $i['submission_count'],
                                 ['%count%' => $i['submission_count']]
                             ); ?>
                         </a>

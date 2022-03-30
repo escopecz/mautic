@@ -1,5 +1,14 @@
 <?php
 
+/*
+ * @copyright   2016 Mautic Contributors. All rights reserved
+ * @author      Mautic
+ *
+ * @link        http://mautic.org
+ *
+ * @license     GNU/GPLv3 http://www.gnu.org/licenses/gpl-3.0.html
+ */
+
 namespace Mautic\CoreBundle\Model;
 
 use Doctrine\ORM\EntityManager;
@@ -13,10 +22,13 @@ use Monolog\Logger;
 use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Routing\Router;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
-use Symfony\Component\Intl\Locales;
+use Symfony\Component\Intl\Intl;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Translation\TranslatorInterface;
 
+/**
+ * Class AbstractCommonModel.
+ */
 abstract class AbstractCommonModel
 {
     /**
@@ -253,7 +265,7 @@ abstract class AbstractCommonModel
         $lang     = null;
 
         $slugCount = count($slugs);
-        $locales   = Locales::getNames();
+        $locales   = Intl::getLocaleBundle()->getLocaleNames();
 
         switch (true) {
             case 3 === $slugCount:
@@ -308,9 +320,7 @@ abstract class AbstractCommonModel
     }
 
     /**
-     * @param string      $alias
-     * @param string|null $categoryAlias
-     * @param string|null $lang
+     * @param $alias
      *
      * @return object|null
      */

@@ -1,15 +1,38 @@
 <?php
 
+/*
+ * @copyright   2014 Mautic Contributors. All rights reserved
+ * @author      Mautic
+ *
+ * @link        http://mautic.org
+ *
+ * @license     GNU/GPLv3 http://www.gnu.org/licenses/gpl-3.0.html
+ */
+
 namespace Mautic\AssetBundle\DataFixtures\ORM;
 
 use Doctrine\Common\DataFixtures\AbstractFixture;
 use Doctrine\Common\DataFixtures\OrderedFixtureInterface;
 use Doctrine\Persistence\ObjectManager;
 use Mautic\AssetBundle\Entity\Asset;
+use Mautic\AssetBundle\Model\AssetModel;
 
 class LoadAssetData extends AbstractFixture implements OrderedFixtureInterface
 {
-    public function load(ObjectManager $manager): void
+    /**
+     * @var AssetModel
+     */
+    private $assetModel;
+
+    /**
+     * {@inheritdoc}
+     */
+    public function __construct(AssetModel $assetModel)
+    {
+        $this->assetModel = $assetModel;
+    }
+
+    public function load(ObjectManager $manager)
     {
         $asset = new Asset();
         $asset
@@ -22,11 +45,17 @@ class LoadAssetData extends AbstractFixture implements OrderedFixtureInterface
             ->setRevision(1)
             ->setLanguage('en');
 
-        $manager->persist($asset);
-        $manager->flush();
+        try {
+            $this->assetModel->getRepository()->saveEntity($asset);
+        } catch (\Exception $e) {
+            echo $e->getMessage();
+        }
     }
 
-    public function getOrder(): int
+    /**
+     * @return int
+     */
+    public function getOrder()
     {
         return 10;
     }
