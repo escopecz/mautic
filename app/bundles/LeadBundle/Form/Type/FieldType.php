@@ -545,16 +545,19 @@ class FieldType extends AbstractType
             ]
         );
 
-        $builder->add(
-            'isShortVisible',
-            YesNoButtonGroupType::class,
-            [
-                'label' => 'mautic.lead.field.form.isshortvisible',
-                'attr'  => [
-                    'tooltip' => 'mautic.lead.field.form.isshortvisible.tooltip',
-                ],
-            ]
-        );
+        if ('company' !== $options['data']->getIsShortVisible()) {
+            $builder->add(
+                'isShortVisible',
+                YesNoButtonGroupType::class,
+                [
+                    'label' => 'mautic.lead.field.form.isshortvisible',
+                    'attr'  => [
+                        'tooltip'      => 'mautic.lead.field.form.isshortvisible.tooltip',
+                        'data-show-on' => '{"leadfield_object":"lead"}',
+                    ],
+                ]
+            );
+        }
 
         $builder->add(
             'isListable',
